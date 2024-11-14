@@ -5,6 +5,9 @@ theory Catdeory
 begin
 
 (*check for the proof- cross_affine_dependent*)
+lemma "5 + 3 = 8"
+  by simp
+
 
 lemma "(1::real, 2) \<le> (2, 2)"
   by simp
