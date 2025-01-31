@@ -25,13 +25,13 @@ definition lex :: "(real\<times>real) \<Rightarrow> (real\<times>real) \<Rightar
 type_synonym real_plane = "real \<times> real"
 
 definition cross3 :: "_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> real" where
-"cross3 a b c \<equiv> (fst b - fst a) * (snd c - snd a) - (fst c - fst a) * (snd b - snd a)"
-
+"cross3 a b c \<equiv> (snd b - snd a) * (fst c - fst b) - (snd c - snd b) * (fst b - fst a)"
+(* (y2- y1)*(x3 - x2) - (y3 - y2)*(x2 - x2) *)
 definition cup3 :: "_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool" where
-"cup3 a c b \<equiv>  cross3 a b c < 0"
+"cup3 a b c \<equiv>  cross3 a b c < 0"
 
 definition cap3 :: "_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool" where
-"cap3 a c b \<equiv>  cross3 a b c > 0"
+"cap3 a b c \<equiv>  cross3 a b c > 0"
 
 definition collinear3 :: "_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool" where
 "collinear3 a b c \<equiv> cross3 a b c = 0"
