@@ -156,8 +156,8 @@ affine dependent*)
 lemma cross_affine_dependent:assumes "cross3 a b c = 0" "distinct [a,b,c]"
   shows "affine_dependent {a, b, c}" 
 proof-
-  have reln:"(snd b - snd a)*(fst c - fst b) = (snd c - snd b)*(fst b - fst a)" 
-    using assms unfolding cross3_def by simp
+  have reln:"(snd b - snd a)*(fst c - fst  b) = (snd c - snd b)*(fst b - fst a)" 
+    using assms by (smt (verit) cross3_def left_diff_distrib mult.commute)
   hence eqn1:"(snd b - snd a)* fst c = (snd c - snd a)*(fst b) + (snd b - snd c)*fst a"
     by argo
   from reln have eqn2:"(fst b - fst a)* snd c = (fst c - fst a)* snd b - (fst c - fst b)* snd a"
@@ -313,7 +313,6 @@ qed
 lemma assumes "affine_dependent S"
   shows "\<exists>x \<in> S. \<exists> y \<in> S. \<exists>z \<in> S. (distinct [x,y,z]) \<and> cross3 x y z = 0"
   sorry
-
 lemma assumes "general_pos S"
   shows "\<forall>x \<in> S. \<forall> y \<in> S. \<forall>z \<in> S. cross3 x y z \<noteq> 0"
   sorry
