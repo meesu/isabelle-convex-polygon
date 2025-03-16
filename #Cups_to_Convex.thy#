@@ -22,6 +22,14 @@ value "cap3 (-0.5,0) (0,0) (1,-1)"
 value "cap3 (-1,-1) (0,0) (1,-1)"
 value "cap3 (-1,-1) (-0.5,0) (1,-1)"
 
+definition slope :: "(_\<times>_) \<Rightarrow> (_\<times>_) \<Rightarrow> _" where 
+"slope p1 p2 = (snd p2 - snd p1)/(fst p2 - fst p1)"
+
+lemma capAlternative:
+  assumes "cap3 p1 p2 p3" 
+  shows "(slope p1 p2) > (slope p2 p3)"
+  
+
 lemma cap_step1:
   assumes "cap3 p1 p2 p3" "cap3 p2 p3 p4" "sorted_wrt (<) [p1,p2,p3,p4]"
   shows "(fst p1 < fst p2 \<and> fst p2 < fst p3 \<and> fst p3 < fst p4) \<or>
@@ -54,8 +62,43 @@ proof-
     by (smt (verit, del_insts) assms(1) assms(3) cap3_def cross3_def divide_neg_pos frac_less_eq mult.commute zero_less_mult_iff) 
   moreover have "(snd p3 - snd p2)/(fst p3 - fst p2) > (snd p4 - snd p2)/(fst p4 - fst p2)"
     by (smt (verit) assms(2) assms(3) cap3_def cross3_def divide_neg_pos frac_less_eq mult.commute zero_less_mult_iff)
-  ultimately have "(snd p3 - snd p1)/(fst p3 - fst p1) > (snd p4 - snd p1)/(fst p4 - fst p1)"
+  ultimately have "(snd p2 - snd p1)/(fst p2 - fst p1) > (snd p3 - snd p1)/(fst p3 - fst p1)\<and> (snd p3 - snd p1)/(fst p3 - fst p1)> (snd p3 - snd p2)/(fst p3 - fst p2)" 
+  then show ?thesis
+    sorry
+qed
+
+lemma cap_final:
+  assumes "cap3 p1 p2 p3" "cap3 p2 p3 p4"
+  shows "cap3 p1 p3 p4"
+proof (cases "(fst p1 < fst p2 \<and> fst p2 < fst p3 \<and> fst p3 < fst p4)")
+  case True
+  then show ?thesis using cap_step5 assms(1) assms(2) by blast
+next
+  case False 
+  then have neg1: "\<not>(fst p1 < fst p2 \<and> fst p2 < fst p3 \<and> fst p3 < fst p4)" by blast
+  then show ?thesis
+  proof (cases "(fst p1 = fst p2 \<and> fst p2 < fst p3 \<and> fst p3 < fst p4)")
+    case True
+    then show ?thesis using assms(1) assms(2) cap_step2 by blast
+  next
+    case False
+    then have "\<not>(fst p1 < fst p2 \<and> fst p2 < fst p3 \<and> fst p3 < fst p4)\<and> \<not>(fst p1 = fst p2 \<and> fst p2 < fst p3 \<and> fst p3 < fst p4)"
+      using neg1 by blast
+    then show ?thesis
+    proof (cases "(fst p1 < fst p2 \<and> fst p2 = fst p3 \<and> fst p3 < fst p4)")
+      case True
+      then show ?thesis using assms(1) assms(2) cap_step3 by blast
+    next
+      case False
+      then show ?thesis 
+        have "(fst p1 < fst p2 \<and> fst p2 < fst p3 \<and> fst p3 = fst p4)"
+          using assms cap_step1 sledgehammer
+    qed
     
+  qed
+  
+qed
+  
 
 lemma cross_sum: 
   assumes "sorted_wrt (<) [p1,p2,p3,p4]" "cross3 p1 p3 p2 > 0" "cross3 p2 p4 p3 > 0"
