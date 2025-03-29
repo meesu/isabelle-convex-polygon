@@ -316,7 +316,7 @@ lemma cross_affine_dependent_conv:
   using affinedep_cases assms cross3_commutation_12 cross3_commutation_23 in_hull3_iscollinear 
   by blast
 
-lemma 
+lemma genpos_cross0:
   assumes "general_pos S" and "x \<in> S" and "y \<in> S" and "z \<in> S" and "distinct [x, y, z]"
   shows "cross3 x y z \<noteq> 0"
   using assms nsubset_def general_pos_def cross_affine_dependent
@@ -328,56 +328,123 @@ definition min_conv :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
                 \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sorted xs) \<and> (cap k xs \<or> cup l xs)))})"
 *)
 
+(*
+min_conv 3 k = 
+Inf {n. \<forall>S. n \<le> card S \<and> general_pos S \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sorted xs \<and> (cap 3 xs \<or> cup k xs))}
+*)
+
+lemma cross3_non0_distinct: "cross3 a b c \<noteq> 0 \<longrightarrow> distinct [a,b,c]" unfolding cross3_def by auto
+
+lemma cup_cap_cross_non0:
+  assumes "cup k A \<or> cap l A"
+  shows   "\<forall>i j k. distinct [i,j,k] \<longrightarrow> cross3 (A!i) (A!j) (A!k) \<noteq> 0"
+(*bounds for i j k ? *)
+  sorry
+
+lemma cup_cap_distinct:
+  assumes "cup k A \<or> cap l A"
+  shows   "distinct A" using assms cup_cap_cross_non0 cross3_non0_distinct sorry
+
 theorem "min_conv 3 k = k"
+  unfolding min_conv_def
 proof(induction k)
   case 0
-  then show ?case sorry
+  have "cap 0 []" by (simp add: cap_def) 
+  thus ?case using 0 cup_def
+    by (smt (verit, ccfv_threshold) empty_subsetI le_zero_eq list.size(3) list_check.simps(1)
+        mem_Collect_eq sorted_wrt.simps(1) wellorder_Inf_le1 empty_set)
 next
   case (Suc k)
-  {fix S::"(real \<times> real) set"
-    assume S_asm:"card S = Suc k"
-    assume S_gp:"general_pos S"        
-   then obtain x xs where x_xs:"S = set (x#xs)" "sorted (x#xs)" "length (x#xs) = card S"
-     sorry
-     using S_asm by (metis One_nat_def Suc_le_length_iff card.infinite le_add1 nat.simps(3) plus_1_eq_Suc sorted_list_of_set.length_sorted_key_list_of_set sorted_list_of_set.set_sorted_key_list_of_set sorted_list_of_set.sorted_sorted_key_list_of_set)
-   have x_Min:"x = Min S" using x_xs 
-     sorry 
-   hence "length xs = k" using S_asm x_xs by auto
-   moreover have sminus_x:"card (S - {x}) = k" using S_asm 
-     sorry by (simp add: card.insert_remove x_xs(1))
-   moreover have gp_sminus_x:"general_pos (S - {x})" using x_xs(1) S_gp general_pos_subs by blast
-   ultimately obtain zs where  zs:"set zs \<subseteq> S - {x}" "(cap 3 zs \<or> cup k zs)" "sorted zs"
-     using extract_cap_cup[OF Suc(1) sminus_x gp_sminus_x] by blast
-   then have "cap 3 zs \<or> cup (Suc k) (x#zs)"
-   proof(cases "cap 3 zs")
-     case False
-     hence F1:"cup k zs" using zs(2) by simp
-     hence F2:"length zs = k" unfolding cup_def by argo
-     hence F3:"sorted (x#zs)" using zs x_Min 
-       by (metis (no_types, opaque_lifting) Diff_empty in_mono set_ConsD sorted_wrt.simps(2) subset_Diff_insert x_xs(1) x_xs(2))
-     then show ?thesis
-     proof(cases "cup (Suc k) (x#zs)")
-       case False
-       then obtain z1 z2 z3 zs0 where "zs = z1#z2#zs0" unfolding cup_def
-         using F2 F3 list_check.simps(2,3) 
-         sorry by (metis length_Cons remdups_adj.cases)
-       (* prove that if xs is a cup and x#xs is not a cup, first three elements are not a cup*)
-       then show ?thesis sorry
-     qed (argo)
-   qed (argo)
-  then show ?case sorry
+  fix S::"(real \<times> real) set"
+  assume S_asm:"card S = Suc k"
+  assume S_gp:"general_pos S"
+  then obtain x xs where x_xs:"S = set (x#xs)" "sorted (x#xs)" "length (x#xs) = card S" 
+    by (metis (no_types, opaque_lifting) S_asm sorted_list_of_set.sorted_sorted_key_list_of_set
+        sorted_list_of_set.sorted_key_list_of_set_unique card.infinite length_Suc_conv nat.simps(3))
+  have x_Min:"x = Min S" using x_xs using x_xs(2) by (simp add: Min_insert2)
+  have "length xs = k" using S_asm x_xs by auto
+  moreover have sminus_x:"card (S - {x}) = k" using S_asm by (simp add: card.insert_remove x_xs(1))
+  moreover have gp_sminus_x:"general_pos (S - {x})" using x_xs(1) S_gp general_pos_subs by blast
+  text \<open>Using induction hypothesis obtain the cup or cap of size k from the set S - {min(S)}.\<close>
+  ultimately obtain zs where  zs:"set zs \<subseteq> S - {x}" "(cap 3 zs \<or> cup k zs)" "sorted zs"
+    using extract_cap_cup[of "3" "k" "k" "S - {x}"] Suc min_conv_def by auto
+  hence d_zs: "distinct zs" using cup_cap_distinct by auto
+(*
+To Prove
+Inf {n. \<forall>S. n \<le> card S \<and> general_pos S \<longrightarrow> 
+    (\<exists>xs. set xs \<subseteq> S \<and> sorted xs \<and> (cap 3 xs \<or> cup (Suc k) xs))} = Suc k
+*)
+  have "\<exists>cc. set cc \<subseteq> S \<and> sorted cc \<and> (cap 3 cc \<or> cup (Suc k) cc)"
+  proof(cases "cap 3 zs")
+    case True
+    then show ?thesis using zs(1,3) by auto
+  next
+    case False
+    hence F1:"cup k zs" using zs(2) by simp
+    hence F2:"length zs = k" unfolding cup_def by argo
+    have  F3:"sorted (x#zs)" using zs(1,3) x_Min x_xs(1,2) by fastforce
+    then show ?thesis
+    proof(cases "cup (Suc k) (x#zs)")
+      case True
+      then show ?thesis using F3 x_xs(1) zs(1)
+        by (metis Diff_empty insert_subset list.set_intros(1) list.simps(15) subset_Diff_insert)
+    next
+      case False
+(* TODO - cant derive distinctness, clash of --set,list and distinctness--
+  1. better definitions only in terms of lists or
+  2. derive distinctness using current definitions
+  --- lists allow repeated points -- which is more realistic?
+*)
+      hence "\<exists>b1 b2 b3. \<not> cup3 b1 b2 b3 \<and> sorted [b1,b2,b3] \<and> {b1, b2, b3} \<subseteq> set (x#zs) \<and> distinct[b1,b2,b3]"
+        using cup3_def zs d_zs sorry
+      then obtain b1 b2 b3 where b_cup:"\<not> cup3 b1 b2 b3" "sorted [b1,b2,b3]" "{b1, b2, b3} \<subseteq> set (x#zs)"
+        by blast
+      have fb1:"b1 \<in> S \<and> b2 \<in> S \<and> b3 \<in> S" using b_cup(3) x_xs(1) zs(1) by auto
+      have fb2:"distinct [b1, b2, b3]" using cross3_non0_distinct fb1 genpos_cross0 S_gp zs
+      have fb3:"cross3 b1 b3 b2 \<noteq> 0" using S_gp
+        using cross3_commutation_23 genpos_cross0 fb2 fb1 by blast
+      hence "cap 3 [b1, b2, b3]" using cap_def b_cup fb2 unfolding cup3_def cap3_def by auto 
+      then show ?thesis using b_cup(2) fb1 by force
+    qed
+  qed
+  thus ?case sorry
 qed
+
+end
+(* steps above: 
+1, Show that every k-1 cap does not contain a 3-cup
+2, Use that to show that if its a j-cap, where j<k, it does not contain a 3-cup
+3. also show that the cap in question needs to have at least k element set. 
+4. Thus value of S needs to be at least k*)
+
+(*
+
+  then have "cap 3 zs \<or> cup (Suc k) (x#zs)"
+  proof(cases "cap 3 zs")
+    case False
+    hence F1:"cup k zs" using zs(2) by simp
+    hence F2:"length zs = k" unfolding cup_def by argo
+    have  F3:"sorted (x#zs)" using zs(1,3) x_Min x_xs(1,2) by fastforce
+    then show ?thesis
+    proof(cases "cup (Suc k) (x#zs)")
+      case False
+      then obtain b1 b2 b3 where b_cup:"\<not> cup3 b1 b2 b3" "sorted [b1,b2,b3]"
+        by (metis add.right_neutral add_diff_cancel_left' cross3_def cup3_def order.refl 
+            order_less_irrefl sorted2_simps(2) sorted_wrt2_simps(1))
+      have fb1:"b1 \<in> S" "b2 \<in> S" "b3 \<in> S" sorry
+      have fb2:"distinct [b1, b2, b3]" sorry
+      have fb3:"cross3 b1 b3 b2 \<noteq> 0" using S_gp
+        using cross3_commutation_23 genpos_cross0 fb2 fb1 by blast
+      hence "cap 3 [b1, b2, b3]" using cap_def b_cup fb2 unfolding cup3_def cap3_def by auto 
+      then show ?thesis sorry
+    qed (argo)
+  qed (argo)
+  thus ?case sorry
+
 
   obtain n where "n =min_conv 3 k"
     unfolding min_conv_def using non_empty_cup_cap 
     by blast
-
-  (* steps above: 
-  1, Show that every k-1 cap does not contain a 3-cup
-2, Use that to show that if its a j-cap, where j<k, it does not contain a 3-cup
-3. also show that the cap in question needs to have atleat k element set. 
-4. Thus value of S needs to be atleast k*)
-
    {fix S
     assume asm:"card S = k \<and> general_pos S"
     have "\<exists>xs. set xs \<subseteq> S \<and> (cap k xs \<or> cup 3 xs)"
@@ -388,9 +455,8 @@ qed
     qed   }
   show ?thesis sorry
 qed
+*)
 
-
-end
 (*** Theorem 2.2: Let f(k, ℓ) be the smallest integer N such that any N-element planar point
 set in the plane in general position contains a k-cup or an ℓ-cap. Then f(k, l) = 1 + choose(k+l-4, k-2).
 ***)
@@ -401,164 +467,3 @@ set in the plane in general position contains a k-cup or an ℓ-cap. Then f(k, l
 (*from above, we can write another lemma to extract*)
 
 (* try to instantiate R^2 in this*)
-
-(*
-lemma cross_affine_dependent:
-  assumes "cross3 a b c = 0" "distinct [a,b,c]"
-  shows "affine_dependent {a, b, c}" 
-proof-
-  have reln:"(snd b - snd a)*(fst c - fst  b) = (snd c - snd b)*(fst b - fst a)" 
-    using assms by (smt (verit) cross3_def left_diff_distrib mult.commute)
-  hence eqn1:"(snd b - snd a)* fst c = (snd c - snd a)*(fst b) + (snd b - snd c)*fst a"
-    by argo
-  from reln have eqn2:"(fst b - fst a)* snd c = (fst c - fst a)* snd b - (fst c - fst b)* snd a"
-    by argo
-  hence dep_lem:"\<exists> u v. u + v = 1 \<and> c =  u *\<^sub>R b + v *\<^sub>R a"
-  proof(cases "(snd b - snd a)*(fst c - fst b) = 0")
-    case True
-    hence T0:"(snd b = snd a) \<or> (fst c = fst b)" by simp
-    hence T:"snd c = snd b \<or> fst b = fst a" using reln by force
-    then show ?thesis
-    proof(cases "(snd b - snd a) = 0 \<and> (fst c - fst b) = 0")
-      case True
-      hence T11:"snd b = snd a" by argo
-      hence T12:"fst c = fst b" using True by argo
-      then show ?thesis 
-      proof(cases "snd c = snd b")
-        case True
-        then show ?thesis using assms(2) T11 T12
-          by (simp add:  prod_eq_iff) 
-      next
-        case False
-        then show ?thesis  using assms(2) T11 T12 T
-          by (metis distinct_length_2_or_more prod_eqI)
-      qed
-    next
-      case False
-      then show ?thesis 
-      proof(cases "snd b \<noteq> snd a")
-        case True
-        hence T111:"fst b = fst c" using False T0 by argo
-        then show ?thesis
-        proof(cases "snd b = snd c")
-          case True
-          then show ?thesis using T111 assms(2) 
-            by (simp add: prod_eq_iff)  
-        next
-          case False
-          hence "fst b = fst a" using T by argo
-          hence "(snd b - snd a)* fst c = (snd c - snd a)*(fst b) + (snd b - snd c)*fst a"
-            using eqn1 by argo
-          hence f:"fst c = ((snd c - snd a)/(snd b - snd a))*(fst b) + ((snd b - snd c)/(snd b - snd a))*(fst a)"
-            using True 
-            by (metis (no_types, opaque_lifting) T111 \<open>fst b = fst a\<close> add_divide_distrib diff_add_eq diff_diff_eq distrib_left divide_self_if mult.commute mult.right_neutral right_minus_eq)
-          have s:"snd c = ((snd c - snd a)/(snd b - snd a))*(snd b) + ((snd b - snd c)/(snd b - snd a))*(snd a)"  
-          proof-
-            have loc1:"((snd c - snd a)/(snd b - snd a))*(snd b) + ((snd b - snd c)/(snd b - snd a))*(snd a)
-                         = (((snd c)*(snd b) - (snd a)*(snd b) + (snd b)*(snd a) - (snd c)*(snd a))/(snd b - snd a))"
-              by argo
-            hence loc2:"... = (((snd c)*(snd b - snd a))/(snd b - snd a))"
-              by argo
-            hence "... = snd c" using True by simp
-            thus ?thesis using loc1 loc2 by presburger
-          qed
-          moreover have "((snd b - snd c)/(snd b - snd a)) + ((snd c - snd a)/(snd b - snd a)) = 1"
-            using True 
-            by (metis (no_types, opaque_lifting) add_divide_distrib cancel_comm_monoid_add_class.diff_cancel diff_add_eq diff_diff_eq2 diff_zero divide_self_if)
-          then show ?thesis using f s False unfolding pair_scal 
-            by (metis add.commute add_Pair prod.exhaust_sel)
-        qed
-      next
-        case False
-        hence f1:"fst b \<noteq> fst a" using assms(2) 
-          by (simp add: prod_eq_iff)
-        hence s2:"snd b = snd c" using reln 
-          using T by presburger
-        hence s:"snd c = ((fst c - fst a)/(fst b - fst a))* snd b + ((fst b - fst c)/(fst b - fst a))* snd a"
-          using eqn2 f1 
-          by (metis (no_types, opaque_lifting) False add_divide_distrib diff_add_eq diff_diff_eq distrib_left divide_self_if mult.commute mult.right_neutral right_minus_eq) 
-        moreover have "fst c = ((fst c - fst a)/(fst b - fst a))* fst b + ((fst b - fst c)/(fst b - fst a))* fst a"
-        proof-
-          have "((fst c - fst a)/(fst b - fst a))* fst b + ((fst b - fst c)/(fst b - fst a))* fst a
-                      = ((fst c - fst a)*fst b + (fst b - fst c)* fst a)/(fst b - fst a)"
-            using f1 by argo
-          moreover have "... =  (fst c * fst b - fst c * fst a)/(fst b - fst a)"
-            by argo
-          moreover have "... = fst c"
-            using f1 
-            by (simp add: divide_eq_eq vector_space_over_itself.scale_right_diff_distrib)
-          ultimately show ?thesis by presburger
-        qed
-        moreover have "((fst c - fst a)/(fst b - fst a)) + ((fst b - fst c)/(fst b - fst a)) = 1"
-          using True 
-          by (metis (no_types, opaque_lifting) add.commute add_diff_eq add_divide_distrib diff_add_cancel divide_self_if f1 right_minus_eq)
-        ultimately show ?thesis unfolding pair_scal 
-          by (metis add_Pair prod.exhaust_sel)
-      qed
-    qed
-  next
-    case False
-    hence 1:"(fst c - fst b) \<noteq> 0 \<and> (snd b - snd a) \<noteq> 0 " by simp
-    hence f:"fst c = ((snd c - snd a)/(snd b - snd a))*(fst b) + ((snd b - snd c)/(snd b - snd a))*fst a"
-      by (metis (no_types, opaque_lifting) add.right_cancel diff_add_cancel diff_divide_eq_iff eqn1 mult.commute times_divide_eq_right)
-    moreover have wt:"((snd c - snd a)/(snd b - snd a)) +  ((snd b - snd c)/(snd b - snd a)) = 1"
-      using 1 
-      by (metis add.commute add_diff_eq add_divide_distrib diff_add_cancel divide_self_if)
-    hence 2:"fst b - fst a \<noteq> 0 \<and> snd c - snd b \<noteq> 0" using False reln by auto
-    hence "snd c = ((fst c - fst a)/(fst b - fst a))* snd b - ((fst c - fst b)/(fst b - fst a))* snd a"
-      using eqn2 
-      by (smt (verit, ccfv_SIG) add_diff_cancel_left' diff_diff_eq2 divide_diff_eq_iff mult.commute times_divide_eq_right)
-    hence s:"snd c = ((fst c - fst a)/(fst b - fst a))* snd b + ((fst b - fst c)/(fst b - fst a))* snd a"
-      by argo
-    let ?u = "((snd c - snd a)/(snd b - snd a))"
-    have onemu: "((snd b - snd c)/(snd b - snd a)) = 1 - ?u" using wt by argo
-    have fonemu:"((fst b - fst c)/(fst b - fst a)) = 1 - ?u" 
-      unfolding sym[OF onemu] using reln 1 2 
-    proof-
-      have " (fst c - fst b) = ((snd c - snd b)/(snd b - snd a)) * (fst b - fst a)"
-        using reln 1 2 
-        by (simp add: mult.commute nonzero_eq_divide_eq)
-      hence "((fst c - fst b)/ (fst b - fst a)) = ((snd c - snd b)/(snd b - snd a))"
-        using 1 2 by auto
-      thus "((fst b - fst c)/ (fst b - fst a)) = ((snd b - snd c)/(snd b - snd a))"
-        by argo
-    qed
-    hence fu:"((fst c - fst a)/(fst b - fst a)) = ?u" 
-      using 1 2 
-      by (smt (verit) add_divide_distrib divide_self_if)
-    hence "snd c = ?u * snd b + (1 - ?u)* snd a" using onemu fonemu by algebra
-    hence "c =  ?u *\<^sub>R (b) + (1 - ?u) *\<^sub>R a"
-      using f  unfolding onemu pair_scal using  1 2
-      by (metis add_Pair prod.collapse)
-    thus ?thesis by force
-  qed
-  hence p_span:"c \<in> span {a, b}" 
-    by (meson insertCI span_add span_base span_mul)
-  hence "c \<in> span ({a, b, c} - {c})" 
-  proof-
-    have "{a,b} = {a,b,c} - {c}" using assms(2) by auto
-    thus ?thesis using p_span by auto
-  qed
-  hence "dependent {a,b,c}" 
-    using dependent_def by blast
-  have c_hull:"c \<in> affine hull {a,b}" unfolding affine_def hull_def 
-  proof
-    fix X
-    assume X:"X \<in> {t. (\<forall>x\<in>t. \<forall>y\<in>t. \<forall>u v. u + v = 1 \<longrightarrow> u *\<^sub>R x + v *\<^sub>R y \<in> t) \<and>
-                 {a, b} \<subseteq> t}"
-    hence "(\<forall>x\<in>X. \<forall>y\<in>X. \<forall>u v. u + v = 1 \<longrightarrow> u *\<^sub>R x + v *\<^sub>R y \<in> X) \<and>
-                 {a, b} \<subseteq> X" by blast
-    hence "\<forall>u v. u + v = 1 \<longrightarrow> u *\<^sub>R a + v *\<^sub>R b \<in> X"
-      by simp
-    thus "c \<in> X" using dep_lem 
-      by (metis add.commute)
-  qed
-  show ?thesis unfolding affine_dependent_def 
-  proof- 
-    have "c \<in> affine hull ({a, b, c} - {c})" using c_hull assms(2)  
-      by (smt (verit) distinct_length_2_or_more hull_mono insertI2 insert_Diff insert_mono singleton_iff singleton_insert_inj_eq subsetD subset_insert_iff)
-    thus "\<exists>x\<in>{a, b, c}. x \<in> affine hull ({a, b, c} - {x})" by simp
-  qed
-qed
-*)
-
