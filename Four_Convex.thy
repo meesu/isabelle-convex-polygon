@@ -11,7 +11,8 @@ proof(rule ccontr)
   then obtain A s where es:"A\<subseteq>S" "s\<in>S-A" "convex hull (S-A) = convex hull (S-A-{s})" 
     by blast
   hence "convex hull S = convex hull (S-{s})"
-    by (smt (verit, ccfv_SIG) Diff_mono Diff_subset hull_inc hull_mono hull_redundant insert_Diff insert_mono rel_interior_empty rel_interior_subset subset_iff)
+    by (smt (verit, ccfv_SIG) Diff_mono Diff_subset hull_inc hull_mono hull_redundant insert_Diff
+        insert_mono rel_interior_empty rel_interior_subset subset_iff)
   thus False using assms convex_pos_def es(2) by blast
 qed
 
@@ -24,7 +25,8 @@ proof(rule ccontr)
   then obtain e s where es:"e\<in>S" "s\<in>S-{e}" "convex hull (S-{e}) = convex hull (S-{e}-{s})" 
     by blast
   hence "convex hull S = convex hull (S-{s})"
-    by (metis Diff_insert hull_insert insert_Diff_single insert_absorb insert_commute member_remove remove_def)
+    by (metis Diff_insert hull_insert insert_Diff_single insert_absorb insert_commute member_remove
+        remove_def)
   thus False using assms convex_pos_def es(2) by blast
 qed
 
