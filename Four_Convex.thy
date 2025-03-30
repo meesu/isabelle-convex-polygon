@@ -2,14 +2,6 @@ theory Four_Convex
 imports Definitions
 begin
 
-(*we define a set of points to be in a convex position if none of the points 
-belong to the convex hull of the rest*)
-(*a set of points in a convex position can be thought of as the minimal specification set
-of a convex hull*)
-definition convex_pos::"('a::euclidean_space set) \<Rightarrow> bool"
-  where
-"convex_pos S \<equiv>  (\<forall> s \<in> S. convex hull S \<noteq> convex hull (S - {s}))"
-
 lemma convex_pos_inherit': 
   assumes "convex_pos S"
   shows "\<forall> A \<subseteq> S. convex_pos (S - A)"
