@@ -1,7 +1,5 @@
 theory Four_Convex
-imports Main
-          "~~/src/HOL/Library/Product_Lexorder"
-          "~~/src/HOL/Analysis/Cartesian_Euclidean_Space"
+imports Definitions
 begin
 
 (*we define a set of points to be in a convex position if none of the points 
@@ -24,7 +22,6 @@ proof(rule ccontr)
     by (smt (verit, ccfv_SIG) Diff_mono Diff_subset hull_inc hull_mono hull_redundant insert_Diff insert_mono rel_interior_empty rel_interior_subset subset_iff)
   thus False using assms convex_pos_def es(2) by blast
 qed
-
 
 lemma convex_pos_inherit0: 
   assumes "convex_pos S"

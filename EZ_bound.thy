@@ -1,67 +1,17 @@
 theory EZ_bound
-imports Four_Convex "HOL-Library.Sublist"
+imports Four_Convex Definitions
 begin
 
-
 (*** start of Theorem 2.2 Andrew Suk ***)
-
-definition nsubset::"'a set \<Rightarrow> nat \<Rightarrow> ('a set) set" (infix "~" 76)
-  where
-"nsubset S k = {X. X \<subseteq> S \<and>  card X = k}"
-
-
-(*** defs gen-position, k-cup, l-cup ***)
-definition general_pos::"((real\<times>real) set) \<Rightarrow> bool" where
-"general_pos S \<equiv>  (\<forall> P3 \<in> S~3. \<not> affine_dependent P3)"
-
-(*to be deleted - begin*)
-definition lex_eq :: "(real\<times>real) \<Rightarrow> (real\<times>real) \<Rightarrow> bool" where
-"lex_eq p1 p2 \<equiv> fst p1 \<le> fst p2"
-
-definition lex :: "(real\<times>real) \<Rightarrow> (real\<times>real) \<Rightarrow> bool" where
-"lex p1 p2 \<equiv> fst p1 < fst p2"
-(*to be deleted - end*)
-
-type_synonym R2 = "real \<times> real"
-
-definition cross3 :: "R2 \<Rightarrow> R2 \<Rightarrow> R2 \<Rightarrow> real" where
-"cross3 a b c \<equiv> (fst b - fst a) * (snd c - snd a) - (fst c - fst a) * (snd b - snd a)"
-
-definition cup3 :: "_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool" where
-"cup3 a b c \<equiv>  cross3 a c b < 0"
-
-definition cap3 :: "_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool" where
-"cap3 a b c \<equiv>  cross3 a c b > 0"
-
-definition collinear3 :: "_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool" where
-"collinear3 a b c \<equiv> cross3 a c b = 0"
-
-(* observation: \<not> collinear3 a b c = general_pos_2D {a,b,c} *)
-
-fun list_check :: "(_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool) \<Rightarrow> _ list \<Rightarrow> bool" where
-  "list_check f [] = True"
-| "list_check f (a#[]) = True"
-| "list_check f (a#b#[]) = (a \<noteq> b)"
-| "list_check f (a#b#c#rest) = (f a b c \<and> list_check f (b#c#rest))"
-
-definition cap::"nat \<Rightarrow> (real\<times>real) list \<Rightarrow> bool" where
-"cap k L \<equiv> (k = length L) \<and> (sorted L) \<and> (list_check cap3 L)"
-
-definition cup :: "nat \<Rightarrow> (real \<times> real) list \<Rightarrow> bool" where
-"cup k L \<equiv> (k = length L) \<and> (sorted L) \<and> (list_check cup3 L)"
-
-(* definition of minimum number of points containing an l-cup or k-cap *)
-(* distinctness is taken care of by the fact that cap or cup needs to have distinct points*)
-(*distinctness *)
-definition min_conv :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"min_conv k l = (Inf {n . (\<forall>S . card S \<ge> n \<and> general_pos S 
-                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sorted xs) \<and> (cap k xs \<or> cup l xs)))})"
 
 lemma cross3_commutation_12: "cross3 x y z = 0 \<longrightarrow> cross3 y x z = 0"
   unfolding cross3_def by argo
 
 lemma cross3_commutation_23: "cross3 x y z = 0 \<longrightarrow> cross3 x z y = 0"
   unfolding cross3_def by argo
+
+lemma cross3_non0_distinct: "cross3 a b c \<noteq> 0 \<longrightarrow> distinct [a,b,c]" 
+  unfolding cross3_def by auto
 
 lemma cap_reduct:
   assumes "cap (k+1) (a#xs)"
@@ -111,7 +61,7 @@ lemma assumes "finite S" "gen_pos S"
 
 lemma extract_cap_cup:
     assumes "min_conv k l = n"
-      and "card S = n" "general_pos S"
+        and "card S = n" "general_pos S"
     shows "\<exists>xs. set xs \<subseteq> S \<and> sorted xs \<and> (cap k xs \<or> cup l xs)" using min_conv_def assms
 proof-
   have s_1:"card S \<ge> n \<and> general_pos S" using assms by simp
@@ -333,12 +283,9 @@ min_conv 3 k =
 Inf {n. \<forall>S. n \<le> card S \<and> general_pos S \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sorted xs \<and> (cap 3 xs \<or> cup k xs))}
 *)
 
-lemma cross3_non0_distinct: "cross3 a b c \<noteq> 0 \<longrightarrow> distinct [a,b,c]" unfolding cross3_def by auto
-
 lemma
   assumes "distinct P" and "sorted P" and "\<not> cap (length P) P"
   shows "\<exists>a b c. (sublist [a,b,c] P) \<and> \<not> cap3 a b c"
-(*  shows "\<exists>i. cross3 (P!i) (P!(i+1)) (P!(i+2)) = 0 \<or> cup3 (P!i) (P!(i+1)) (P!(i+2))" *)
 proof-
   from assms have "\<not> list_check cap3 P" by (simp add: cap_def)
   then show ?thesis using assms
@@ -352,7 +299,24 @@ proof-
       case True
       hence "cap (length P) P"  
         using list_check.simps assms(1) Cons.IH Cons.prems(2,3) cap_def sublist_length_le by force
-      then show ?thesis using Cons sorry
+      then show ?thesis using Cons
+      proof(cases "length P = 2")
+        case True
+        then obtain x y where "P = [x,y]"
+          by (metis (no_types, lifting) One_nat_def Suc_1 length_0_conv length_Suc_conv)
+       
+        then show ?thesis
+          by (metis Cons.prems(1) \<open>cap (length P) P\<close> cap_def list_check.simps(4)
+              sublist_order.order_refl)  
+      next
+        case False
+        hence "length P < 2"
+          using True nat_less_le by blast
+        then have False unfolding cap_def using Cons(3,4)
+          by (metis (no_types, lifting) Cons.prems(1) distinct_length_2_or_more length_0_conv
+              length_Suc_conv less_2_cases list_check.simps(2,3))      
+        then show ?thesis by argo
+      qed
     next
       case False
       hence "\<exists>u v rest. P = (u#v#rest)"
