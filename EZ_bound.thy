@@ -1,5 +1,5 @@
 theory EZ_bound
-imports Four_Convex
+imports Four_Convex "HOL-Library.Sublist"
 begin
 
 
@@ -34,7 +34,7 @@ definition cap3 :: "_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool" where
 "cap3 a b c \<equiv>  cross3 a c b > 0"
 
 definition collinear3 :: "_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool" where
-"collinear3 a b c \<equiv> cross3 a b c = 0"
+"collinear3 a b c \<equiv> cross3 a c b = 0"
 
 (* observation: \<not> collinear3 a b c = general_pos_2D {a,b,c} *)
 
@@ -334,6 +334,45 @@ Inf {n. \<forall>S. n \<le> card S \<and> general_pos S \<longrightarrow> (\<exi
 *)
 
 lemma cross3_non0_distinct: "cross3 a b c \<noteq> 0 \<longrightarrow> distinct [a,b,c]" unfolding cross3_def by auto
+
+lemma
+  assumes "distinct P" and "sorted P" and "\<not> cap (length P) P"
+  shows "\<exists>a b c. (sublist [a,b,c] P) \<and> \<not> cap3 a b c"
+(*  shows "\<exists>i. cross3 (P!i) (P!(i+1)) (P!(i+2)) = 0 \<or> cup3 (P!i) (P!(i+1)) (P!(i+2))" *)
+proof-
+  from assms have "\<not> list_check cap3 P" by (simp add: cap_def)
+  then show ?thesis using assms
+  proof(induction P)
+    case Nil
+    then show ?case using cap_def by auto
+  next
+    case (Cons a P)
+    then show ?case
+    proof(cases "length P \<le> 2")
+      case True
+      hence "cap (length P) P"  
+        using list_check.simps assms(1) Cons.IH Cons.prems(2,3) cap_def sublist_length_le by force
+      then show ?thesis using Cons sorry
+    next
+      case False
+      hence "\<exists>u v rest. P = (u#v#rest)"
+        by (metis Cons.prems(1,2) distinct_length_2_or_more list_check.simps(2,3) remdups_adj.cases)
+      then obtain u v rest where uvrest: "P = (u#v#rest)" by blast
+      hence "\<not> cap3 a u v \<or> \<not> list_check cap3 P"
+        using Cons.prems(1) by auto
+      then show ?thesis
+      proof
+        assume "\<not> cap3 a u v"
+        thus "\<exists>aa b c. sublist [aa, b, c] (a # P) \<and> \<not> cap3 aa b c" using uvrest
+          by (metis append_Cons append_Nil sublist_append_rightI)
+      next
+        assume "\<not> list_check cap3 P"
+        thus "\<exists>aa b c. sublist [aa, b, c] (a # P) \<and> \<not> cap3 aa b c" using uvrest Cons.prems(2,3)
+          by (metis Cons_eq_appendI cap_def distinct_length_2_or_more sorted2 sublist_def Cons.IH)
+      qed
+    qed
+  qed
+qed
 
 lemma cup_cap_cross_non0:
   assumes "cup k A \<or> cap l A"
