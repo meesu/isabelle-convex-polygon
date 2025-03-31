@@ -8,10 +8,10 @@ thm strict_sorted_iff
 
 thm finite_sorted_distinct_unique
 
-lemma cross3_commutation_12: "cross3 x y z = 0 \<longrightarrow> cross3 y x z = 0"
+lemma cross3_commutation_12[simp]: "cross3 x y z = 0 \<longrightarrow> cross3 y x z = 0"
   unfolding cross3_def by argo
 
-lemma cross3_commutation_23: "cross3 x y z = 0 \<longrightarrow> cross3 x z y = 0"
+lemma cross3_commutation_23[simp]: "cross3 x y z = 0 \<longrightarrow> cross3 x z y = 0"
   unfolding cross3_def by argo
 
 lemma cross3_non0_distinct: "cross3 a b c \<noteq> 0 \<longrightarrow> distinct [a,b,c]" 
@@ -412,12 +412,17 @@ definition f :: "real \<Rightarrow> R2" where "f \<equiv> \<lambda>a. (a, a * a)
 lemma f_prop1: "\<forall>x y. x \<noteq> y \<longleftrightarrow> f x \<noteq> f y"                  using f_def fst_conv by metis
 lemma f_prop2: "distinct[a,b,c] \<longrightarrow> distinct[f a, f b, f c]" using f_prop1 by auto
 
-lemma f_prop3: "distinct [a,b,c] \<longrightarrow> \<not> collinear3 (f a) (f b) (f c)"
+lemma f_prop3: 
+  assumes "distinct [a,b,c]"
+  shows   "\<not> collinear3 (f a) (f b) (f c)"
 proof
-  assume asm: "distinct [a,b,c]"
-  thus "\<not> collinear3 (f a) (f b) (f c)" sorry
+  have 1:"distinct [f a, f b, f c]" using assms f_prop2 by auto
+  assume 2:"collinear3 (f a) (f b) (f c)"
+  hence "(c - a) * (b*b - a*a) - (b - a)*(c*c - a*a) = 0" by (simp add:collinear3_def cross3_def f_def)
+  hence "(b - a) * (c - a) * (c - b) = 0" by argo
+  thus False using assms 1 2 by simp
 qed
-  
+
 thm card_le_inj
 
 lemma card_fS_from_S: 
@@ -438,7 +443,7 @@ proof(induction k)
         mem_Collect_eq sorted_wrt.simps(1) wellorder_Inf_le1 empty_set)
 next
   case (Suc k)
-  obtain S where S_asm:"card S = Suc k" and S_gp:"general_pos S" sorry
+  obtain S where S_asm:"card S = Suc k" and S_gp:"general_pos S" using genpos_ex gpos_equiv_def by blast
   then obtain x xs where x_xs:"S = set (x#xs)" "sortedStrict (x#xs)" "length (x#xs) = card S" 
     using extract_cap_cup S_asm list.exhaust list.size(3) nat.simps(3)
     by (metis card.infinite sorted_list_of_set.sorted_key_list_of_set_unique)
@@ -484,7 +489,7 @@ Inf {n. \<forall>S. n \<le> card S \<and> general_pos S \<longrightarrow>
       have fb3:"cross3 b1 b3 b2 \<noteq> 0" using S_gp fb1 cross3_commutation_23 fb2 genpos_cross0 
           strict_sorted_iff by blast
       have fb4:"length [b1, b2, b3] = 3" using fb2 by simp
-      have     "cap3 b1 b2 b3" using fb3 bcup(2) cap3_def cup3_def by auto
+      have     "cap3 b1 b2 b3" using fb3 bcup(2) cap3_def cup3_def not_less_iff_gr_or_eq by blast
       hence "cap 3 [b1, b2, b3]" unfolding cap_def using fb2 fb4 by auto 
       thus ?thesis by (meson F4 bcup(1) dual_order.trans fb2 set_mono_sublist)
     qed
