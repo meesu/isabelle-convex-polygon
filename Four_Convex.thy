@@ -53,7 +53,7 @@ qed
 
 (*if every subset of S of cardinality four is in a convex position, 
 then S is in a convex position. This is a proof of lemma 2.1*)
-lemma four_convex:
+lemma fourconvex:
   assumes "\<forall>X \<subseteq> (S::(real \<times> real) set). card X \<le> 4 \<longrightarrow> convex_pos X"
   shows "convex_pos S"
 proof(rule ccontr)
@@ -73,12 +73,12 @@ proof(rule ccontr)
     by (simp add: assms)
 qed
 
-lemma convex_four:
+lemma convexfour:
   assumes "convex_pos S"
   shows "\<forall>X \<subseteq> (S::(real \<times> real) set). card X \<le> 4 \<longrightarrow> convex_pos X"
   using assms convex_pos_inherit by auto
 
 theorem fourConvexfour:
 "convex_pos S = (\<forall>X \<subseteq> (S::(real \<times> real) set). card X \<le> 4 \<longrightarrow> convex_pos X)"
-  using convex_four four_convex by blast
+  using convexfour fourconvex by blast
 end

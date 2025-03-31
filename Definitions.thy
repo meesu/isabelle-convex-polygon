@@ -6,6 +6,9 @@ theory Definitions
 
 begin
 
+abbreviation
+  "sortedStrict \<equiv> sorted_wrt (<)"
+
 definition nsubset::"'a set \<Rightarrow> nat \<Rightarrow> ('a set) set" (infix "~" 76)
   where
 "nsubset S k = {X. X \<subseteq> S \<and>  card X = k}"
@@ -45,16 +48,16 @@ fun list_check :: "(_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool) \<Righ
 | "list_check f (a#b#c#rest) = (f a b c \<and> list_check f (b#c#rest))"
 
 definition cap::"nat \<Rightarrow> (real\<times>real) list \<Rightarrow> bool" where
-"cap k L \<equiv> (k = length L) \<and> (sorted L) \<and> (list_check cap3 L)"
+"cap k L \<equiv> (k = length L) \<and> (sortedStrict L) \<and> (list_check cap3 L)"
 
 definition cup :: "nat \<Rightarrow> (real \<times> real) list \<Rightarrow> bool" where
-"cup k L \<equiv> (k = length L) \<and> (sorted L) \<and> (list_check cup3 L)"
+"cup k L \<equiv> (k = length L) \<and> (sortedStrict L) \<and> (list_check cup3 L)"
 
 (* definition of minimum number of points containing an l-cup or k-cap *)
 (* distinctness is taken care of by the fact that cap or cup needs to have distinct points*)
 (*distinctness *)
 definition min_conv :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
 "min_conv k l = (Inf {n . (\<forall>S . card S \<ge> n \<and> general_pos S 
-                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sorted xs) \<and> (cap k xs \<or> cup l xs)))})"
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs)))})"
 
 end

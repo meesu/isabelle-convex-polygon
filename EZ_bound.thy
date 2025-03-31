@@ -4,6 +4,10 @@ begin
 
 (*** start of Theorem 2.2 Andrew Suk ***)
 
+thm strict_sorted_iff
+
+thm finite_sorted_distinct_unique
+
 lemma cross3_commutation_12: "cross3 x y z = 0 \<longrightarrow> cross3 y x z = 0"
   unfolding cross3_def by argo
 
@@ -16,9 +20,8 @@ lemma cross3_non0_distinct: "cross3 a b c \<noteq> 0 \<longrightarrow> distinct 
 lemma cap_reduct:
   assumes "cap (k+1) (a#xs)"
   shows "cap k xs"
-  using assms unfolding cap_def 
-
-  using add_left_cancel length_Cons list.distinct(1) list.inject list_check.elims(2) by fastforce
+  using assms add_left_cancel length_Cons list.distinct(1) list.inject list_check.elims(2)
+  unfolding cap_def by fastforce
 
 lemma  card_of_s:
   assumes "set xs \<subseteq> S" "cap k xs" "distinct xs" "finite S"
@@ -28,7 +31,9 @@ lemma  card_of_s:
 
 theorem non_empty_cup_cap:
   fixes k l
-  shows "{(n::nat) . (\<forall>S . card S \<ge> n \<and> general_pos S \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sorted xs) \<and> (cap k xs \<or> cup l xs)))} \<noteq> {}"
+  shows "{} \<noteq> {(n::nat). 
+                (\<forall>S . card S \<ge> n \<and> general_pos S \<longrightarrow> 
+                  (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs)))}"
   sorry
 
 lemma assumes "(X::nat set) \<noteq> {}" 
@@ -42,14 +47,11 @@ lemma fixes S
   using assms 
   by (metis distinct_card finite_distinct_list)
 
-lemma fixes S
-  assumes "finite S"
-  shows "\<exists>xs.  length xs = card S \<and> set xs = S \<and> sorted xs"
-  by (metis assms finite_sorted_distinct_unique sorted_list_of_set.idem_if_sorted_distinct sorted_list_of_set.sorted_key_list_of_set_unique)
-lemma fixes S
-  assumes "finite S"
-  shows "\<exists>xs.  length xs = card S \<and> set xs = S \<and> sorted xs"
-  by (metis assms finite_sorted_distinct_unique sorted_list_of_set.idem_if_sorted_distinct sorted_list_of_set.sorted_key_list_of_set_unique)
+lemma set2list:
+  assumes "finite (S :: R2 set)"
+  shows   "\<exists>!xs. set xs = S \<and> sortedStrict xs \<and> distinct xs \<and> length xs = card S"
+  using finite_sorted_distinct_unique[of "S"] strict_sorted_iff distinct_card assms
+  by metis
 
 (* To show in a lemma if j < k, and the set of points created by a k-cap does not contain
 a 3-cup*)
@@ -62,25 +64,13 @@ lemma assumes "finite S" "gen_pos S"
 lemma extract_cap_cup:
     assumes "min_conv k l = n"
         and "card S = n" "general_pos S"
-    shows "\<exists>xs. set xs \<subseteq> S \<and> sorted xs \<and> (cap k xs \<or> cup l xs)" using min_conv_def assms
-proof-
-  have s_1:"card S \<ge> n \<and> general_pos S" using assms by simp
-  hence "card S \<in> {m.  (\<forall>S . card S \<ge> m \<and> general_pos S \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sorted xs) \<and> (cap k xs \<or> cup l xs)))}"
-    using assms(1) unfolding min_conv_def 
-  proof -
-    assume a1: "Inf {n. \<forall>S. n \<le> card S \<and> general_pos S \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sorted xs) \<and> (cap k xs \<or> cup l xs))} = n"
-    have "{} \<noteq> {n. \<forall>r. n \<le> card r \<and> general_pos r \<longrightarrow> (\<exists>ps. set ps \<subseteq> r \<and> sorted ps \<and> (cap k ps \<or> cup l ps))}"
-      using non_empty_cup_cap by blast
-    then show ?thesis
-      using a1 by (smt (z3) Inf_nat_def1 assms(2))
-  qed
-  hence "(\<exists>xs. set xs \<subseteq> S \<and> sorted xs \<and> (cap k xs \<or> cup l xs))"
-    using assms(1) s_1 unfolding min_conv_def by simp
-  thus ?thesis by argo
-qed
+      shows "\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap k xs \<or> cup l xs)"
+  using assms non_empty_cup_cap min_conv_def
+  by (smt (verit, del_insts) Inf_nat_def1 mem_Collect_eq verit_comp_simplify1(2))
 
-lemma general_pos_subs: assumes "X \<subseteq> Y" and "general_pos Y"
-  shows "general_pos X" 
+lemma general_pos_subs:
+  assumes "X \<subseteq> Y" and "general_pos Y"
+  shows "general_pos X"
 proof(rule ccontr)
   assume "\<not>general_pos X"
   then obtain S where S:"S \<in> X~ 3" "affine_dependent S" unfolding general_pos_def by blast
@@ -89,12 +79,14 @@ proof(rule ccontr)
   thus False using S(2) assms(2) unfolding general_pos_def by simp 
 qed
 
-lemma assumes "cup k (y#z#ws)" and "x \<le> y"
-          and "\<not> cup (Suc k) (x#y#z#ws)"
-        shows "(cross3 x z y) \<ge> 0"
-  using assms unfolding cup_def list_check.simps cup3_def 
+(* lemma noname *)
+lemma 
+  assumes "cup k (y#z#ws)" and "x < y"
+      and "\<not> cup (Suc k) (x#y#z#ws)"
+    shows "(cross3 x z y) \<ge> 0"
+  using assms unfolding cup_def list_check.simps cup3_def
 proof-
-  have "sorted (x#y#z#ws)" using assms(1,2) unfolding cup_def by fastforce
+  have "sortedStrict (x#y#z#ws)" using assms(1,2) unfolding cup_def by fastforce
   moreover have "length (x#y#z#ws) = Suc k" 
     using assms(1) cup_def by force
   ultimately have 1:"\<not>list_check cup3 (x#y#z#ws)" using assms(3) unfolding cup_def
@@ -104,8 +96,9 @@ proof-
 qed
 
 lemma affine_comb_affine_dep:
-  assumes "(u :: real) \<ge> 0" and "x = (1 - u) *\<^sub>R y + u *\<^sub>R (z :: R2)" and "distinct [x, y, z]"
-  shows "affine_dependent {x, y, z}"
+  assumes "(u :: real) \<ge> 0" and "x = (1 - u) *\<^sub>R y + u *\<^sub>R (z :: R2)" 
+      and "distinct [x, y, z]"
+    shows "affine_dependent {x, y, z}"
 proof-
   have "x \<in> affine hull {y, z}" using assms affine_def hull_def by force
   thus ?thesis using assms by (simp add: affine_dependent_def)
@@ -272,22 +265,12 @@ lemma genpos_cross0:
   using assms nsubset_def general_pos_def cross_affine_dependent
   by (smt (verit, del_insts) add.right_neutral add_Suc_right distinct_card empty_set 
       empty_subsetI insert_subset list.simps(15) list.size(3,4) mem_Collect_eq numeral_3_eq_3)
-(*
-definition min_conv :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"min_conv k l = (Inf {n . (\<forall>S . card S \<ge> n \<and> general_pos S 
-                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sorted xs) \<and> (cap k xs \<or> cup l xs)))})"
-*)
 
-(*
-min_conv 3 k = 
-Inf {n. \<forall>S. n \<le> card S \<and> general_pos S \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sorted xs \<and> (cap 3 xs \<or> cup k xs))}
-*)
-
-lemma
-  assumes "distinct P" and "sorted P" and "\<not> cap (length P) P"
+lemma get_cup_from_bad_cap:
+  assumes "sortedStrict P" and "\<not> cap (length P) P"
   shows "\<exists>a b c. (sublist [a,b,c] P) \<and> \<not> cap3 a b c"
 proof-
-  from assms have "\<not> list_check cap3 P" by (simp add: cap_def)
+  from assms have "\<not> list_check cap3 P" using cap_def by simp
   then show ?thesis using assms
   proof(induction P)
     case Nil
@@ -312,15 +295,15 @@ proof-
         case False
         hence "length P < 2"
           using True nat_less_le by blast
-        then have False unfolding cap_def using Cons(3,4)
-          by (metis (no_types, lifting) Cons.prems(1) distinct_length_2_or_more length_0_conv
-              length_Suc_conv less_2_cases list_check.simps(2,3))      
+        then have False using Suc_length_conv strict_sorted_iff list.inject list_check.elims(1) Cons(2,3)
+          by (smt (verit, best) distinct_length_2_or_more length_0_conv less_2_cases_iff neq_Nil_conv)
         then show ?thesis by argo
       qed
     next
       case False
       hence "\<exists>u v rest. P = (u#v#rest)"
-        by (metis Cons.prems(1,2) distinct_length_2_or_more list_check.simps(2,3) remdups_adj.cases)
+        by (metis One_nat_def Suc_1 bot_nat_0.extremum le_add1 length_Cons list.exhaust list.size(3)
+            plus_1_eq_Suc)
       then obtain u v rest where uvrest: "P = (u#v#rest)" by blast
       hence "\<not> cap3 a u v \<or> \<not> list_check cap3 P"
         using Cons.prems(1) by auto
@@ -332,21 +315,112 @@ proof-
       next
         assume "\<not> list_check cap3 P"
         thus "\<exists>aa b c. sublist [aa, b, c] (a # P) \<and> \<not> cap3 aa b c" using uvrest Cons.prems(2,3)
-          by (metis Cons_eq_appendI cap_def distinct_length_2_or_more sorted2 sublist_def Cons.IH)
+          by (metis Cons_eq_appendI cap_def strict_sorted_iff distinct_length_2_or_more 
+              sorted2 sublist_def Cons.IH)
       qed
     qed
   qed
 qed
 
-lemma cup_cap_cross_non0:
-  assumes "cup k A \<or> cap l A"
-  shows   "\<forall>i j k. distinct [i,j,k] \<longrightarrow> cross3 (A!i) (A!j) (A!k) \<noteq> 0"
-(*bounds for i j k ? *)
-  sorry
+lemma get_cap_from_bad_cup:
+  assumes "sortedStrict P" and "\<not> cup (length P) P"
+  shows "\<exists>a b c. (sublist [a,b,c] P) \<and> \<not> cup3 a b c"
+proof-
+  from assms have "\<not> list_check cup3 P" using cup_def by simp
+  then show ?thesis using assms
+  proof(induction P)
+    case Nil
+    then show ?case using cup_def by auto
+  next
+    case (Cons a P)
+    then show ?case
+    proof(cases "length P \<le> 2")
+      case True
+      hence 1: "cup (length P) P"  
+        using list_check.simps assms(1) Cons.IH Cons.prems(2,3) cup_def sublist_length_le by force
+      then show ?thesis using Cons
+      proof(cases "length P = 2")
+        case True
+        then obtain x y where "P = [x,y]"
+          by (metis (no_types, lifting) One_nat_def Suc_1 length_0_conv length_Suc_conv)
+       
+        then show ?thesis
+          by (metis Cons.prems(1) 1 cup_def list_check.simps(4)
+              sublist_order.order_refl)  
+      next
+        case False
+        hence "length P < 2"
+          using True nat_less_le by blast
+        then have False using Suc_length_conv strict_sorted_iff list.inject list_check.elims(1) Cons(2,3)
+          by (smt (verit, best) distinct_length_2_or_more length_0_conv less_2_cases_iff neq_Nil_conv)
+        then show ?thesis by argo
+      qed
+    next
+      case False
+      hence "\<exists>u v rest. P = (u#v#rest)"
+        by (metis One_nat_def Suc_1 bot_nat_0.extremum le_add1 length_Cons list.exhaust list.size(3)
+            plus_1_eq_Suc)
+      then obtain u v rest where uvrest: "P = (u#v#rest)" by blast
+      hence "\<not> cup3 a u v \<or> \<not> list_check cup3 P"
+        using Cons.prems(1) by auto
+      then show ?thesis
+      proof
+        assume "\<not> cup3 a u v"
+        thus "\<exists>aa b c. sublist [aa, b, c] (a # P) \<and> \<not> cup3 aa b c" using uvrest
+          by (metis append_Cons append_Nil sublist_append_rightI)
+      next
+        assume "\<not> list_check cup3 P"
+        thus "\<exists>aa b c. sublist [aa, b, c] (a # P) \<and> \<not> cup3 aa b c" using uvrest Cons.prems(2,3)
+          by (metis Cons_eq_appendI cup_def strict_sorted_iff distinct_length_2_or_more 
+              sorted2 sublist_def Cons.IH)
+      qed
+    qed
+  qed
+qed
 
-lemma cup_cap_distinct:
-  assumes "cup k A \<or> cap l A"
-  shows   "distinct A" using assms cup_cap_cross_non0 cross3_non0_distinct sorry
+lemma coll_is_affDep:
+  "distinct [a,b,c] \<longrightarrow> (collinear3 a b c \<longleftrightarrow> affine_dependent {a, b, c})"
+  using collinear3_def cross3_commutation_23 cross3_non0_distinct
+    cross_affine_dependent cross_affine_dependent_conv by blast
+
+lemma distinct_is_triple:
+  "a\<in>S \<and> b\<in>S \<and> c\<in>S \<and> distinct [a,b,c] \<longleftrightarrow> {a,b,c} \<in> S ~ 3"
+  by (smt (verit, del_insts) distinct.simps(2) distinct_card distinct_singleton
+      empty_set empty_subsetI insert_absorb insert_subset length_Cons lessI
+      list.set(2) list.size(3) mem_Collect_eq not_less_iff_gr_or_eq nsubset_def
+      numeral_3_eq_3)
+
+(*work with a simpler definition of general position*)
+definition
+  "gpos S \<equiv> \<forall>a\<in>S. \<forall>b\<in>S. \<forall>c\<in>S. distinct [a,b,c] \<longrightarrow> \<not> collinear3 a b c"
+(*"general_pos S \<equiv>  (\<forall> P3 \<in> S~3. \<not> affine_dependent P3)"*)
+lemma gpos_equiv_def:
+  "gpos S \<longleftrightarrow> general_pos S" 
+proof
+  show "gpos S \<Longrightarrow> general_pos S" 
+    unfolding gpos_def general_pos_def using coll_is_affDep distinct_is_triple nsubset_def
+    by (smt (verit, ccfv_threshold) card_3_iff mem_Collect_eq)
+next
+  show "general_pos S \<Longrightarrow> gpos S"
+    unfolding gpos_def general_pos_def using coll_is_affDep distinct_is_triple by metis
+qed
+
+lemma real_set_ex: "\<exists>(S:: real set). card S = (n::nat)"
+  using infinite_UNIV_char_0 infinite_arbitrarily_large by blast
+
+definition f :: "real \<Rightarrow> R2" where "f \<equiv> \<lambda>a. (a, a * a)"
+lemma f_prop1: "\<forall>x y. x \<noteq> y \<longleftrightarrow> f x \<noteq> f y" using f_def fst_conv by metis
+lemma f_prop2: "distinct [a,b,c] \<longrightarrow> \<not> collinear3 (f a) (f b) (f c)" sorry
+  
+thm card_le_inj
+
+lemma card_fS_from_S: 
+ assumes "finite S" shows "card S = card (f ` S)"
+ using inj_on_iff_eq_card[of "S" "f"] assms f_prop1 by (simp add: inj_onI)
+
+lemma genpos_ex:
+  "gpos (f ` S)"
+  unfolding gpos_def using f_prop2 f_prop1 sorry
 
 theorem "min_conv 3 k = k"
   unfolding min_conv_def
@@ -358,34 +432,36 @@ proof(induction k)
         mem_Collect_eq sorted_wrt.simps(1) wellorder_Inf_le1 empty_set)
 next
   case (Suc k)
-  fix S::"(real \<times> real) set"
-  assume S_asm:"card S = Suc k"
-  assume S_gp:"general_pos S"
-  then obtain x xs where x_xs:"S = set (x#xs)" "sorted (x#xs)" "length (x#xs) = card S" 
-    by (metis (no_types, opaque_lifting) S_asm sorted_list_of_set.sorted_sorted_key_list_of_set
-        sorted_list_of_set.sorted_key_list_of_set_unique card.infinite length_Suc_conv nat.simps(3))
-  have x_Min:"x = Min S" using x_xs using x_xs(2) by (simp add: Min_insert2)
+  obtain S where S_asm:"card S = Suc k" and S_gp:"general_pos S" sorry
+  then obtain x xs where x_xs:"S = set (x#xs)" "sortedStrict (x#xs)" "length (x#xs) = card S" 
+    using extract_cap_cup S_asm list.exhaust list.size(3) nat.simps(3)
+    by (metis card.infinite sorted_list_of_set.sorted_key_list_of_set_unique)
+  have x_Min:"x = Min S" using x_xs(1,2)
+    by (metis List.finite_set list.discI list.inject set_empty2
+        sorted_list_of_set.idem_if_sorted_distinct sorted_list_of_set_nonempty strict_sorted_iff)
   have "length xs = k" using S_asm x_xs by auto
   moreover have sminus_x:"card (S - {x}) = k" using S_asm by (simp add: card.insert_remove x_xs(1))
   moreover have gp_sminus_x:"general_pos (S - {x})" using x_xs(1) S_gp general_pos_subs by blast
   text \<open>Using induction hypothesis obtain the cup or cap of size k from the set S - {min(S)}.\<close>
-  ultimately obtain zs where  zs:"set zs \<subseteq> S - {x}" "(cap 3 zs \<or> cup k zs)" "sorted zs"
-    using extract_cap_cup[of "3" "k" "k" "S - {x}"] Suc min_conv_def by auto
-  hence d_zs: "distinct zs" using cup_cap_distinct by auto
+  ultimately obtain zs
+    where zs:"set zs \<subseteq> S - {x}" "sortedStrict zs" "(cap 3 zs \<or> cup k zs)"
+    using extract_cap_cup[of "3" "k" "k" "S - {x}"] Suc min_conv_def strict_sorted_iff by auto
 (*
 To Prove
 Inf {n. \<forall>S. n \<le> card S \<and> general_pos S \<longrightarrow> 
     (\<exists>xs. set xs \<subseteq> S \<and> sorted xs \<and> (cap 3 xs \<or> cup (Suc k) xs))} = Suc k
 *)
-  have "\<exists>cc. set cc \<subseteq> S \<and> sorted cc \<and> (cap 3 cc \<or> cup (Suc k) cc)"
+  have "\<exists>cc. set cc \<subseteq> S \<and> sortedStrict cc \<and> (cap 3 cc \<or> cup (Suc k) cc)"
   proof(cases "cap 3 zs")
     case True
-    then show ?thesis using zs(1,3) by auto
+    then show ?thesis using zs(1,2) by auto
   next
     case False
-    hence F1:"cup k zs" using zs(2) by simp
+    hence F1:"cup k zs" using zs by simp
     hence F2:"length zs = k" unfolding cup_def by argo
-    have  F3:"sorted (x#zs)" using zs(1,3) x_Min x_xs(1,2) by fastforce
+    hence F0:"length (x#zs) = Suc k" using x_Min by auto
+    have  F4:"set (x#zs) \<subseteq> S" using x_xs(1) zs(1) by auto
+    have  F3:"sortedStrict (x#zs)" using zs(1,2) x_Min x_xs(1,2) by fastforce
     then show ?thesis
     proof(cases "cup (Suc k) (x#zs)")
       case True
@@ -393,80 +469,25 @@ Inf {n. \<forall>S. n \<le> card S \<and> general_pos S \<longrightarrow>
         by (metis Diff_empty insert_subset list.set_intros(1) list.simps(15) subset_Diff_insert)
     next
       case False
-(* TODO - cant derive distinctness, clash of --set,list and distinctness--
-  1. better definitions only in terms of lists or
-  2. derive distinctness using current definitions
-  --- lists allow repeated points -- which is more realistic?
-*)
-      hence "\<exists>b1 b2 b3. \<not> cup3 b1 b2 b3 \<and> sorted [b1,b2,b3] \<and> {b1, b2, b3} \<subseteq> set (x#zs) \<and> distinct[b1,b2,b3]"
-        using cup3_def zs d_zs sorry
-      then obtain b1 b2 b3 where b_cup:"\<not> cup3 b1 b2 b3" "sorted [b1,b2,b3]" "{b1, b2, b3} \<subseteq> set (x#zs)"
-        by blast
-      have fb1:"b1 \<in> S \<and> b2 \<in> S \<and> b3 \<in> S" using b_cup(3) x_xs(1) zs(1) by auto
-      have fb2:"distinct [b1, b2, b3]" using cross3_non0_distinct fb1 genpos_cross0 S_gp zs
-      have fb3:"cross3 b1 b3 b2 \<noteq> 0" using S_gp
-        using cross3_commutation_23 genpos_cross0 fb2 fb1 by blast
-      hence "cap 3 [b1, b2, b3]" using cap_def b_cup fb2 unfolding cup3_def cap3_def by auto 
-      then show ?thesis using b_cup(2) fb1 by force
+      hence "\<exists>a b c. (sublist [a,b,c] (x#zs)) \<and> \<not> cup3 a b c"
+        using F0 F3 get_cap_from_bad_cup by presburger
+      then obtain b1 b2 b3 where bcup:"sublist [b1,b2,b3] (x#zs)" "\<not> cup3 b1 b2 b3" by blast
+      have fb1:"b1 \<in> S \<and> b2 \<in> S \<and> b3 \<in> S" 
+        by (meson F4 bcup list.set_intros(1,2) set_mono_sublist subset_code(1))
+      have fb2:"sortedStrict [b1, b2, b3]" using bcup F3 sublist_def sorted_wrt_append by metis
+      have fb3:"cross3 b1 b3 b2 \<noteq> 0" using S_gp fb1 cross3_commutation_23 fb2 genpos_cross0 
+          strict_sorted_iff by blast
+      have fb4:"length [b1, b2, b3] = 3" using fb2 by simp
+      have     "cap3 b1 b2 b3" using fb3 bcup(2) cap3_def cup3_def by auto
+      hence "cap 3 [b1, b2, b3]" unfolding cap_def using fb2 fb4 by auto 
+      thus ?thesis by (meson F4 bcup(1) dual_order.trans fb2 set_mono_sublist)
     qed
   qed
-  thus ?case sorry
+  hence "Suc k = card S \<and> general_pos S \<longrightarrow> 
+        (\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap 3 xs \<or> cup (Suc k) xs))" by blast
+  have "min_conv 3 (Suc k) > k \<Longrightarrow> (\<exists>S. k = card S \<and> general_pos S \<longrightarrow> 
+        \<not> (\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap 3 xs \<or> cup (Suc k) xs)))" sorry
+  then show ?case sorry
 qed
 
 end
-(* steps above: 
-1, Show that every k-1 cap does not contain a 3-cup
-2, Use that to show that if its a j-cap, where j<k, it does not contain a 3-cup
-3. also show that the cap in question needs to have at least k element set. 
-4. Thus value of S needs to be at least k*)
-
-(*
-
-  then have "cap 3 zs \<or> cup (Suc k) (x#zs)"
-  proof(cases "cap 3 zs")
-    case False
-    hence F1:"cup k zs" using zs(2) by simp
-    hence F2:"length zs = k" unfolding cup_def by argo
-    have  F3:"sorted (x#zs)" using zs(1,3) x_Min x_xs(1,2) by fastforce
-    then show ?thesis
-    proof(cases "cup (Suc k) (x#zs)")
-      case False
-      then obtain b1 b2 b3 where b_cup:"\<not> cup3 b1 b2 b3" "sorted [b1,b2,b3]"
-        by (metis add.right_neutral add_diff_cancel_left' cross3_def cup3_def order.refl 
-            order_less_irrefl sorted2_simps(2) sorted_wrt2_simps(1))
-      have fb1:"b1 \<in> S" "b2 \<in> S" "b3 \<in> S" sorry
-      have fb2:"distinct [b1, b2, b3]" sorry
-      have fb3:"cross3 b1 b3 b2 \<noteq> 0" using S_gp
-        using cross3_commutation_23 genpos_cross0 fb2 fb1 by blast
-      hence "cap 3 [b1, b2, b3]" using cap_def b_cup fb2 unfolding cup3_def cap3_def by auto 
-      then show ?thesis sorry
-    qed (argo)
-  qed (argo)
-  thus ?case sorry
-
-
-  obtain n where "n =min_conv 3 k"
-    unfolding min_conv_def using non_empty_cup_cap 
-    by blast
-   {fix S
-    assume asm:"card S = k \<and> general_pos S"
-    have "\<exists>xs. set xs \<subseteq> S \<and> (cap k xs \<or> cup 3 xs)"
-    proof-
-      have "\<exists> xs. length xs = k \<and> set xs = S \<and>  sorted_wrt (\<le>) xs"
-        using asm unfolding le_x_def sorry
-      show ?thesis  sorry
-    qed   }
-  show ?thesis sorry
-qed
-*)
-
-(*** Theorem 2.2: Let f(k, ℓ) be the smallest integer N such that any N-element planar point
-set in the plane in general position contains a k-cup or an ℓ-cap. Then f(k, l) = 1 + choose(k+l-4, k-2).
-***)
-
-
-
-(* relevant equivalent lemma for above is convex_hull_finite*)
-(*from above, we can write another lemma to extract*)
-
-(* try to instantiate R^2 in this*)
