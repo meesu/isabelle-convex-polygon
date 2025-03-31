@@ -431,7 +431,9 @@ lemma f_prop3:
 proof
   have 1:"distinct [f a, f b, f c]" using assms f_prop2 by auto
   assume 2:"collinear3 (f a) (f b) (f c)"
-  hence "(c - a) * (b*b - a*a) - (b - a)*(c*c - a*a) = 0" by (simp add:collinear3_def cross3_def f_def)
+  hence "(b - a) * (c*c - b * b) - (c - b)*(b*b - a*a) = 0 "
+    unfolding collinear3_def cross3_def f_def
+    by (simp add:collinear3_def cross3_def f_def)
   hence "(b - a) * (c - a) * (c - b) = 0" by argo
   thus False using assms 1 2 by simp
 qed
@@ -442,13 +444,8 @@ lemma card_fS_from_S:
  assumes "finite S" shows "card S = card (f ` S)"
  using inj_on_iff_eq_card[of "S" "f"] assms f_prop1 by (simp add: inj_onI)
 
-lemma genpos_ex:
-  "\<forall> n. \<exists>S. (gpos S \<and> card S = n)"
-proof
-  fix n
-  show " \<exists>S. gpos S \<and> card S = n" sorry
-qed  
 
+ 
 
 theorem "min_conv 3 k = k"
   unfolding min_conv_def

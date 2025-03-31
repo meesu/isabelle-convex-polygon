@@ -27,6 +27,8 @@ definition convex_pos::"('a::euclidean_space set) \<Rightarrow> bool"
 
 type_synonym R2 = "real \<times> real"
 
+(* it ensures that the middle point is subtracted to ensure that it reflects increasing
+ slopes*)
 definition cross3 :: "R2 \<Rightarrow> R2 \<Rightarrow> R2 \<Rightarrow> real" where
 "cross3 a b c \<equiv> (fst b - fst a) * (snd c - snd b) - (fst c - fst b) * (snd b - snd a)"
 
@@ -37,7 +39,7 @@ definition cap3 :: "_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool" where
 "cap3 a b c \<equiv>  cross3 a c b > 0"
 
 definition collinear3 :: "_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool" where
-"collinear3 a b c \<equiv> cross3 a c b = 0"
+"collinear3 a b c \<equiv> cross3 a b c = 0"
 
 (* observation: \<not> collinear3 a b c = general_pos_2D {a,b,c} *)
 
