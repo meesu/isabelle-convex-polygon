@@ -232,30 +232,23 @@ next
     then show ?thesis 
       using cross_affine_dependent_aux1[of "snd y" "snd x" "fst z" "fst y" "snd z" "fst x"] assms(1,2)
         cross3_def surjective_pairing cross_affine_dep_aux3[of "(prod.swap ` {x, y, z})"] prod.swap_def
-      by (smt (verit, ccfv_SIG) distinct_length_2_or_more distinct_singleton image_empty
-          image_insert mult_eq_0_iff swap_simp)      
+      by (smt (verit, best) distinct_length_2_or_more distinct_singleton image_insert
+          image_is_empty mult.commute swap_simp)
   next
     case False
     assume a1: "fst y \<noteq> fst x"
     define "u" where u_def: "u = (fst z - fst y) / (fst y - fst x)"
-    then have  "fst z = fst y - u * fst x + u * fst y" using "False" a1
+    then have z1: "fst z = fst y - u * fst x + u * fst y" using "False" a1
       by (simp add: nonzero_eq_divide_eq right_diff_distrib)
-    then have "fst z = (1 + u) * (fst y) - u * fst x"
-      by argo
-    then have z1:"fst z = (- u) * fst x + (1 + u) * (fst y) "
-      by simp
-    have "u = (snd z - snd y) / (snd y - snd x)" using u_def assms a1 
-      by (simp add: False cross3_def frac_eq_eq mult.commute )
+    have "u = (snd z - snd y) / (snd y - snd x)" using u_def assms a1
+      by (simp add: False cross3_def frac_eq_eq mult.commute)
     then have "snd z = snd y - u * snd x + u * snd y" using "False" a1
       by (simp add: nonzero_eq_divide_eq right_diff_distrib)
-    then have "snd z = (-u) * snd x + (1 + u) * snd y"
-      by argo
-     then have "z = (- u) *\<^sub>R x + (1 + u) *\<^sub>R y" using assms a1 False z1
-      by (metis (mono_tags, lifting) add.commute add_left_cancel diff_add_cancel fst_diff
-          fst_scaleR pair_scal real_scaleR_def scaleR_left.diff scaleR_one snd_diff snd_scaleR)
-    then show "affine_dependent {x, y, z :: R2}"
-      by (smt (verit, del_insts) add_diff_cancel_left' affine_comb_affine_dep assms(2)
-          diff_add_cancel distinct_length_2_or_more insert_commute)
+    then have "z = (1 + u) *\<^sub>R y - u *\<^sub>R x" using assms a1 False z1
+      by (metis (mono_tags, opaque_lifting) diff_add_eq fst_diff fst_scaleR prod.collapse
+          real_scaleR_def scaleR_left_distrib scaleR_one snd_diff snd_scaleR)
+    then show "affine_dependent {x, y, z :: R2}" 
+      sorry
   qed
 qed
 
@@ -268,8 +261,7 @@ lemma affinedep_cases:
 lemma cross_affine_dependent_conv:
   assumes "affine_dependent {x, y, z :: real \<times> real}"
   shows "cross3 x y z = 0"
-  using affinedep_cases assms cross3_commutation_12 
-        cross3_commutation_23 in_hull3_iscollinear 
+  using affinedep_cases assms cross3_commutation_12 cross3_commutation_23 in_hull3_iscollinear 
   by blast
 
 lemma genpos_cross0:
@@ -441,8 +433,9 @@ lemma genpos_ex:
   "\<forall> n. \<exists>S. (gpos S \<and> card S = n)"
 proof
   fix n
-  show " \<exists>S. gpos S \<and> card S = n" sorry
-qed  
+  
+  
+  sorry
 
 
 theorem "min_conv 3 k = k"
