@@ -409,8 +409,14 @@ lemma real_set_ex: "\<exists>(S:: real set). card S = (n::nat)"
   using infinite_UNIV_char_0 infinite_arbitrarily_large by blast
 
 definition f :: "real \<Rightarrow> R2" where "f \<equiv> \<lambda>a. (a, a * a)"
-lemma f_prop1: "\<forall>x y. x \<noteq> y \<longleftrightarrow> f x \<noteq> f y" using f_def fst_conv by metis
-lemma f_prop2: "distinct [a,b,c] \<longrightarrow> \<not> collinear3 (f a) (f b) (f c)" sorry
+lemma f_prop1: "\<forall>x y. x \<noteq> y \<longleftrightarrow> f x \<noteq> f y"                  using f_def fst_conv by metis
+lemma f_prop2: "distinct[a,b,c] \<longrightarrow> distinct[f a, f b, f c]" using f_prop1 by auto
+
+lemma f_prop3: "distinct [a,b,c] \<longrightarrow> \<not> collinear3 (f a) (f b) (f c)"
+proof
+  assume asm: "distinct [a,b,c]"
+  thus "\<not> collinear3 (f a) (f b) (f c)" sorry
+qed
   
 thm card_le_inj
 
@@ -419,8 +425,8 @@ lemma card_fS_from_S:
  using inj_on_iff_eq_card[of "S" "f"] assms f_prop1 by (simp add: inj_onI)
 
 lemma genpos_ex:
-  "gpos (f ` S)"
-  unfolding gpos_def using f_prop2 f_prop1 sorry
+  "\<exists>S. gpos S \<and> card S = n" sorry
+
 
 theorem "min_conv 3 k = k"
   unfolding min_conv_def
