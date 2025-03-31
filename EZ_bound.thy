@@ -425,13 +425,15 @@ qed
 
 thm card_le_inj
 
-lemma card_fS_from_S: 
- assumes "finite S" shows "card S = card (f ` S)"
- using inj_on_iff_eq_card[of "S" "f"] assms f_prop1 by (simp add: inj_onI)
-
 lemma genpos_ex:
-  "\<exists>S. gpos S \<and> card S = n" sorry
-
+  "\<exists>S. gpos S \<and> card S = n"
+proof-
+  obtain X  where rset: "card (X :: real set) = n" using real_set_ex by blast
+  hence 1:"card (f ` X) = n"  by (metis card_image f_prop1 inj_onI)
+  have "gpos (f ` X)" using f_prop3 gpos_def
+    by (smt (verit, best) distinct_length_2_or_more distinct_singleton image_iff)
+  thus ?thesis using 1 by blast
+qed
 
 theorem "min_conv 3 k = k"
   unfolding min_conv_def
