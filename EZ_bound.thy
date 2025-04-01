@@ -279,6 +279,13 @@ lemma genpos_cross0:
   by (smt (verit, del_insts) add.right_neutral add_Suc_right distinct_card empty_set 
       empty_subsetI insert_subset list.simps(15) list.size(3,4) mem_Collect_eq numeral_3_eq_3)
 
+thm strict_sorted_iff
+
+lemma exactly_one_true:
+  assumes "A = collinear3 a b c" and "B = cap3 a b c" and "C = cup3 a b c"
+  shows "(A \<or> B \<or> C) \<and> ((\<not>A \<and> \<not>B) \<or> (\<not>B \<and> \<not>C) \<or> (\<not>C \<and> \<not>A))"
+  using assms unfolding collinear3_def cap3_def cup3_def by linarith
+
 lemma get_cup_from_bad_cap:
   assumes "sortedStrict P" and "\<not> cap (length P) P"
   shows "\<exists>a b c. (sublist [a,b,c] P) \<and> \<not> cap3 a b c"
@@ -338,6 +345,7 @@ qed
 lemma get_cap_from_bad_cup:
   assumes "sortedStrict P" and "\<not> cup (length P) P"
   shows "\<exists>a b c. (sublist [a,b,c] P) \<and> \<not> cup3 a b c"
+  using get_cup_from_bad_cap[of "P"]
 proof-
   from assms have "\<not> list_check cup3 P" using cup_def by simp
   then show ?thesis using assms
@@ -469,7 +477,7 @@ next
   have "length xs = k" using S_asm x_xs by auto
   moreover have sminus_x:"card (S - {x}) = k" using S_asm by (simp add: card.insert_remove x_xs(1))
   moreover have gp_sminus_x:"general_pos (S - {x})" using x_xs(1) S_gp general_pos_subs by blast
-  text \<open>Using induction hypothesis obtain the cup or cap of size k from the set S - {min(S)}.\<close>
+  text \<open>Using induction hypothesis obtain the cap of size 3 or cup of size k from the set S - {min(S)}.\<close>
   ultimately obtain zs
     where zs:"set zs \<subseteq> S - {x}" "sortedStrict zs" "(cap 3 zs \<or> cup k zs)"
     using extract_cap_cup[of "3" "k" "k" "S - {x}"] Suc min_conv_def strict_sorted_iff by auto
@@ -513,8 +521,9 @@ Inf {n. \<forall>S. n \<le> card S \<and> general_pos S \<longrightarrow>
   qed
   hence "Suc k = card S \<and> general_pos S \<longrightarrow> 
         (\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap 3 xs \<or> cup (Suc k) xs))" by blast
-  have "min_conv 3 (Suc k) > k \<Longrightarrow> (\<exists>S. k = card S \<and> general_pos S \<longrightarrow> 
-        \<not> (\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap 3 xs \<or> cup (Suc k) xs)))" sorry
+  hence "\<forall>S. Suc k \<le> card S \<and> general_pos S \<longrightarrow> 
+        (\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap 3 xs \<or> cup (Suc k) xs))" sorry
+  hence "min_conv 3 (Suc k) \<le> Suc k" unfolding S_asm min_conv_def sorry
   then show ?case sorry
 qed
 
