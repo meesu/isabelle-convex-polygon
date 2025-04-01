@@ -286,118 +286,57 @@ lemma exactly_one_true:
   shows "(A \<or> B \<or> C) \<and> ((\<not>A \<and> \<not>B) \<or> (\<not>B \<and> \<not>C) \<or> (\<not>C \<and> \<not>A))"
   using assms unfolding collinear3_def cap3_def cup3_def by linarith
 
+lemma lcheck_len2_T:
+  assumes "length P \<le> 2" and "distinct P" shows "list_check f P"
+proof(cases "length P = 2")
+  case True
+  hence "\<exists>x y. P=[x,y] \<and> distinct [x,y]" using assms(2)
+    by (metis (no_types, lifting) One_nat_def Suc_1  length_0_conv length_Suc_conv)
+  then show ?thesis using list_check.simps(3) by fastforce
+next
+  case False
+  hence "(P = []) \<or> (\<exists>x. P=[x])"
+    by (metis assms(1) length_0_conv length_Suc_conv less_2_cases_iff nat_less_le)
+  then show ?thesis by fastforce
+qed
+
+lemma bad3_from_bad:
+  assumes "distinct P" and "\<not> list_check f P"
+  shows   "\<exists>a b c. (sublist [a,b,c] P) \<and> \<not> f a b c"
+  using assms
+proof(induction "length P" arbitrary: P)
+  case (Suc x)
+  then show ?case
+  proof(cases "length P \<le> 2")
+    case False
+    hence "\<exists>a u v rest. P = (a#u#v#rest)" using Suc(2) Suc.prems(2) assms(1) list.size(3)
+      by (metis One_nat_def Suc_1 bot_nat_0.extremum length_Cons list.exhaust not_less_eq_eq)
+    then obtain a u v rest where aP: "P = (a#u#v#rest)" by blast
+    hence "\<not> f a u v \<or> \<not> list_check f (u#v#rest)" using Suc by simp
+    then show ?thesis
+    proof
+      assume "\<not> f a u v"
+      thus "\<exists>a b c. sublist [a, b, c] P \<and> \<not> f a b c" using aP
+        by (metis append_Cons append_Nil sublist_append_rightI)
+    next
+      assume "\<not> list_check f (u#v#rest)"
+      moreover have "length (u#v#rest) = x" using aP Suc(2) by simp
+      moreover have "distinct (u#v#rest)" using Suc(3) aP by simp
+      ultimately have "\<exists>a b c. sublist [a, b, c] (u#v#rest) \<and> \<not> f a b c" using Suc(1) by blast
+      thus "\<exists>a b c. sublist [a, b, c] P \<and> \<not> f a b c" using aP Suc by (meson sublist_Cons_right)
+    qed
+  qed(metis lcheck_len2_T)
+qed(auto)
+
 lemma get_cup_from_bad_cap:
   assumes "sortedStrict P" and "\<not> cap (length P) P"
   shows "\<exists>a b c. (sublist [a,b,c] P) \<and> \<not> cap3 a b c"
-proof-
-  from assms have "\<not> list_check cap3 P" using cap_def by simp
-  then show ?thesis using assms
-  proof(induction P)
-    case Nil
-    then show ?case using cap_def by auto
-  next
-    case (Cons a P)
-    then show ?case
-    proof(cases "length P \<le> 2")
-      case True
-      hence "cap (length P) P"  
-        using list_check.simps assms(1) Cons.IH Cons.prems(2,3) cap_def sublist_length_le by force
-      then show ?thesis using Cons
-      proof(cases "length P = 2")
-        case True
-        then obtain x y where "P = [x,y]"
-          by (metis (no_types, lifting) One_nat_def Suc_1 length_0_conv length_Suc_conv)
-       
-        then show ?thesis
-          by (metis Cons.prems(1) \<open>cap (length P) P\<close> cap_def list_check.simps(4)
-              sublist_order.order_refl)  
-      next
-        case False
-        hence "length P < 2"
-          using True nat_less_le by blast
-        then have False using Suc_length_conv strict_sorted_iff list.inject list_check.elims(1) Cons(2,3)
-          by (smt (verit, best) distinct_length_2_or_more length_0_conv less_2_cases_iff neq_Nil_conv)
-        then show ?thesis by argo
-      qed
-    next
-      case False
-      hence "\<exists>u v rest. P = (u#v#rest)"
-        by (metis One_nat_def Suc_1 bot_nat_0.extremum le_add1 length_Cons list.exhaust list.size(3)
-            plus_1_eq_Suc)
-      then obtain u v rest where uvrest: "P = (u#v#rest)" by blast
-      hence "\<not> cap3 a u v \<or> \<not> list_check cap3 P"
-        using Cons.prems(1) by auto
-      then show ?thesis
-      proof
-        assume "\<not> cap3 a u v"
-        thus "\<exists>aa b c. sublist [aa, b, c] (a # P) \<and> \<not> cap3 aa b c" using uvrest
-          by (metis append_Cons append_Nil sublist_append_rightI)
-      next
-        assume "\<not> list_check cap3 P"
-        thus "\<exists>aa b c. sublist [aa, b, c] (a # P) \<and> \<not> cap3 aa b c" using uvrest Cons.prems(2,3)
-          by (metis Cons_eq_appendI cap_def strict_sorted_iff distinct_length_2_or_more 
-              sorted2 sublist_def Cons.IH)
-      qed
-    qed
-  qed
-qed
+  using bad3_from_bad assms(1,2) cap_def strict_sorted_iff by blast
 
 lemma get_cap_from_bad_cup:
   assumes "sortedStrict P" and "\<not> cup (length P) P"
   shows "\<exists>a b c. (sublist [a,b,c] P) \<and> \<not> cup3 a b c"
-  using get_cup_from_bad_cap[of "P"]
-proof-
-  from assms have "\<not> list_check cup3 P" using cup_def by simp
-  then show ?thesis using assms
-  proof(induction P)
-    case Nil
-    then show ?case using cup_def by auto
-  next
-    case (Cons a P)
-    then show ?case
-    proof(cases "length P \<le> 2")
-      case True
-      hence 1: "cup (length P) P"  
-        using list_check.simps assms(1) Cons.IH Cons.prems(2,3) cup_def sublist_length_le by force
-      then show ?thesis using Cons
-      proof(cases "length P = 2")
-        case True
-        then obtain x y where "P = [x,y]"
-          by (metis (no_types, lifting) One_nat_def Suc_1 length_0_conv length_Suc_conv)
-       
-        then show ?thesis
-          by (metis Cons.prems(1) 1 cup_def list_check.simps(4)
-              sublist_order.order_refl)  
-      next
-        case False
-        hence "length P < 2"
-          using True nat_less_le by blast
-        then have False using Suc_length_conv strict_sorted_iff list.inject list_check.elims(1) Cons(2,3)
-          by (smt (verit, best) distinct_length_2_or_more length_0_conv less_2_cases_iff neq_Nil_conv)
-        then show ?thesis by argo
-      qed
-    next
-      case False
-      hence "\<exists>u v rest. P = (u#v#rest)"
-        by (metis One_nat_def Suc_1 bot_nat_0.extremum le_add1 length_Cons list.exhaust list.size(3)
-            plus_1_eq_Suc)
-      then obtain u v rest where uvrest: "P = (u#v#rest)" by blast
-      hence "\<not> cup3 a u v \<or> \<not> list_check cup3 P"
-        using Cons.prems(1) by auto
-      then show ?thesis
-      proof
-        assume "\<not> cup3 a u v"
-        thus "\<exists>aa b c. sublist [aa, b, c] (a # P) \<and> \<not> cup3 aa b c" using uvrest
-          by (metis append_Cons append_Nil sublist_append_rightI)
-      next
-        assume "\<not> list_check cup3 P"
-        thus "\<exists>aa b c. sublist [aa, b, c] (a # P) \<and> \<not> cup3 aa b c" using uvrest Cons.prems(2,3)
-          by (metis Cons_eq_appendI cup_def strict_sorted_iff distinct_length_2_or_more 
-              sorted2 sublist_def Cons.IH)
-      qed
-    qed
-  qed
-qed
+  using bad3_from_bad assms(1,2) cup_def strict_sorted_iff by blast
 
 lemma coll_is_affDep:
   "distinct [a,b,c] \<longrightarrow> (collinear3 a b c \<longleftrightarrow> affine_dependent {a, b, c})"
@@ -417,33 +356,19 @@ definition
 (*"general_pos S \<equiv>  (\<forall> P3 \<in> S~3. \<not> affine_dependent P3)"*)
 lemma gpos_equiv_def:
   "gpos S \<longleftrightarrow> general_pos S" 
-proof
-  show "gpos S \<Longrightarrow> general_pos S" 
-    unfolding gpos_def general_pos_def using coll_is_affDep distinct_is_triple nsubset_def
-    by (smt (verit, ccfv_threshold) card_3_iff mem_Collect_eq)
-next
-  show "general_pos S \<Longrightarrow> gpos S"
-    unfolding gpos_def general_pos_def using coll_is_affDep distinct_is_triple by metis
-qed
+  using coll_is_affDep distinct_is_triple nsubset_def[of "S" "3"] unfolding gpos_def general_pos_def
+  by (smt (verit, ccfv_threshold) card_3_iff mem_Collect_eq)
 
 lemma real_set_ex: "\<exists>(S:: real set). card S = (n::nat)"
   using infinite_UNIV_char_0 infinite_arbitrarily_large by blast
 
 definition f :: "real \<Rightarrow> R2" where "f \<equiv> \<lambda>a. (a, a * a)"
+lemma f_prop0: "cross3 (f a) (f b) (f c) = (a - b) * (c - a) * (b - c)" 
+  unfolding collinear3_def cross3_def f_def by (simp, argo)
 lemma f_prop1: "\<forall>x y. x \<noteq> y \<longleftrightarrow> f x \<noteq> f y"                  using f_def fst_conv by metis
 lemma f_prop2: "distinct[a,b,c] \<longrightarrow> distinct[f a, f b, f c]" using f_prop1 by auto
-
-lemma f_prop3: 
-  assumes "distinct [a,b,c]"
-  shows   "\<not> collinear3 (f a) (f b) (f c)"
-proof
-  have 1:"distinct [f a, f b, f c]" using assms f_prop2 by auto
-  assume 2:"collinear3 (f a) (f b) (f c)"
-  hence "(b-a) * (c*c - b*b) - (c-b) * (b*b - a*a) = 0"  
-    unfolding collinear3_def cross3_def f_def by simp
-  hence "(b - a) * (c - a) * (b - c) = 0" by argo
-  thus False using assms 1 2 by simp
-qed
+lemma f_prop3: "distinct [a,b,c] \<longrightarrow> \<not> collinear3 (f a) (f b) (f c)"
+  using f_prop2 f_prop0 unfolding collinear3_def cross3_def f_def by auto
 
 thm card_le_inj
 
