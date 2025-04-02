@@ -28,8 +28,7 @@ lemma cap_reduct:
 lemma  card_of_s:
   assumes "set xs \<subseteq> S" "cap k xs" "distinct xs" "finite S"
   shows "card S \<ge> k"
-  using assms(4,1,2,3) 
-  by (metis cap_def card_mono distinct_card)
+  by (metis assms cap_def card_mono distinct_card)
 
 theorem non_empty_cup_cap:
   fixes k l
@@ -366,9 +365,19 @@ definition f :: "real \<Rightarrow> R2" where "f \<equiv> \<lambda>a. (a, a * a)
 lemma f_prop0: "cross3 (f a) (f b) (f c) = (a - b) * (c - a) * (b - c)" 
   unfolding collinear3_def cross3_def f_def by (simp, argo)
 lemma f_prop1: "\<forall>x y. x \<noteq> y \<longleftrightarrow> f x \<noteq> f y"                  using f_def fst_conv by metis
-lemma f_prop2: "distinct[a,b,c] \<longrightarrow> distinct[f a, f b, f c]" using f_prop1 by auto
+lemma f_prop2: "distinct [a,b,c] \<longrightarrow> distinct[f a, f b, f c]" using f_prop1 by auto
 lemma f_prop3: "distinct [a,b,c] \<longrightarrow> \<not> collinear3 (f a) (f b) (f c)"
   using f_prop2 f_prop0 unfolding collinear3_def cross3_def f_def by auto
+lemma f_prop4: "sortedStrict [a,b,c] \<longrightarrow> cup3 (f a) (f b) (f c)" 
+  using f_prop0 strict_sorted_iff unfolding cup3_def
+  by (smt (verit, ccfv_threshold) distinct_length_2_or_more mult_eq_0_iff sorted2 zero_less_mult_iff)
+lemma f_prop5: "sortedStrict (rev [a,b,c]) \<longrightarrow> cap3 (f a) (f b) (f c)"
+  using f_prop4 f_prop3 exactly_one_true
+  by (smt (verit, best) append.simps(1,2) cup3_def distinct_rev f_prop0 rev.simps(2) singleton_rev_conv sorted2 strict_sorted_iff
+      zero_less_mult_iff)
+
+lemma f_prop6: "sortedStrict S \<longrightarrow> gpos (f ` set S)"
+  by (smt (verit, ccfv_SIG) collinear3_def distinct_length_2_or_more f_prop0 gpos_def image_iff mult_eq_0_iff)
 
 thm card_le_inj
 
