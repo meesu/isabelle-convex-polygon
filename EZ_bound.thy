@@ -466,11 +466,12 @@ lemma min_conv_arg_swap:
 lemma min_conv_lower:
   assumes "\<exists>S. (card S \<ge> n \<and> general_pos S)
                 \<and> (\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
-  shows "min_conv 3 (Suc k) > k"
+  shows "min_conv k l > n"
 proof-
-  have "\<forall>t. t \<le> k \<longrightarrow> min_conv 3 (Suc k) \<noteq> t" 
-    using  assms min_conv_num_out[of _ "3" "Suc k"] sorry
-  show ?thesis sorry
+  obtain S where "card S \<ge> n" "general_pos S" "\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs)"
+    using assms by blast
+  hence "\<forall>t. t \<le> n \<longrightarrow> min_conv k l \<noteq> t" using min_conv_num_out by (metis le_trans)
+  thus ?thesis using min_conv_def not_le_imp_less by blast
 qed
 
 theorem "min_conv 3 k = k"
