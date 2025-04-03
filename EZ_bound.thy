@@ -346,7 +346,7 @@ lemma distinct_is_triple:
 definition
   "gpos S \<equiv> \<forall>a\<in>S. \<forall>b\<in>S. \<forall>c\<in>S. distinct [a,b,c] \<longrightarrow> \<not> collinear3 a b c"
 (*"general_pos S \<equiv>  (\<forall> P3 \<in> S~3. \<not> affine_dependent P3)"*)
-lemma gpos_equiv_def:
+lemma gpos_generalpos:
   "gpos S \<longleftrightarrow> general_pos S" 
   using coll_is_affDep distinct_is_triple nsubset_def[of "S" "3"] unfolding gpos_def general_pos_def
   by (smt (verit, ccfv_threshold) card_3_iff mem_Collect_eq)
@@ -354,32 +354,32 @@ lemma gpos_equiv_def:
 lemma real_set_ex: "\<exists>(S:: real set). card S = (n::nat)"
   using infinite_UNIV_char_0 infinite_arbitrarily_large by blast
 
-definition f :: "real \<Rightarrow> R2" where "f \<equiv> \<lambda>a. (a, a * a)"
-lemma f_prop0: "cross3 (f a) (f b) (f c) = (a - b) * (c - a) * (b - c)" 
-  unfolding collinear3_def cross3_def f_def by (simp, argo)
-lemma f_prop1: "\<forall>x y. x \<noteq> y \<longleftrightarrow> f x \<noteq> f y"                  using f_def fst_conv by metis
-lemma f_prop2: "distinct [a,b,c] \<longrightarrow> distinct[f a, f b, f c]" using f_prop1 by auto
-lemma f_prop3: "distinct [a,b,c] \<longrightarrow> \<not> collinear3 (f a) (f b) (f c)"
-  using f_prop2 f_prop0 unfolding collinear3_def cross3_def f_def by auto
-lemma f_prop4: "sortedStrict [a,b,c] \<longrightarrow> cup3 (f a) (f b) (f c)" 
+definition v2 :: "real \<Rightarrow> R2" where "v2 \<equiv> \<lambda>a. (a, a * a)"
+lemma f_prop0: "cross3 (v2 a) (v2 b) (v2 c) = (a - b) * (c - a) * (b - c)" 
+  unfolding collinear3_def cross3_def v2_def by (simp, argo)
+lemma f_prop1: "\<forall>x y. x \<noteq> y \<longleftrightarrow> v2 x \<noteq> v2 y"                  using v2_def fst_conv by metis
+lemma f_prop2: "distinct [a,b,c] \<longrightarrow> distinct[v2 a, v2 b, v2 c]" using f_prop1 by auto
+lemma f_prop3: "distinct [a,b,c] \<longrightarrow> \<not> collinear3 (v2 a) (v2 b) (v2 c)"
+  using f_prop2 f_prop0 unfolding collinear3_def cross3_def v2_def by auto
+lemma f_prop4: "sortedStrict [a,b,c] \<longrightarrow> cup3 (v2 a) (v2 b) (v2 c)" 
   using f_prop0 strict_sorted_iff unfolding cup3_def
   by (smt (verit, ccfv_threshold) distinct_length_2_or_more mult_eq_0_iff sorted2 zero_less_mult_iff)
-lemma f_prop5: "sortedStrict (rev [a,b,c]) \<longrightarrow> cap3 (f a) (f b) (f c)"
+lemma f_prop5: "sortedStrict (rev [a,b,c]) \<longrightarrow> cap3 (v2 a) (v2 b) (v2 c)"
   using f_prop4 f_prop3 exactly_one_true
   by (smt (verit, best) append.simps(1,2) cup3_def distinct_rev f_prop0 rev.simps(2) singleton_rev_conv sorted2 strict_sorted_iff
       zero_less_mult_iff)
 
-lemma f_prop6: "sortedStrict S \<longrightarrow> gpos (f ` set S)"
+lemma f_prop6: "sortedStrict S \<longrightarrow> gpos (v2 ` set S)"
   by (smt (verit, ccfv_SIG) collinear3_def distinct_length_2_or_more f_prop0 gpos_def image_iff mult_eq_0_iff)
 
 thm card_le_inj
 
 lemma genpos_ex:
-  "\<exists>S. gpos S \<and> card S = n"
+  "\<exists>S. gpos S \<and> card S  = n \<and> (\<exists>Sr :: real set. S = (v2 ` Sr))"
 proof-
   obtain X  where rset: "card (X :: real set) = n" using real_set_ex by blast
-  hence 1:"card (f ` X) = n"  by (metis card_image f_prop1 inj_onI)
-  have "gpos (f ` X)" using f_prop3 gpos_def
+  hence 1:"card (v2 ` X) = n"  by (metis card_image f_prop1 inj_onI)
+  have "gpos (v2 ` X)" using f_prop3 gpos_def
     by (smt (verit, best) distinct_length_2_or_more distinct_singleton image_iff)
   thus ?thesis using 1 by blast
 qed
@@ -472,6 +472,27 @@ proof-
     using assms by blast
   hence "\<forall>t. t \<le> n \<longrightarrow> min_conv k l \<noteq> t" using min_conv_num_out by (metis le_trans)
   thus ?thesis using min_conv_def not_le_imp_less by blast
+qed
+
+lemma min_conv_3_k_bnd:
+  "min_conv 3 (Suc k) > k"
+proof-
+  have "\<exists>S. (card S \<ge> k \<and> general_pos S)
+                \<and> (\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap 3 xs \<or> cup (Suc k) xs))"
+  proof-
+    obtain T Tr where Tp:"T = v2 ` Tr" "card T = k" "general_pos T" 
+      using genpos_ex real_set_ex gpos_generalpos by meson
+    hence "\<exists>tl. set tl \<subseteq> T \<and> (sortedStrict tl) \<longrightarrow> cup k tl" using f_prop3
+      by (meson distinct_length_2_or_more strict_sorted_iff)
+    obtain Tlist where tlp: "set Tlist \<subseteq> T" "sortedStrict Tlist" "length Tlist = k"
+      using Tp(2) set2list
+      by (metis card_eq_0_iff empty_subsetI finite.intros(1) order_refl)
+    hence tl_cupk: "cup k Tlist" using f_prop4 sorry
+    hence "\<not>(cap 3 Tlist \<or> cup (Suc k) Tlist)" sorry
+    hence "\<forall>xs. set xs \<subseteq> T \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap 3 xs \<or> cup (Suc k) xs)" using tlp tl_cupk sorry
+    thus ?thesis using Tp(2,3) by blast
+  qed
+  thus ?thesis using min_conv_lower by simp
 qed
 
 theorem "min_conv 3 k = k"
