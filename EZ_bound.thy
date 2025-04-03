@@ -366,11 +366,15 @@ lemma f_prop4: "sortedStrict [a,b,c] \<longrightarrow> cup3 (v2 a) (v2 b) (v2 c)
   by (smt (verit, ccfv_threshold) distinct_length_2_or_more mult_eq_0_iff sorted2 zero_less_mult_iff)
 lemma f_prop5: "sortedStrict (rev [a,b,c]) \<longrightarrow> cap3 (v2 a) (v2 b) (v2 c)"
   using f_prop4 f_prop3 exactly_one_true
-  by (smt (verit, best) append.simps(1,2) cup3_def distinct_rev f_prop0 rev.simps(2) singleton_rev_conv sorted2 strict_sorted_iff
-      zero_less_mult_iff)
-
+  by (smt (verit, best) append.simps(1,2) cup3_def distinct_rev f_prop0 rev.simps(2) singleton_rev_conv sorted2 strict_sorted_iff zero_less_mult_iff)
 lemma f_prop6: "sortedStrict S \<longrightarrow> gpos (v2 ` set S)"
   by (smt (verit, ccfv_SIG) collinear3_def distinct_length_2_or_more f_prop0 gpos_def image_iff mult_eq_0_iff)
+lemma f_prop7: "0 < (a :: real) \<longrightarrow> ((a < b) \<longrightarrow> (a*a < b*b))" by (simp add: mult_strict_mono)
+lemma f_prop8: "(0 < (a :: real) \<and> 0 < b) \<longrightarrow> ((a*a < b*b) \<longrightarrow> (a < b))" by (metis antisym_conv3 f_prop7 order_less_asym')
+lemma f_prop9: "\<forall>a>0. \<forall>b>0. sortedStrict[a,b] \<longleftrightarrow> sortedStrict[v2 a, v2 b]" using f_prop7 v2_def strict_sorted_iff
+  by (metis (lifting) distinct_length_2_or_more less_prod_simp linorder_not_less not_less_iff_gr_or_eq sorted2
+      sorted_wrt1)
+lemma f_prop10: "\<forall>a>0. \<forall>b>0. \<forall>c>0. sortedStrict [a,b,c] \<longleftrightarrow> sortedStrict[v2 a, v2 b, v2 c]" using f_prop9 by fastforce
 
 thm card_le_inj
 
