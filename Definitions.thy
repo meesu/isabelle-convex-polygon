@@ -56,8 +56,13 @@ definition cup :: "nat \<Rightarrow> (real \<times> real) list \<Rightarrow> boo
 (* definition of minimum number of points containing an l-cup or k-cap *)
 (* distinctness is taken care of by the fact that cap or cup needs to have distinct points*)
 (*distinctness *)
-definition min_conv :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"min_conv k l = (Inf {n :: nat. (\<forall>S . card S \<ge> n \<and> general_pos S 
-                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs)))})"
 
+definition min_conv :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+"min_conv k l = (Inf {n :: nat. (\<forall>S . (card S \<ge> n \<and> general_pos S)
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs)))})"
+(*
+definition min_conv :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+"min_conv k l = Inf {card S| S. general_pos S 
+                \<longrightarrow> (\<exists>xs. (set xs \<subseteq> S \<and> (sortedStrict xs)) \<and> (cap k xs \<or> cup l xs))}"
+*)
 end

@@ -4,9 +4,10 @@ begin
 
 (*** start of Theorem 2.2 Andrew Suk ***)
 
-thm strict_sorted_iff
-
-thm finite_sorted_distinct_unique
+lemma ex_equiv_minconv:
+  " (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs)) \<longrightarrow>
+    (\<exists>xs. (set xs \<subseteq> S \<and> (sortedStrict xs)) \<longrightarrow> (cap k xs \<or> cup l xs))"
+  by blast
 
 lemma cross3_commutation_12[simp]: "cross3 x y z = 0 \<longrightarrow> cross3 y x z = 0"
   unfolding cross3_def by argo
@@ -33,7 +34,7 @@ lemma  card_of_s:
 theorem non_empty_cup_cap:
   fixes k l
   shows "{} \<noteq> {(n::nat). 
-                (\<forall>S . card S \<ge> n \<and> general_pos S \<longrightarrow> 
+                (\<forall>S . (card S \<ge> n \<and> general_pos S) \<longrightarrow> 
                   (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs)))}"
   sorry
 
@@ -54,20 +55,12 @@ lemma set2list:
   using finite_sorted_distinct_unique[of "S"] strict_sorted_iff distinct_card assms
   by metis
 
-(* To show in a lemma if j < k, and the set of points created by a k-cap does not contain
-a 3-cup*)
-(*
-
-lemma assumes "finite S" "gen_pos S"
-  shows "\<exists> xs. set xs = S \<and> length xs = card S \<and> cap (card k *)
-
-
 lemma extract_cap_cup:
     assumes "min_conv k l = n"
         and "card S = n" "general_pos S"
       shows "\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap k xs \<or> cup l xs)"
-  using assms non_empty_cup_cap min_conv_def
-  by (smt (verit, del_insts) Inf_nat_def1 mem_Collect_eq verit_comp_simplify1(2))
+  using assms
+  by (smt (verit, best) Inf_nat_def1 mem_Collect_eq min_conv_def non_empty_cup_cap order_refl)
 
 lemma general_pos_subs:
   assumes "X \<subseteq> Y" and "general_pos Y"
@@ -391,35 +384,23 @@ proof-
   thus ?thesis using 1 by blast
 qed
 
-theorem "min_conv 3 k = k"
-  unfolding min_conv_def
-proof(induction k)
-  case 0
-  have "cap 0 []" by (simp add: cap_def) 
-  thus ?case using 0 cup_def
-    by (smt (verit, ccfv_threshold) empty_subsetI le_zero_eq list.size(3) list_check.simps(1)
-        mem_Collect_eq sorted_wrt.simps(1) wellorder_Inf_le1 empty_set)
-next
-  case (Suc k)
-  obtain S where S_asm:"card S = Suc k" and S_gp:"general_pos S" using genpos_ex gpos_equiv_def by blast
-  then obtain x xs where x_xs:"S = set (x#xs)" "sortedStrict (x#xs)" "length (x#xs) = card S" 
+lemma xyz:
+  assumes "min_conv 3 k = k" and S_asm: "card S = Suc k" and S_gp: "general_pos S"
+  shows "(\<exists>xs. (set xs \<subseteq> S \<and> (sortedStrict xs)) \<and> (cap 3 xs \<or> cup (Suc k) xs))"
+  using assms
+proof-
+  obtain x xs where x_xs:"S = set (x#xs)" "sortedStrict (x#xs)" "length (x#xs) = card S"
     using extract_cap_cup S_asm list.exhaust list.size(3) nat.simps(3)
-    by (metis card.infinite sorted_list_of_set.sorted_key_list_of_set_unique)
+    by (metis  card.infinite sorted_list_of_set.sorted_key_list_of_set_unique)
   have x_Min:"x = Min S" using x_xs(1,2)
     by (metis List.finite_set list.discI list.inject set_empty2
         sorted_list_of_set.idem_if_sorted_distinct sorted_list_of_set_nonempty strict_sorted_iff)
   have "length xs = k" using S_asm x_xs by auto
-  moreover have sminus_x:"card (S - {x}) = k" using S_asm by (simp add: card.insert_remove x_xs(1))
+  hence sminus_x:"card (S - {x}) = k" using S_asm by (simp add: card.insert_remove x_xs(1))
   moreover have gp_sminus_x:"general_pos (S - {x})" using x_xs(1) S_gp general_pos_subs by blast
   text \<open>Using induction hypothesis obtain the cap of size 3 or cup of size k from the set S - {min(S)}.\<close>
-  ultimately obtain zs
-    where zs:"set zs \<subseteq> S - {x}" "sortedStrict zs" "(cap 3 zs \<or> cup k zs)"
-    using extract_cap_cup[of "3" "k" "k" "S - {x}"] Suc min_conv_def strict_sorted_iff by auto
-(*
-To Prove
-Inf {n. \<forall>S. n \<le> card S \<and> general_pos S \<longrightarrow> 
-    (\<exists>xs. set xs \<subseteq> S \<and> sorted xs \<and> (cap 3 xs \<or> cup (Suc k) xs))} = Suc k
-*)
+  ultimately obtain zs where zs:"set zs \<subseteq> S - {x}" "sortedStrict zs" "(cap 3 zs \<or> cup k zs)"
+    unfolding min_conv_def using assms(1) extract_cap_cup by blast
   have "\<exists>cc. set cc \<subseteq> S \<and> sortedStrict cc \<and> (cap 3 cc \<or> cup (Suc k) cc)"
   proof(cases "cap 3 zs")
     case True
@@ -453,12 +434,62 @@ Inf {n. \<forall>S. n \<le> card S \<and> general_pos S \<longrightarrow>
       thus ?thesis by (meson F4 bcup(1) dual_order.trans fb2 set_mono_sublist)
     qed
   qed
-  hence "Suc k = card S \<and> general_pos S \<longrightarrow> 
-        (\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap 3 xs \<or> cup (Suc k) xs))" by blast
-  hence "\<forall>S. Suc k \<le> card S \<and> general_pos S \<longrightarrow> 
-        (\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap 3 xs \<or> cup (Suc k) xs))" sorry
-  hence "min_conv 3 (Suc k) \<le> Suc k" unfolding S_asm min_conv_def sorry
-  then show ?case sorry
+  thus ?thesis using assms unfolding min_conv_def by blast
 qed
+
+lemma abc:
+  assumes "min_conv 3 k = k"
+  shows "\<forall>S. ((card S = Suc k) \<and> general_pos S) \<longrightarrow> (\<exists>xs. (set xs \<subseteq> S \<and> (sortedStrict xs)) \<and> (cap 3 xs \<or> cup (Suc k) xs))"
+  using xyz assms by simp
+
+lemma inf_subset_bounds:
+  assumes "X \<noteq> {}" and "(X :: nat set) \<subseteq> (Y :: nat set)"
+  shows "Inf Y \<le> Inf X"
+  by (simp add: assms(1,2) cInf_superset_mono)
+
+lemma min_conv_num_out:
+  assumes "\<exists>S. (card S \<ge> n \<and> general_pos S)
+                \<and> (\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
+  shows "min_conv k l \<noteq> n"
+proof
+  assume "min_conv k l = n"
+  hence "\<forall>S . (card S \<ge> n \<and> general_pos S)
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs))"
+    by (meson ex_card extract_cap_cup general_pos_subs order_trans)
+  thus False using assms by presburger
+qed
+
+lemma min_conv_arg_swap:
+  "min_conv k l = min_conv l k"
+  unfolding min_conv_def sorry
+
+lemma min_conv_lower:
+  assumes "\<exists>S. (card S \<ge> n \<and> general_pos S)
+                \<and> (\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
+  shows "min_conv 3 (Suc k) > k"
+proof-
+  have "\<forall>t. t \<le> k \<longrightarrow> min_conv 3 (Suc k) \<noteq> t" 
+    using  assms min_conv_num_out[of _ "3" "Suc k"] sorry
+  show ?thesis sorry
+qed
+
+theorem "min_conv 3 k = k"
+proof(induction k)
+  case 0
+  have "cap 0 []" by (simp add: cap_def) 
+  thus ?case unfolding min_conv_def
+    by (smt (verit, best) bot.extremum bot_nat_0.extremum cInf_eq_minimum cup_def list.size(3) list_check.simps(1)
+        mem_Collect_eq set_empty2 sorted_wrt.simps(1))
+next
+  case (Suc k)
+  hence "Suc k \<in> {n :: nat. (\<forall>S . card S \<ge> (Suc k) \<and> general_pos S
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap 3 xs \<or> cup (Suc k) xs)))}"
+    by (smt (verit, best) abc ex_card general_pos_subs mem_Collect_eq order_trans)
+  hence "min_conv 3 (Suc k) \<le> Suc k" unfolding min_conv_def[of "3" "Suc k"] using inf_subset_bounds
+    by (metis (no_types, lifting) ext mem_Collect_eq wellorder_Inf_le1)
+  moreover have "min_conv 3 (Suc k) \<ge> Suc k"  using Suc_leI sorry
+  ultimately show ?case by simp
+qed
+
 
 end
