@@ -59,7 +59,7 @@ lemma extract_cap_cup:
     assumes "min_conv k l = n"
         and "card S = n" "general_pos S"
       shows "\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap k xs \<or> cup l xs)"
-  using assms
+  using assms 
   by (smt (verit, best) Inf_nat_def1 mem_Collect_eq min_conv_def non_empty_cup_cap order_refl)
 
 lemma general_pos_subs:
@@ -351,9 +351,6 @@ lemma gpos_generalpos:
   using coll_is_affDep distinct_is_triple nsubset_def[of "S" "3"] unfolding gpos_def general_pos_def
   by (smt (verit, ccfv_threshold) card_3_iff mem_Collect_eq)
 
-lemma real_set_ex: "\<exists>(S:: real set). card S = (n::nat)"
-  using infinite_UNIV_char_0 infinite_arbitrarily_large by blast
-
 definition v2 :: "real \<Rightarrow> R2" where "v2 \<equiv> \<lambda>a. (a, a * a)"
 lemma f_prop0: "cross3 (v2 a) (v2 b) (v2 c) = (a - b) * (c - a) * (b - c)" 
   unfolding collinear3_def cross3_def v2_def by (simp, argo)
@@ -369,14 +366,33 @@ lemma f_prop5: "sortedStrict (rev [a,b,c]) \<longrightarrow> cap3 (v2 a) (v2 b) 
   by (smt (verit, best) append.simps(1,2) cup3_def distinct_rev f_prop0 rev.simps(2) singleton_rev_conv sorted2 strict_sorted_iff zero_less_mult_iff)
 lemma f_prop6: "sortedStrict S \<longrightarrow> gpos (v2 ` set S)"
   by (smt (verit, ccfv_SIG) collinear3_def distinct_length_2_or_more f_prop0 gpos_def image_iff mult_eq_0_iff)
-lemma f_prop7: "0 < (a :: real) \<longrightarrow> ((a < b) \<longrightarrow> (a*a < b*b))" by (simp add: mult_strict_mono)
-lemma f_prop8: "(0 < (a :: real) \<and> 0 < b) \<longrightarrow> ((a*a < b*b) \<longrightarrow> (a < b))" by (metis antisym_conv3 f_prop7 order_less_asym')
-lemma f_prop9: "\<forall>a>0. \<forall>b>0. sortedStrict[a,b] \<longleftrightarrow> sortedStrict[v2 a, v2 b]" using f_prop7 v2_def strict_sorted_iff
+lemma f_prop7: "(a :: real) > 0 \<longrightarrow> ((a < b) \<longrightarrow> (a*a < b*b))" by (simp add: mult_strict_mono)
+lemma f_prop8: "((a > 0 \<and> (b::real) > 0) \<longrightarrow> (a*a < b*b) \<longrightarrow> (a < b))" by (metis antisym_conv3 f_prop7 order_less_asym')
+lemma f_prop9: "sortedStrict[a,b] \<longleftrightarrow> sortedStrict[v2 a, v2 b]" using f_prop7 v2_def strict_sorted_iff
   by (metis (lifting) distinct_length_2_or_more less_prod_simp linorder_not_less not_less_iff_gr_or_eq sorted2
       sorted_wrt1)
-lemma f_prop10: "\<forall>a>0. \<forall>b>0. \<forall>c>0. sortedStrict [a,b,c] \<longleftrightarrow> sortedStrict[v2 a, v2 b, v2 c]" using f_prop9 by fastforce
+lemma f_prop10: "sortedStrict [a,b,c] \<longleftrightarrow> sortedStrict[v2 a, v2 b, v2 c]" using f_prop9 by fastforce
+lemma f_prop11: "sortedStrict L \<longrightarrow> sortedStrict (map v2 L)"
+  by (simp add: sorted_wrt_map_mono v2_def)
+lemma f_prop12: "sortedStrict (map v2 L) \<Longrightarrow> cup (length (map v2 L)) (map v2 L)"
+proof(induction L)
+  case (Cons a L)
+  then show ?case
+  proof(cases "length (map v2 (a#L)) \<le> 2")
+    case False
+    then obtain x y z rest where aL: "a#L = x#y#z#rest"
+      by (metis One_nat_def Suc_1 Suc_le_length_iff le_SucE length_Cons length_map nle_le)
+    hence "sortedStrict [v2 x,v2 y,v2 z]" 
+      using Cons.prems by auto
+    hence "cup3 (v2 x) (v2 y) (v2 z)" using f_prop4 f_prop10 by presburger
+    then show ?thesis using Cons aL cup_def by force
+  qed(metis lcheck_len2_T strict_sorted_iff Cons(2) cup_def)
+qed(simp add: cup_def)
 
 thm card_le_inj
+
+lemma real_set_ex: "\<exists>(S:: real set). card S = n"
+  using infinite_UNIV_char_0 infinite_arbitrarily_large by blast
 
 lemma genpos_ex:
   "\<exists>S. gpos S \<and> card S  = n \<and> (\<exists>Sr :: real set. S = (v2 ` Sr))"
@@ -385,7 +401,7 @@ proof-
   hence 1:"card (v2 ` X) = n"  by (metis card_image f_prop1 inj_onI)
   have "gpos (v2 ` X)" using f_prop3 gpos_def
     by (smt (verit, best) distinct_length_2_or_more distinct_singleton image_iff)
-  thus ?thesis using 1 by blast
+  thus ?thesis using 1 rset by blast
 qed
 
 lemma xyz:
@@ -484,17 +500,40 @@ proof-
   have "\<exists>S. (card S \<ge> k \<and> general_pos S)
                 \<and> (\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap 3 xs \<or> cup (Suc k) xs))"
   proof-
-    obtain T Tr where Tp:"T = v2 ` Tr" "card T = k" "general_pos T" 
-      using genpos_ex real_set_ex gpos_generalpos by meson
-    hence "\<exists>tl. set tl \<subseteq> T \<and> (sortedStrict tl) \<longrightarrow> cup k tl" using f_prop3
-      by (meson distinct_length_2_or_more strict_sorted_iff)
-    obtain Tlist where tlp: "set Tlist \<subseteq> T" "sortedStrict Tlist" "length Tlist = k"
-      using Tp(2) set2list
-      by (metis card_eq_0_iff empty_subsetI finite.intros(1) order_refl)
-    hence tl_cupk: "cup k Tlist" using f_prop4 sorry
-    hence "\<not>(cap 3 Tlist \<or> cup (Suc k) Tlist)" sorry
-    hence "\<forall>xs. set xs \<subseteq> T \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap 3 xs \<or> cup (Suc k) xs)" using tlp tl_cupk sorry
-    thus ?thesis using Tp(2,3) by blast
+    obtain L where Trp:"length (L :: real list) = k" "sortedStrict L" using real_set_ex set2list
+      by (metis sorted_list_of_set.length_sorted_key_list_of_set
+          sorted_list_of_set.strict_sorted_key_list_of_set)
+    define V2L where v2lp:"V2L = map v2 L"
+    hence v2l_k:  "length V2L = k" using Trp by force
+    hence v2l_ss: "sortedStrict V2L" using Trp(2) v2lp f_prop11 by simp
+    hence         "cup k V2L" using f_prop4 v2lp v2l_k f_prop12 by blast
+    have v2l_gp:  "general_pos (set V2L)" using f_prop6 Trp(2)f_prop11 by (simp add: gpos_generalpos v2lp)
+    have  "(\<forall>xs. (set xs \<subseteq> set V2L) \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap 3 xs \<or> cup (Suc k) xs))"
+    proof-
+      {
+        fix xs
+        assume xsp:"set xs \<subseteq> set V2L"  "sortedStrict xs"
+        hence "length xs \<le> k" using v2l_k v2l_ss strict_sorted_iff
+          by (metis List.finite_set card_mono distinct_card)
+        hence 1:"\<not> cup (Suc k) xs" using cup_def by simp
+        have "\<not> cap 3 xs"
+        proof(cases "length xs = 3")
+          case True
+          then obtain a b c where xs3: "xs = a#b#c#[]" "sortedStrict[a, b, c]" using ext xsp(2) True
+            by (metis (no_types, lifting) Suc_length_conv length_0_conv numeral_3_eq_3)
+          then obtain u v w where uvw: "a = v2 u" "b = v2 v" "c = v2 w" using xsp v2lp by auto
+          hence "sortedStrict[v2 u, v2 v, v2 w]" using xsp(2) xs3 by simp
+          hence "cup3 a b c" using f_prop4 uvw f_prop10 by presburger
+          thus "\<not>(cap 3 xs)" using True exactly_one_true cap_def xs3 by (metis list_check.simps(4))
+        qed(simp add: cap_def)
+        hence "set xs \<subseteq> set V2L \<and> sortedStrict xs \<longrightarrow> \<not> (cap 3 xs \<or> cup (Suc k) xs)" using 1
+          by blast
+      }
+      thus ?thesis by blast
+    qed
+    hence "(\<forall>xs. (set xs \<subseteq> set V2L \<and> (sortedStrict xs)) \<longrightarrow> \<not>(cap 3 xs \<or> cup (Suc k) xs))" by simp
+    thus ?thesis using v2l_gp Trp(1) v2l_ss v2l_k
+      by (metis distinct_card le_refl strict_sorted_iff)
   qed
   thus ?thesis using min_conv_lower by simp
 qed
@@ -513,7 +552,8 @@ next
     by (smt (verit, best) abc ex_card general_pos_subs mem_Collect_eq order_trans)
   hence "min_conv 3 (Suc k) \<le> Suc k" unfolding min_conv_def[of "3" "Suc k"] using inf_subset_bounds
     by (metis (no_types, lifting) ext mem_Collect_eq wellorder_Inf_le1)
-  moreover have "min_conv 3 (Suc k) \<ge> Suc k"  using Suc_leI sorry
+  moreover have "min_conv 3 (Suc k) \<ge> Suc k"  using Suc_leI min_conv_3_k_bnd
+    by presburger
   ultimately show ?case by simp
 qed
 
