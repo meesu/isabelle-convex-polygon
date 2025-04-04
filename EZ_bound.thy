@@ -467,6 +467,10 @@ lemma inf_subset_bounds:
   shows "Inf Y \<le> Inf X"
   by (simp add: assms(1,2) cInf_superset_mono)
 
+lemma inf_upper:
+  "x \<in> (S::nat set) \<longrightarrow> Inf S \<le> x"
+  by (simp add: wellorder_Inf_le1)
+
 lemma min_conv_num_out:
   assumes "\<exists>S. (card S \<ge> n \<and> general_pos S)
                 \<and> (\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
@@ -542,7 +546,7 @@ theorem "min_conv 3 k = k"
 proof(induction k)
   case 0
   have "cap 0 []" by (simp add: cap_def) 
-  thus ?case unfolding min_conv_def
+  thus ?case unfolding min_conv_def using lcheck_len2_T
     by (smt (verit, best) bot.extremum bot_nat_0.extremum cInf_eq_minimum cup_def list.size(3) list_check.simps(1)
         mem_Collect_eq set_empty2 sorted_wrt.simps(1))
 next
@@ -550,8 +554,8 @@ next
   hence "Suc k \<in> {n :: nat. (\<forall>S . card S \<ge> (Suc k) \<and> general_pos S
                 \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap 3 xs \<or> cup (Suc k) xs)))}"
     by (smt (verit, best) abc ex_card general_pos_subs mem_Collect_eq order_trans)
-  hence "min_conv 3 (Suc k) \<le> Suc k" unfolding min_conv_def[of "3" "Suc k"] using inf_subset_bounds
-    by (metis (no_types, lifting) ext mem_Collect_eq wellorder_Inf_le1)
+  hence "min_conv 3 (Suc k) \<le> Suc k" 
+    unfolding min_conv_def[of "3" "Suc k"] using inf_upper by force
   moreover have "min_conv 3 (Suc k) \<ge> Suc k"  using Suc_leI min_conv_3_k_bnd
     by presburger
   ultimately show ?case by simp
