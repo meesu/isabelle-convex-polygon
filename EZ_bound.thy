@@ -483,10 +483,6 @@ proof
   thus False using assms by presburger
 qed
 
-lemma min_conv_arg_swap:
-  "min_conv k l = min_conv l k"
-  unfolding min_conv_def sorry
-
 lemma min_conv_lower:
   assumes "\<exists>S. (card S \<ge> n \<and> general_pos S)
                 \<and> (\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
@@ -542,7 +538,8 @@ proof-
   thus ?thesis using min_conv_lower by simp
 qed
 
-theorem "min_conv 3 k = k"
+theorem min_conv_base:
+  "min_conv 3 k = k"
 proof(induction k)
   case 0
   have "cap 0 []" by (simp add: cap_def) 
