@@ -18,25 +18,52 @@ an (l −1)-cap {(xi1 , yi1 ),(xi2 , yi2 ),... ,(xil−1 , yil−1 )}. Let {(xj1
 either (xil−2 , yil−2 ) can be added to the (k − 1)-cup to create a k-cup or (xj2 , yj2 )
 can be added to the (l − 1)-cap to create an l-cap.
 *)
+
+thm inf_upper
+
 lemma min_conv_rec:
-  "min_conv k l \<le> min_conv (k - 1) l + min_conv k (l - 1) - 1"
-proof-
-  obtain X where xo: "general_pos X" "card X = min_conv (k - 1) l + min_conv k (l - 1) - 1" 
-    using genpos_ex gpos_generalpos by blast
-  define Y where yo: "Y = {Min xs | xs. xs \<subseteq> X \<and> cup (k-1) (sorted_list_of_set xs)}"
-  have ysx: "Y\<subseteq>X" using xo yo sorry
-  show ?thesis
-  proof(cases "card (X-Y) \<ge> min_conv (k-1) l")
-    case True
-    then show ?thesis sorry (* show existence of l-cap in X\Y *)
-  next
-    case False
-    hence "card Y \<ge> min_conv k (l-1)" using xo(2) ysx sorry 
-    then show ?thesis sorry (* show existence of l-cap *)
+  assumes "k\<ge>3" and "l\<ge>3"
+  shows "min_conv k l \<le> min_conv (k - 1) l + min_conv k (l - 1) - 1" 
+  (is "?a \<le> ?b") using inf_upper
+proof
+  show "?b \<in> {n. \<forall>S . (card S = n \<and> general_pos S)
+                \<longrightarrow> (\<exists>xs. (set xs \<subseteq> S \<and> sortedStrict xs) \<and> (cap k xs \<or> cup l xs))}"
+  (is "?b \<in> {n. \<forall>S. ?GSET n S \<longrightarrow> (\<exists>xs. ?SS xs S \<and> ?CUPCAP k xs l)}")
+  proof
+    show "\<forall>S. card S = ?b \<and> general_pos S \<longrightarrow> (\<exists>xs. (set xs \<subseteq> S \<and> sortedStrict xs) \<and> (cap k xs \<or> cup l xs))"
+    proof-
+    {
+      fix X
+      assume asm:"?b = card X" "general_pos X"
+      hence A1: "?b \<le> card X" by simp
+      let ?Y = "{Min xs | xs. xs \<subseteq> X \<and> cup (k-1) (sorted_list_of_set xs)}"
+      have ysx: "?Y\<subseteq>X"
+      proof
+        {
+          fix x
+          assume asm1: "x \<in> {Min xs |xs. xs \<subseteq> X \<and> cup (k - 1) (sorted_list_of_set xs)}"
+          hence "\<exists>xs. x = Min xs \<and> xs \<subseteq> X" by blast
+          then obtain xs where "x = Min xs \<and> xs \<subseteq> X" by blast
+          hence "x \<in> xs" using Min_in asm sorry
+          thus "x\<in>X" sorry
+        }
+      qed
+      have "(\<exists>xs. ?SS xs X \<and> ?CUPCAP k xs l)"
+      proof(cases "card (X-?Y) \<ge> min_conv (k-1) l")
+        case True
+        then show ?thesis sorry (* show existence of l-cap in X\Y *)
+      next
+        case False
+        hence "min_conv (k - 1) l \<ge> card (X - ?Y) + 1" by simp
+        have "card (X - (?Y)) = card X - (card (?Y))" using ysx card_def sorry
+        then show ?thesis sorry (* show existence of l-cap *)
+      qed
+    }
+    thus ?thesis sorry  
   qed
 qed
-
-thm binomial_Suc_Suc
+  show ?thesis sorry
+qed
 
 lemma min_conv_bin:
   shows "min_conv (k+3) (l+3) \<le> ((k + l + 2) choose (k + 1)) + 1"
@@ -49,8 +76,9 @@ proof(induction "k+l" arbitrary: l k)
     show ?thesis
     proof(cases "l = 0")
       case True
-      then show ?thesis using min_conv_base min_conv_arg_swap
-        by (metis Suc_eq_plus1 add_0 add_2_eq_Suc' add_Suc_right binomial_Suc_n dual_order.refl numeral_3_eq_3)
+      hence "min_conv (k + 3) (l + 3) = k + 3" using min_conv_arg_swap min_conv_base[of "k+3"] by simp
+      moreover have "(k + l + 2 choose k + 1) + 1 = k + 3" using True binomial_Suc_n by simp
+      ultimately show ?thesis using min_conv_base by simp
     next
       case False
       hence 2:"l\<ge>1" by simp
