@@ -271,8 +271,6 @@ lemma genpos_cross0:
   by (smt (verit, del_insts) add.right_neutral add_Suc_right distinct_card empty_set 
       empty_subsetI insert_subset list.simps(15) list.size(3,4) mem_Collect_eq numeral_3_eq_3)
 
-thm strict_sorted_iff
-
 lemma exactly_one_true:
   assumes "A = collinear3 a b c" and "B = cap3 a b c" and "C = cup3 a b c"
   shows "(A \<or> B \<or> C) \<and> ((\<not>A \<and> \<not>B) \<or> (\<not>B \<and> \<not>C) \<or> (\<not>C \<and> \<not>A))"
@@ -519,8 +517,8 @@ proof-
         have "\<not> cap 3 xs"
         proof(cases "length xs = 3")
           case True
-          then obtain a b c where xs3: "xs = a#b#c#[]" "sortedStrict[a, b, c]" using ext xsp(2) True
-            by (metis (no_types, lifting) Suc_length_conv length_0_conv numeral_3_eq_3)
+          then obtain a b c where xs3: "xs = [a,b,c]" "sortedStrict[a, b, c]"
+            by (metis (no_types, lifting) ext Suc_length_conv length_0_conv numeral_3_eq_3 xsp(2))
           then obtain u v w where uvw: "a = v2 u" "b = v2 v" "c = v2 w" using xsp v2lp by auto
           hence "sortedStrict[v2 u, v2 v, v2 w]" using xsp(2) xs3 by simp
           hence "cup3 a b c" using f_prop4 uvw f_prop10 by presburger
