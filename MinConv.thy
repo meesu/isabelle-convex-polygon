@@ -7,14 +7,16 @@ lemma gpos_neg:
   assumes "gpos S"
   shows   "gpos (uminus ` S)"
 proof-
-  have  0:"\<forall>a. a\<in>S \<longrightarrow> (-a) \<in> (uminus ` S)" by simp
-  hence 1:"\<forall>a\<in>S. \<forall>b\<in>S. \<forall>c\<in>S. distinct [ a, b, c] \<longrightarrow> \<not> collinear3 (a) (b) (c)" using gpos_def assms by simp
-  have  2:"\<forall>a\<in>S. \<forall>b\<in>S. \<forall>c\<in>S. distinct [a,b,c] \<longrightarrow> distinct [-a, -b, -c]" by simp
-  have  3:"\<forall>a\<in>S. \<forall>b\<in>S. \<forall>c\<in>S. \<not>collinear3 a b c \<longrightarrow> \<not>collinear3 (-a) (-b) (-c)" unfolding collinear3_def cross3_def
-  by (smt (verit, del_insts) diff_0 diff_minus_eq_add fst_conv minus_prod_def
-    mult.commute mult_minus_right snd_eqD)
-  have "\<forall>a\<in>S. \<forall>b\<in>S. \<forall>c\<in>S. distinct [-a, -b, -c] \<longrightarrow> \<not>collinear3 (-a) (-b) (-c)" using 1 2 3 by simp
-  thus ?thesis using general_pos_def[of "-S"] using 0
+  {
+    fix a b c
+    assume asm: "a\<in>S" "b\<in>S" "c\<in>S" "distinct [a,b,c]"
+    hence 1:"\<not> collinear3 (a) (b) (c)"    using gpos_def assms asm by simp
+    have  2:  "distinct [-a, -b, -c]"     using asm by simp
+    have  3:"\<not>collinear3 (-a) (-b) (-c)"  using 1 unfolding collinear3_def cross3_def
+      by (simp add: mult.commute vector_space_over_itself.scale_right_diff_distrib)
+    have "distinct [-a, -b, -c] \<longrightarrow> \<not>collinear3 (-a) (-b) (-c)" using 2 3 by simp
+  }
+  thus ?thesis
   by (simp add: gpos_def)
 qed
 corollary general_pos_neg:
@@ -28,9 +30,25 @@ lemma card_neg:
   "(card S \<ge> n) = (card (uminus ` (S :: R2 set)) \<ge> n)" using card_def
   by (simp add: card_image)
 
+lemma rev_uminus:
+  "rev \<circ> (map uminus) = (map uminus) \<circ> rev"
+  by (simp add: comp_def rev_map)
+
+lemma rev_uminus_inv:
+  "(rev \<circ> (map uminus)) \<circ> (rev \<circ> (map uminus)) = (id :: R2 list \<Rightarrow> R2 list)"
+  by (metis (no_types, lifting) List.map.comp comp_assoc comp_id group_add_class.minus_comp_minus list.map_id0 rev_involution rev_uminus)
+
+lemma distinct_neg:
+  "distinct xs = distinct (rev (map uminus (xs :: R2 list)))"
+  by (simp add: distinct_map)
+
 lemma sorted_neg:
+  "sorted xs = sorted (rev (map uminus (xs :: R2 list)))" sorry
+
+lemma sortedstrict_neg:
   "sortedStrict xs = sortedStrict (rev (map uminus (xs :: R2 list)))" 
-sorry
+  using distinct_neg sorted_neg conjE strict_sorted_iff rev_uminus_inv
+  by metis
 
 lemma orig_refl_rev:
   "cap3 x y z = cup3 (-z) (-y) (-x)"
@@ -41,7 +59,7 @@ lemma cap_orig_refl_rev:
   using orig_refl_rev unfolding cap_def cup_def sorry 
 
 lemma min_conv_arg_swap: "min_conv k l = min_conv l k"  
-unfolding min_conv_def using cap_orig_refl_rev orig_refl_rev card_neg general_pos_neg sorry
+unfolding min_conv_def using cap_orig_refl_rev orig_refl_rev card_neg general_pos_neg sorted_neg rev_uminus rev_uminus_inv sorry
   
 lemma extend_cap_cup:
   assumes "sortedStrict (B@[b])" and "list_check cc (B :: R2 list)" and "cc (B!(length B-2)) (B!(length B-1)) b"
