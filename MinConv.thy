@@ -3,16 +3,45 @@ imports EZ_bound
 
 begin
 
+lemma gpos_neg:
+  assumes "gpos S"
+  shows   "gpos (uminus ` S)"
+proof-
+  have  0:"\<forall>a. a\<in>S \<longrightarrow> (-a) \<in> (uminus ` S)" by simp
+  hence 1:"\<forall>a\<in>S. \<forall>b\<in>S. \<forall>c\<in>S. distinct [ a, b, c] \<longrightarrow> \<not> collinear3 (a) (b) (c)" using gpos_def assms by simp
+  have  2:"\<forall>a\<in>S. \<forall>b\<in>S. \<forall>c\<in>S. distinct [a,b,c] \<longrightarrow> distinct [-a, -b, -c]" by simp
+  have  3:"\<forall>a\<in>S. \<forall>b\<in>S. \<forall>c\<in>S. \<not>collinear3 a b c \<longrightarrow> \<not>collinear3 (-a) (-b) (-c)" unfolding collinear3_def cross3_def
+  by (smt (verit, del_insts) diff_0 diff_minus_eq_add fst_conv minus_prod_def
+    mult.commute mult_minus_right snd_eqD)
+  have "\<forall>a\<in>S. \<forall>b\<in>S. \<forall>c\<in>S. distinct [-a, -b, -c] \<longrightarrow> \<not>collinear3 (-a) (-b) (-c)" using 1 2 3 by simp
+  thus ?thesis using general_pos_def[of "-S"] using 0
+  by (simp add: gpos_def)
+qed
+corollary general_pos_neg:
+  "general_pos S \<longrightarrow> general_pos (uminus ` S)" using gpos_generalpos gpos_neg by simp
+corollary general_pos_neg_neg:
+  "general_pos (uminus ` S) \<longrightarrow> general_pos S" using general_pos_neg
+  by (metis (no_types, opaque_lifting) general_pos_subs minus_equation_iff
+    rev_image_eqI subset_eq)
+
+lemma card_neg:
+  "(card S \<ge> n) = (card (uminus ` (S :: R2 set)) \<ge> n)" using card_def
+  by (simp add: card_image)
+
+lemma sorted_neg:
+  "sortedStrict xs = sortedStrict (rev (map uminus (xs :: R2 list)))" 
+sorry
+
 lemma orig_refl_rev:
   "cap3 x y z = cup3 (-z) (-y) (-x)"
   unfolding cap3_def cup3_def cross3_def by fastforce
   
-lemma cap_origin_reflection_rev:
-  "cap k xs = cup k (rev (map uminus xs))"
-  using orig_refl_rev unfolding cap_def cup_def sorry  
+lemma cap_orig_refl_rev:
+  "cap k xs = cup k (rev (map uminus (xs::R2 list)))"
+  using orig_refl_rev unfolding cap_def cup_def sorry 
 
 lemma min_conv_arg_swap: "min_conv k l = min_conv l k"  
-unfolding min_conv_def using cap_origin_reflection_rev sorry
+unfolding min_conv_def using cap_orig_refl_rev orig_refl_rev card_neg general_pos_neg sorry
   
 lemma extend_cap_cup:
   assumes "sortedStrict (B@[b])" and "list_check cc (B :: R2 list)" and "cc (B!(length B-2)) (B!(length B-1)) b"
