@@ -3,9 +3,12 @@ imports EZ_bound
 
 begin
 
+abbreviation
+  "reflect \<equiv> (\<lambda> p. -(p :: R2))" 
+
 lemma gpos_neg:
   assumes "gpos S"
-  shows   "gpos (uminus ` S)"
+  shows   "gpos (reflect ` S)"
 proof-
   {
     fix a b c
@@ -20,46 +23,101 @@ proof-
   by (simp add: gpos_def)
 qed
 corollary general_pos_neg:
-  "general_pos S \<longrightarrow> general_pos (uminus ` S)" using gpos_generalpos gpos_neg by simp
+  "general_pos S \<longrightarrow> general_pos (reflect ` S)" using gpos_generalpos gpos_neg by simp
 corollary general_pos_neg_neg:
-  "general_pos (uminus ` S) \<longrightarrow> general_pos S" using general_pos_neg
+  "general_pos (reflect ` S) \<longrightarrow> general_pos S" using general_pos_neg
   by (metis (no_types, opaque_lifting) general_pos_subs minus_equation_iff
     rev_image_eqI subset_eq)
 
 lemma card_neg:
-  "(card S \<ge> n) = (card (uminus ` (S :: R2 set)) \<ge> n)" using card_def
+  "(card S \<ge> n) = (card (reflect ` (S :: R2 set)) \<ge> n)" using card_def
   by (simp add: card_image)
 
-lemma rev_uminus:
-  "rev \<circ> (map uminus) = (map uminus) \<circ> rev"
-  by (simp add: comp_def rev_map)
+lemma neg_neg:
+  "reflect \<circ> reflect = id" by simp
 
-lemma rev_uminus_inv:
-  "(rev \<circ> (map uminus)) \<circ> (rev \<circ> (map uminus)) = (id :: R2 list \<Rightarrow> R2 list)"
-  by (metis (no_types, lifting) List.map.comp comp_assoc comp_id group_add_class.minus_comp_minus list.map_id0 rev_involution rev_uminus)
+lemma rev_reflect:
+  "rev \<circ> (map reflect) = (map reflect) \<circ> rev"
+   by (simp add: comp_def rev_map)
+
+lemma rev_reflect_inv:
+  "(rev \<circ> (map reflect)) \<circ> (rev \<circ> (map reflect)) = (id :: R2 list \<Rightarrow> R2 list)"
+  using rev_reflect neg_neg
+  by (metis List.map.comp comp_assoc comp_id list.map_id0 rev_involution)
 
 lemma distinct_neg:
-  "distinct xs = distinct (rev (map uminus (xs :: R2 list)))"
-  by (simp add: distinct_map)
+"distinct xs = distinct (rev (map reflect (xs :: R2 list)))"
+by (simp add: distinct_map)
 
 lemma sorted_neg:
-  "sorted xs = sorted (rev (map uminus (xs :: R2 list)))" sorry
+  "sorted xs = sorted (rev (map reflect (xs :: R2 list)))"
+  (is "?P xs = ?Q xs")
+proof
+  assume asm:"?P xs"
+  hence 1:"sorted_wrt (\<ge>) (rev xs)"
+    by (simp add: sorted_wrt_rev)
+  have Fact:"\<forall>x y. x \<le> y \<longrightarrow> reflect x \<ge> reflect y" by simp
+  hence 2:"sorted_wrt (\<ge>) (map reflect xs)"
+    by (metis asm sorted_wrt_map_mono)
+  thus "?Q xs" using asm 1 sorted_wrt_rev
+    by blast
+next
+  have Fact:"\<forall>x y. reflect x \<ge> reflect y \<longrightarrow> x \<le> y " by simp
+  assume asm:"?Q xs"
+  thus "?P xs" using sorted_wrt_rev sorted_wrt_map_mono Fact
+    by (smt (verit, ccfv_SIG) sorted_wrt_map sorted_wrt_mono_rel)
+qed
 
 lemma sortedstrict_neg:
-  "sortedStrict xs = sortedStrict (rev (map uminus (xs :: R2 list)))" 
-  using distinct_neg sorted_neg conjE strict_sorted_iff rev_uminus_inv
-  by metis
+  "sortedStrict xs = sortedStrict (rev (map reflect (xs :: R2 list)))" 
+  using distinct_neg sorted_neg strict_sorted_iff by blast
 
 lemma orig_refl_rev:
   "cap3 x y z = cup3 (-z) (-y) (-x)"
   unfolding cap3_def cup3_def cross3_def by fastforce
   
 lemma cap_orig_refl_rev:
-  "cap k xs = cup k (rev (map uminus (xs::R2 list)))"
+  "cap k xs = cup k (rev (map reflect (xs::R2 list)))"
   using orig_refl_rev unfolding cap_def cup_def sorry 
 
-lemma min_conv_arg_swap: "min_conv k l = min_conv l k"  
-unfolding min_conv_def using cap_orig_refl_rev orig_refl_rev card_neg general_pos_neg sorted_neg rev_uminus rev_uminus_inv sorry
+(*
+{n :: nat. (\<forall>S . (card S \<ge> n \<and> general_pos S)
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs)))
+*)
+lemma min_conv_sets_eq:
+  assumes rmr:"rmr \<equiv> (\<lambda> xs. (rev (map reflect xs)))"
+  shows "{n :: nat. (\<forall>S :: R2 set . (card S \<ge> n \<and> general_pos S)
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs)))}
+= {n :: nat. (\<forall>S :: R2 set . (card S \<ge> n \<and> general_pos S)
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap l xs \<or> cup k xs)))}"
+(is "?P = ?Q")
+proof
+  show "?P \<subseteq> ?Q"
+  proof
+    fix x 
+    assume x_in:"x \<in> ?P"
+    have 1:"\<forall>S :: R2 set. (card (reflect ` S) \<ge> x \<and> general_pos (reflect ` S))
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> (reflect ` S) \<and> (sortedStrict xs) \<and> (cap l xs \<or> cup k xs))"
+      by (smt (verit, best) cap_def cap_orig_refl_rev card_neg cup_def general_pos_neg_neg id_apply image_mono image_set mem_Collect_eq o_def rev_reflect_inv set_rev x_in)
+    have 2:"bij (reflect :: R2 \<Rightarrow> R2)"
+      using Fun.bij_uminus by auto
+    have 3:"reflect \<circ> reflect = id" by simp
+(*     have 4:"p \<in> \<real>\<times>\<real> \<longrightarrow> (reflect p) \<in> \<real>\<times>\<real>" by auto
+    have 5: "(reflect p) \<in> \<real>\<times>\<real> \<longrightarrow> p \<in> \<real>\<times>\<real>"
+      by (simp add: mem_Times_iff)
+ *)
+    thus "x \<in> ?Q" sorry (* by blast *)
+  qed
+next
+  show "?Q \<subseteq> ?P"
+  proof
+    fix x assume asm:"x \<in> ?Q"
+    show "x \<in> ?P" sorry
+  qed
+qed
+
+lemma min_conv_arg_swap: "min_conv k l = min_conv l k"
+  unfolding min_conv_def using min_conv_sets_eq by simp
   
 lemma extend_cap_cup:
   assumes "sortedStrict (B@[b])" and "list_check cc (B :: R2 list)" and "cc (B!(length B-2)) (B!(length B-1)) b"
@@ -191,7 +249,7 @@ show "\<forall>S. card S = ?b \<and> general_pos S \<longrightarrow> (\<exists>x
           
         case True
           have xy1: "general_pos (X-Y)" using general_pos_subs ysx asm(2) by blast
-(* the following is not possible as X-Y can not have a (l-1) cup as their left points have been put in Y *)
+          (* the following is not possible as X-Y can not have a (l-1) cup as their left points have been put in Y *)
           hence "\<exists>xs. set xs \<subseteq> (X-Y) \<and> sortedStrict xs \<and> cup (l-1) xs"
             using outerFalse True extract_cap_cup[of "k" "l-1" _ "X - Y"] min_conv_num_out
             by (smt (verit, best) Diff_subset dual_order.trans)

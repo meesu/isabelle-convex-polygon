@@ -57,10 +57,10 @@ lemma set2list:
 
 lemma extract_cap_cup:
     assumes "min_conv k l = n"
-        and "card S = n" "general_pos S"
+        and "card (S :: R2 set) = n" and "general_pos S"
       shows "\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap k xs \<or> cup l xs)"
-  using assms 
-  by (smt (verit, best) Inf_nat_def1 mem_Collect_eq min_conv_def non_empty_cup_cap order_refl)
+  using assms
+    by (smt (verit, best) Inf_nat_def1 mem_Collect_eq min_conv_def non_empty_cup_cap order_refl)
 
 lemma general_pos_subs:
   assumes "X \<subseteq> Y" and "general_pos Y"
@@ -523,7 +523,8 @@ proof-
           hence "sortedStrict[v2 u, v2 v, v2 w]" using xsp(2) xs3 by simp
           hence "cup3 a b c" using f_prop4 uvw f_prop10 by presburger
           thus "\<not>(cap 3 xs)" using True exactly_one_true cap_def xs3 by (metis list_check.simps(4))
-        qed(simp add: cap_def)
+          text\<open>When the length xs \<noteq> 3 then xs can not be a 3-cap from definition trivially.\<close>
+        qed(simp add: cap_def) 
         hence "set xs \<subseteq> set V2L \<and> sortedStrict xs \<longrightarrow> \<not> (cap 3 xs \<or> cup (Suc k) xs)" using 1
           by blast
       }

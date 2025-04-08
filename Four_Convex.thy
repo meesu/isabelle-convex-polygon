@@ -53,6 +53,7 @@ qed
 
 (*if every subset of S of cardinality four is in a convex position, 
 then S is in a convex position. This is a proof of lemma 2.1*)
+
 lemma fourconvex:
   assumes "\<forall>X \<subseteq> (S::(real \<times> real) set). card X \<le> 4 \<longrightarrow> convex_pos X"
   shows "convex_pos S"
@@ -62,7 +63,7 @@ proof(rule ccontr)
     using asm unfolding convex_pos_def by blast
   then have "p \<in> convex hull (S - {p})"
     using hull_inc by fastforce
-  then obtain T where t:"finite T" "T \<subseteq> S - {p}" "card T \<le> DIM(real\<times>real) + 1" "p\<in>convex hull T" 
+  then obtain T where t:"finite T" "T \<subseteq> S - {p}" "card T \<le> DIM(real\<times>real) + 1" "p\<in>convex hull T"
     using caratheodory[of "S-{p}"] by blast
   hence c1:"\<not> convex_pos (T\<union>{p})" unfolding convex_pos_def
     by (simp add: hull_insert insert_absorb subset_Diff_insert)
