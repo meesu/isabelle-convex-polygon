@@ -30,7 +30,7 @@ corollary general_pos_neg_neg:
     rev_image_eqI subset_eq)
 
 lemma card_neg:
-  "(card S \<ge> n) = (card (reflect ` (S :: R2 set)) \<ge> n)" using card_def
+  "(card S = n) = (card (reflect ` (S :: R2 set)) = n)" using card_def
   by (simp add: card_image)
 
 lemma neg_neg:
@@ -75,44 +75,60 @@ lemma sortedstrict_neg:
 lemma orig_refl_rev:
   "cap3 x y z = cup3 (-z) (-y) (-x)"
   unfolding cap3_def cup3_def cross3_def by fastforce
-  
+
+lemma list_check_rev_refl:
+  assumes "list_check cc xs" and "sortedStrict xs"
+  shows "list_check (\<lambda>a b c. \<not> cc a b c) (rev (map reflect xs))"
+  using assms
+proof(induction xs)
+  case Nil
+  then show ?case by force
+next
+  case (Cons a xs)
+  then show ?case sorry
+qed
+
 lemma cap_orig_refl_rev:
   "cap k xs = cup k (rev (map reflect (xs::R2 list)))"
-  using orig_refl_rev unfolding cap_def cup_def sorry 
-
+  unfolding cap_def cup_def sorry
 (*
 {n :: nat. (\<forall>S . (card S \<ge> n \<and> general_pos S)
                 \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs)))
 *)
 lemma min_conv_sets_eq:
   assumes rmr:"rmr \<equiv> (\<lambda> xs. (rev (map reflect xs)))"
-  shows "{n :: nat. (\<forall>S :: R2 set . (card S \<ge> n \<and> general_pos S)
-                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs)))}
-= {n :: nat. (\<forall>S :: R2 set . (card S \<ge> n \<and> general_pos S)
-                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap l xs \<or> cup k xs)))}"
-(is "?P = ?Q")
+    shows "{n :: nat. (\<forall>S :: R2 set . (card S \<ge> n \<and> general_pos S)
+                  \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs)))}
+         = {n :: nat. (\<forall>S :: R2 set . (card S \<ge> n \<and> general_pos S)
+                  \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap l xs \<or> cup k xs)))}"
+ (is "?P = ?Q")
 proof
   show "?P \<subseteq> ?Q"
   proof
     fix x 
     assume x_in:"x \<in> ?P"
-    have 1:"\<forall>S :: R2 set. (card (reflect ` S) \<ge> x \<and> general_pos (reflect ` S))
+    have "\<forall>S :: R2 set. (card (S) \<ge> x \<and> general_pos (S))
                 \<longrightarrow> (\<exists>xs. set xs \<subseteq> (reflect ` S) \<and> (sortedStrict xs) \<and> (cap l xs \<or> cup k xs))"
-      by (smt (verit, best) cap_def cap_orig_refl_rev card_neg cup_def general_pos_neg_neg id_apply image_mono image_set mem_Collect_eq o_def rev_reflect_inv set_rev x_in)
-    have 2:"bij (reflect :: R2 \<Rightarrow> R2)"
-      using Fun.bij_uminus by auto
-    have 3:"reflect \<circ> reflect = id" by simp
-(*     have 4:"p \<in> \<real>\<times>\<real> \<longrightarrow> (reflect p) \<in> \<real>\<times>\<real>" by auto
-    have 5: "(reflect p) \<in> \<real>\<times>\<real> \<longrightarrow> p \<in> \<real>\<times>\<real>"
-      by (simp add: mem_Times_iff)
- *)
-    thus "x \<in> ?Q" sorry (* by blast *)
+      by (smt (verit, best) cap_def cap_orig_refl_rev cup_def general_pos_neg_neg id_apply image_mono image_set mem_Collect_eq o_def rev_reflect_inv set_rev x_in)
+    hence "\<forall>S :: R2 set. (card S \<ge> x \<and> general_pos S)
+                 \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap l xs \<or> cup k xs))" 
+      using card_neg general_pos_neg neg_neg
+      by (metis id_apply image_comp image_id) (* takes long *)
+    thus "x \<in> ?Q" by blast
   qed
 next
   show "?Q \<subseteq> ?P"
   proof
-    fix x assume asm:"x \<in> ?Q"
-    show "x \<in> ?P" sorry
+    fix x
+    assume x_in:"x \<in> ?Q"
+    have "\<forall>S :: R2 set. (card (S) \<ge> x \<and> general_pos (S))
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> (reflect ` S) \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs))"
+      by (smt (verit, best) cap_def cap_orig_refl_rev cup_def general_pos_neg_neg id_apply image_mono image_set mem_Collect_eq o_def rev_reflect_inv set_rev x_in)
+    hence "\<forall>S :: R2 set. (card S \<ge> x \<and> general_pos S)
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs))" 
+      using card_neg general_pos_neg neg_neg
+      by (metis id_apply image_comp image_id) (* takes long *)    
+    thus "x \<in> ?P" by blast
   qed
 qed
 
@@ -221,134 +237,135 @@ qed
 lemma min_conv_rec:
 assumes "k\<ge>3" and "l\<ge>3"
 shows "min_conv k l \<le> min_conv (k - 1) l + min_conv k (l - 1) - 1"
-  
-(is "?a \<le> ?b") using inf_upper
-  
-  proof
-show "?b \<in> {n. \<forall>S . (card S = n \<and> general_pos S)
-                \<longrightarrow> (\<exists>xs. (set xs \<subseteq> S \<and> sortedStrict xs) \<and> (cap k xs \<or> cup l xs))}"  
-(is "?b \<in> {n. \<forall>S. ?GSET n S \<longrightarrow> (\<exists>xs. ?SS xs S \<and> ?CUPCAP k xs l)}")
+            (is "?a \<le> ?b") 
+  using inf_upper
   
 proof
-    
-show "\<forall>S. card S = ?b \<and> general_pos S \<longrightarrow> (\<exists>xs. (set xs \<subseteq> S \<and> sortedStrict xs) \<and> (cap k xs \<or> cup l xs))"
+  show "?b \<in> {n. \<forall>S . (card S = n \<and> general_pos S)
+                \<longrightarrow> (\<exists>xs. (set xs \<subseteq> S \<and> sortedStrict xs) \<and> (cap k xs \<or> cup l xs))}"  
+    (is "?b \<in> {n. \<forall>S. ?GSET n S \<longrightarrow> (\<exists>xs. ?SS xs S \<and> ?CUPCAP k xs l)}")
+
+  proof
+
+    show "\<forall>S. card S = ?b \<and> general_pos S \<longrightarrow> (\<exists>xs. (set xs \<subseteq> S \<and> sortedStrict xs) \<and> (cap k xs \<or> cup l xs))"
     proof-
-    {
-      fix X
-      assume asm: "?b = card X" "general_pos X"
-      hence   A1: "?b \<le> card X" by simp
-      define Y where ys: "Y = {Min (set xs) | xs. set xs \<subseteq> X \<and> sortedStrict xs \<and> cup (l - 1) (xs)}"
-      hence ysx:  "Y\<subseteq>X" using cap_endpoint_subset using asm assms by auto
-      hence ygen: "general_pos Y" using asm(2) general_pos_subs by presburger
-      
-      have "\<exists>xs. ?SS xs X \<and> ?CUPCAP k xs l"
-      proof(cases "\<exists>xs. ?SS xs X \<and> (cap k xs \<or> cup l xs)")
-        case outerFalse:False
-        then show ?thesis
-        proof(cases "card (X-Y) \<ge> min_conv k (l-1)")
-          
-        case True
-          have xy1: "general_pos (X-Y)" using general_pos_subs ysx asm(2) by blast
-          (* the following is not possible as X-Y can not have a (l-1) cup as their left points have been put in Y *)
-          hence "\<exists>xs. set xs \<subseteq> (X-Y) \<and> sortedStrict xs \<and> cup (l-1) xs"
-            using outerFalse True extract_cap_cup[of "k" "l-1" _ "X - Y"] min_conv_num_out
-            by (smt (verit, best) Diff_subset dual_order.trans)
-          then obtain lcs where lcs: "set lcs \<subseteq> (X-Y)" "sortedStrict lcs" "cup (l-1) lcs" by blast
-          hence C1: "Min (set lcs) \<in> (X-Y)"
-            by (smt (verit, ccfv_SIG) List.finite_set Min_in One_nat_def assms(2) cup_def diff_Suc_Suc diff_less_mono in_mono less_Suc_eq less_nat_zero_code list.size(3) numeral_3_eq_3 set_empty2)
-          have  C2: "Min (set lcs) \<in> Y"
-            using lcs(1,2,3) ys by blast
-          show ?thesis using C1 C2 by simp
-        next
-          
-        case False
-          hence 2:"min_conv (k) (l-1) \<ge> card (X - Y) + 1" by simp
-          have    "card (X - Y) = card X - (card Y)" using ysx card_def 2 asm(1)
-            by (smt (verit, ccfv_SIG) Suc_eq_plus1 add.commute card.infinite card_Diff_subset diff_0_eq_0 diff_Suc_1 diff_is_0_eq double_diff finite_Diff le_antisym subset_refl trans_le_add2)
-          hence   "card Y \<ge> min_conv (k-1) (l)" using 2 asm(1) by linarith
-          hence 3:"\<exists>xs. set xs \<subseteq> Y \<and> sortedStrict xs \<and> (cap (k-1) xs)"
-            using ygen outerFalse extract_cap_cup[of "k-1" "l" _ "Y"] ysx min_conv_num_out
-            by (metis order_trans)
+      {
+        fix X
+        assume asm: "?b = card X" "general_pos X"
+        hence   A1: "?b \<le> card X" by simp
+        define Y where ys: "Y = {Min (set xs) | xs. set xs \<subseteq> X \<and> sortedStrict xs \<and> cup (l - 1) (xs)}"
+        hence ysx:  "Y\<subseteq>X" using cap_endpoint_subset using asm assms by auto
+        hence ygen: "general_pos Y" using asm(2) general_pos_subs by presburger
+
+        have "\<exists>xs. ?SS xs X \<and> ?CUPCAP k xs l"
+        proof(cases "\<exists>xs. ?SS xs X \<and> (cap k xs \<or> cup l xs)")
+          case outerFalse:False
+          then show ?thesis
+          proof(cases "card (X-Y) \<ge> min_conv k (l-1)")
+
+            case True
+            have xy1: "general_pos (X-Y)" using general_pos_subs ysx asm(2) by blast
+                (* the following is not possible as X-Y can not have a (l-1) cup as their left points have been put in Y *)
+            hence "\<exists>xs. set xs \<subseteq> (X-Y) \<and> sortedStrict xs \<and> cup (l-1) xs"
+              using outerFalse True extract_cap_cup[of "k" "l-1" _ "X - Y"] min_conv_num_out
+              by (smt (verit, best) Diff_subset dual_order.trans)
+            then obtain lcs where lcs: "set lcs \<subseteq> (X-Y)" "sortedStrict lcs" "cup (l-1) lcs" by blast
+            hence C1: "Min (set lcs) \<in> (X-Y)"
+              by (smt (verit, ccfv_SIG) List.finite_set Min_in One_nat_def assms(2) cup_def diff_Suc_Suc diff_less_mono in_mono less_Suc_eq less_nat_zero_code list.size(3) numeral_3_eq_3 set_empty2)
+            have  C2: "Min (set lcs) \<in> Y"
+              using lcs(1,2,3) ys by blast
+            show ?thesis using C1 C2 by simp
+          next
+
+            case False
+            hence 2:"min_conv (k) (l-1) \<ge> card (X - Y) + 1" by simp
+            have    "card (X - Y) = card X - (card Y)" using ysx card_def 2 asm(1)
+              by (smt (verit, ccfv_SIG) Suc_eq_plus1 add.commute card.infinite card_Diff_subset diff_0_eq_0 diff_Suc_1 diff_is_0_eq double_diff finite_Diff le_antisym subset_refl trans_le_add2)
+            hence   "card Y \<ge> min_conv (k-1) (l)" using 2 asm(1) by linarith
+            hence 3:"\<exists>xs. set xs \<subseteq> Y \<and> sortedStrict xs \<and> (cap (k-1) xs)"
+              using ygen outerFalse extract_cap_cup[of "k-1" "l" _ "Y"] ysx min_conv_num_out
+              by (metis order_trans)
 
 (*  Y gets a (k-1) cap, say kap, in this case. Since each point of Y is a starting point of an (l-1) cup,
     get the (l-1) cup starting at last point in kcs. Now, the union of these two contains either an l-cup or a k-cap.          
  *)
 
-          then obtain kap where kap: "set kap \<subseteq> Y" "sortedStrict kap" "(cap (k-1) kap)" by blast
-          (* get (l-1) cup in X starting at kap.last *)
-          hence k1:"length kap = k-1" unfolding cap_def by auto
-          hence k2:"kap!(k-2) \<in> Y" using kap
-            by (metis One_nat_def Suc_1 Suc_diff_Suc Suc_le_lessD add_leE assms(1) lessI nth_mem numeral_3_eq_3 plus_1_eq_Suc subset_iff)
-          then obtain lup where lup:"kap!(k-2) = Min (set lup)" "set lup \<subseteq> X" "sortedStrict lup" "cup (l - 1) (lup)" using ys by auto
-          hence k3:"Min (set lup) = lup!0" using lup(1,3,4) assms(2)
-            by (metis (no_types, lifting) List.finite_set One_nat_def Suc_diff_Suc
-                Suc_le_lessD Suc_lessD Zero_neq_Suc card.empty cup_def nth_Cons_0
-                numeral_3_eq_3 sorted_list_of_set.sorted_key_list_of_set_unique
-                sorted_list_of_set_nonempty strict_sorted_equal)
-          have k7:"lup!1 \<in> X" using lup(2,4) assms(2) cup_def
-            by (metis One_nat_def Suc_le_eq less_diff_conv nth_mem numeral_3_eq_3
-                plus_1_eq_Suc subsetD)
-          have k4:"(kap!(k-3)) < (kap!(k-2))" using assms(1) kap(2,3) cap_def
-            by (metis One_nat_def Suc_1 Suc_diff_Suc Suc_le_lessD add_leE lessI
-                numeral_3_eq_3 plus_1_eq_Suc sorted_wrt_iff_nth_less)
-          have k5:"(kap!(k-2)) < (lup!1)" using assms lup cup_def
-            by (metis One_nat_def Suc_1 Suc_le_lessD add_diff_cancel_left' diff_less_mono
-                k3 numeral_3_eq_3 numeral_One one_le_numeral plus_1_eq_Suc
-                sorted_wrt_nth_less)
-          hence k6:"sortedStrict [(kap!(k-3)),(kap!(k-2)),(lup!1)]" using k4 k5 by simp
-         
-          hence k_noncoll:"\<not> collinear3 (kap!(k-3)) (kap!(k-2)) (lup!1)" 
-            by (metis (full_types) asm(2) assms(1) collinear3_def diff_less_mono2 dual_order.trans genpos_cross0 k1 k2 k7 kap(1) linorder_not_less nth_mem numeral_le_one_iff semiring_norm(70) strict_sorted_iff subsetD ysx)
-       
-          thus ?thesis
-          proof(cases "cap3 (kap!(k-3)) (kap!(k-2)) (lup!1)")
-            
-          case True
-            hence k8:"cap k (kap@[lup!1])" using kap(2,3) cap_def
-            proof-
-              
-            have k_rev: "rev ( (lup!1) # ( rev kap ) ) = (kap@[lup!1])" by force
-              have k_lup_len: "length (kap@[lup!1]) = k" using k1 k5
-                using assms(1) by fastforce
-              hence k29:"sortedStrict (kap@[lup!1] )" 
-                using k1 k3 lup(1) k5 kap(2) assms append_last_sortedStrict
-                by (metis Suc_1 append_Nil diff_Suc_eq_diff_pred last_conv_nth sorted_wrt1)
+            then obtain kap where kap: "set kap \<subseteq> Y" "sortedStrict kap" "(cap (k-1) kap)" by blast
+                (* get (l-1) cup in X starting at kap.last *)
+            hence k1:"length kap = k-1" unfolding cap_def by auto
+            hence k2:"kap!(k-2) \<in> Y" using kap
+              by (metis One_nat_def Suc_1 Suc_diff_Suc Suc_le_lessD add_leE assms(1) lessI nth_mem numeral_3_eq_3 plus_1_eq_Suc subset_iff)
+            then obtain lup where lup:"kap!(k-2) = Min (set lup)" "set lup \<subseteq> X" "sortedStrict lup" "cup (l - 1) (lup)" using ys by auto
+            hence k3:"Min (set lup) = lup!0" using lup(1,3,4) assms(2)
+              by (metis (no_types, lifting) List.finite_set One_nat_def Suc_diff_Suc
+                  Suc_le_lessD Suc_lessD Zero_neq_Suc card.empty cup_def nth_Cons_0
+                  numeral_3_eq_3 sorted_list_of_set.sorted_key_list_of_set_unique
+                  sorted_list_of_set_nonempty strict_sorted_equal)
+            have k7:"lup!1 \<in> X" using lup(2,4) assms(2) cup_def
+              by (metis One_nat_def Suc_le_eq less_diff_conv nth_mem numeral_3_eq_3
+                  plus_1_eq_Suc subsetD)
+            (* try changing k-2 = Suc(k-3) to make it faster? *)
+            have k4:"(kap!(k-3)) < (kap!(k-2))" using assms(1) kap(2,3) cap_def
+              by (metis One_nat_def Suc_1 Suc_diff_Suc Suc_le_lessD add_leE lessI
+                  numeral_3_eq_3 plus_1_eq_Suc sorted_wrt_iff_nth_less)
+            have k5:"(kap!(k-2)) < (lup!1)" using assms lup cup_def
+              by (metis One_nat_def Suc_1 Suc_le_lessD add_diff_cancel_left' diff_less_mono
+                  k3 numeral_3_eq_3 numeral_One one_le_numeral plus_1_eq_Suc
+                  sorted_wrt_nth_less)
+            hence k6:"sortedStrict [(kap!(k-3)),(kap!(k-2)),(lup!1)]" using k4 k5 by simp
+
+            hence k_noncoll:"\<not> collinear3 (kap!(k-3)) (kap!(k-2)) (lup!1)" 
+              by (metis (full_types) asm(2) assms(1) collinear3_def diff_less_mono2 dual_order.trans genpos_cross0 k1 k2 k7 kap(1) linorder_not_less nth_mem numeral_le_one_iff semiring_norm(70) strict_sorted_iff subsetD ysx)
+
+            thus ?thesis
+            proof(cases "cap3 (kap!(k-3)) (kap!(k-2)) (lup!1)")
+
+              case True
+              hence k8:"cap k (kap@[lup!1])" using kap(2,3) cap_def
+              proof-
+
+                have k_rev: "rev ( (lup!1) # ( rev kap ) ) = (kap@[lup!1])" by force
+                have k_lup_len: "length (kap@[lup!1]) = k" using k1 k5
+                  using assms(1) by fastforce
+                hence k29:"sortedStrict (kap@[lup!1] )" 
+                  using k1 k3 lup(1) k5 kap(2) assms append_last_sortedStrict
+                  by (metis Suc_1 append_Nil diff_Suc_eq_diff_pred last_conv_nth sorted_wrt1)
                 thus ?thesis 
-                using k29 k_lup_len True cap_def extend_cap_cup k_rev kap(3)
-              by (metis (no_types, lifting) One_nat_def Suc_1 diff_diff_left numeral_3_eq_3 plus_1_eq_Suc)
+                  using k29 k_lup_len True cap_def extend_cap_cup k_rev kap(3)
+                  by (metis (no_types, lifting) One_nat_def Suc_1 diff_diff_left numeral_3_eq_3 plus_1_eq_Suc)
+              qed
+              have "set kap \<subseteq> X" using kap(1) ysx by blast
+              hence "set (kap@[lup!1]) \<subseteq> X" using k7 by force 
+              then show ?thesis using k1 assms(1) cap_def lup kap ysx order_trans k8 by blast
+            next
+              case False
+              hence k9:"cup l (kap!(k-3)#lup)"
+              proof-
+                have k_kap_len: "length (kap!(k-3)#lup) = l" using k4 lup(1) k3 lup(4) cup_def
+                  using assms(2) by auto
+                have "sortedStrict (kap!(k-3)#lup)" using k4 lup(1,3) k3 assms(1,2) append_first_sortedStrict
+                  by (metis hd_conv_nth sorted_wrt1) 
+                thus ?thesis using False k_noncoll cup_def list_check.simps exactly_one_true k3 k4 k_kap_len lup(1,4)
+                  by (smt (verit)  diff_is_0_eq' verit_comp_simplify1(1) nth_Cons_numeral numeral_One
+                      le_numeral_extra(4) list_check.elims(1) nth_Cons_0)
+              qed
+              have "set (kap!(k-3)#lup) \<subseteq> X" 
+                using kap(1) ysx assms(1) k1 lup(2) by force
+              then show ?thesis using cup_def k9 
+                by blast
             qed
-            have "set kap \<subseteq> X" using kap(1) ysx by blast
-            hence "set (kap@[lup!1]) \<subseteq> X" using k7 by force 
-            then show ?thesis using k1 assms(1) cap_def lup kap ysx order_trans k8 by blast
-          next
-            case False
-            hence k9:"cup l (kap!(k-3)#lup)"
-            proof-
-              have k_kap_len: "length (kap!(k-3)#lup) = l" using k4 lup(1) k3 lup(4) cup_def
-                using assms(2) by auto
-              have "sortedStrict (kap!(k-3)#lup)" using k4 lup(1,3) k3 assms(1,2) append_first_sortedStrict
-                by (metis hd_conv_nth sorted_wrt1) 
-              thus ?thesis using False k_noncoll cup_def list_check.simps exactly_one_true k3 k4 k_kap_len lup(1,4)
-                by (smt (verit)  diff_is_0_eq' verit_comp_simplify1(1) nth_Cons_numeral numeral_One
-                    le_numeral_extra(4) list_check.elims(1) nth_Cons_0)
-            qed
-            have "set (kap!(k-3)#lup) \<subseteq> X" 
-              using kap(1) ysx assms(1) k1 lup(2) by force
-            then show ?thesis using cup_def k9 
-              by blast
           qed
-        qed
-      qed(blast)
-    }  
-    thus ?thesis by presburger  
+        qed(blast)
+      }  
+      thus ?thesis by presburger  
+    qed
   qed
-qed
   thus ?thesis 
     by (smt (verit, ccfv_threshold) inf_upper ex_card general_pos_subs min_conv_def mem_Collect_eq order_trans)
 qed
 
 lemma min_conv_bin:
-  shows "min_conv (k+3) (l+3) \<le> ((k + l + 2) choose (k + 1)) + 1"
+  "min_conv (k+3) (l+3) \<le> ((k + l + 2) choose (k + 1)) + 1"
 proof(induction "k+l" arbitrary: l k)
   case (Suc x)
   then show ?case
