@@ -19,13 +19,15 @@ proof-
       by (simp add: mult.commute vector_space_over_itself.scale_right_diff_distrib)
     have "distinct [-a, -b, -c] \<longrightarrow> \<not>collinear3 (-a) (-b) (-c)" using 2 3 by simp
   }
-  thus ?thesis
-  by (simp add: gpos_def)
+  thus ?thesis unfolding gpos_def by simp
 qed
+
 corollary general_pos_neg:
-  "general_pos S \<longrightarrow> general_pos (reflect ` S)" using gpos_generalpos gpos_neg by simp
+  "general_pos S \<longrightarrow> general_pos (reflect ` S)" 
+  using gpos_generalpos gpos_neg  by blast
+
 corollary general_pos_neg_neg:
-  "general_pos (reflect ` S) \<longrightarrow> general_pos S" using general_pos_neg
+  "general_pos (reflect ` S) \<longrightarrow> general_pos S" using general_pos_neg  
   by (metis (no_types, opaque_lifting) general_pos_subs minus_equation_iff
     rev_image_eqI subset_eq)
 
@@ -45,6 +47,18 @@ lemma rev_reflect_inv:
   using rev_reflect neg_neg
   by (metis List.map.comp comp_assoc comp_id list.map_id0 rev_involution)
 
+lemma implm_rev_reflect_inv:"rev (map reflect (rev (map reflect xs))) = xs"
+proof(induction xs)
+  case (Cons a xs)
+  have "rev (map reflect (a # xs)) = (rev (map reflect xs))@[reflect a]"
+    by simp
+  also have "map reflect ((rev (map reflect xs))@[reflect a])
+         = (map reflect (rev (map reflect xs)))@ [a]"
+    by simp
+  also have "rev ((map reflect (rev (map reflect xs)))@[a]) = [a]@(rev (map reflect (rev (map reflect xs))))"
+    by simp
+  ultimately show ?case using Cons by simp
+qed(simp)
 lemma distinct_neg:
 "distinct xs = distinct (rev (map reflect (xs :: R2 list)))"
 by (simp add: distinct_map)
@@ -76,21 +90,221 @@ lemma orig_refl_rev:
   "cap3 x y z = cup3 (-z) (-y) (-x)"
   unfolding cap3_def cup3_def cross3_def by fastforce
 
-lemma list_check_rev_refl:
-  assumes "list_check cc xs" and "sortedStrict xs"
-  shows "list_check (\<lambda>a b c. \<not> cc a b c) (rev (map reflect xs))"
+lemma list_cap_tail: 
+  assumes "list_check cap3 (xs@[c,b])"
+    and "cross3  c b a < 0"
+  shows "list_check cap3 (xs@[c,b,a])"
   using assms
 proof(induction xs)
   case Nil
-  then show ?case by force
+  hence "distinct [c,b,a]" using cross3_def 
+    using cross3_non0_distinct not_less_iff_gr_or_eq by blast
+  hence "list_check cap3 [b,a]" unfolding list_check.simps(3) by simp
+  then show ?case using list_check.simps(4)[of "cap3" c b a "[]"] unfolding cap3_def
+    by (metis append_Nil assms(2))
+next
+  case (Cons x xs)
+  hence Cons1:" list_check cap3 ((x # xs) @ [c, b])" by argo
+  have cross3: "cross3 c b a < 0" using Cons by argo
+  have "list_check cap3 (xs@[c,b])" using Cons(2) list_check.simps 
+    using list_check.elims(3) by fastforce 
+  hence s1:"list_check cap3 (xs@[c,b,a])" using Cons by argo
+  then show ?case
+  proof(cases xs)
+    case Nil
+    hence "cross3 x c b < 0" using Cons(2) list_check.simps(4)[of cap3 x c b "[]"]
+      unfolding cap3_def 
+      by (metis (no_types, lifting) append_eq_Cons_conv) 
+    then show ?thesis using Nil list_check.simps(4) 
+      by (metis s1 append_Cons append_Nil cap3_def) 
+  next
+    case (Cons y ys)
+    hence xs_is:"xs = y#ys" by argo
+    then show ?thesis 
+    proof(cases ys)
+      case Nil
+      hence "cap3 x y c" using Cons Cons1 by simp
+      then show ?thesis using Cons Cons1 cross3 unfolding cap3_def 
+        by (metis \<open>list_check cap3 (xs @ [c, b, a])\<close> append_Cons append_Nil
+            list_check.simps(3,4) local.Nil) 
+    next
+      case (Cons z zs)
+      hence "cap3 x y z" using xs_is Cons Cons1 by simp
+      then show ?thesis using xs_is Cons s1 by auto
+    qed
+  qed
+qed
+
+lemma list_cup_tail: 
+  assumes "list_check cup3 (xs@[c,b])"
+    and "cross3  c b a > 0"
+  shows "list_check cup3 (xs@[c,b,a])"
+  using assms
+proof(induction xs)
+  case Nil
+  hence "distinct [c,b,a]" using cross3_def 
+    using cross3_non0_distinct not_less_iff_gr_or_eq 
+    by (metis assms(2)) 
+  hence "list_check cup3 [b,a]" unfolding list_check.simps(3) by simp
+  then show ?case using list_check.simps(4)[of "cup3" c b a "[]"] unfolding cup3_def
+    by (metis append.left_neutral assms(2))
+next
+  case (Cons x xs)
+  hence Cons1:" list_check cup3 ((x # xs) @ [c, b])"  by argo
+  have cross3: "cross3 c b a > 0" using Cons by argo
+  have "list_check cup3 (xs@[c,b])" using Cons(2) list_check.simps 
+    using list_check.elims(3) by fastforce 
+  hence s1:"list_check cup3 (xs@[c,b,a])" using Cons by argo
+  then show ?case
+  proof(cases xs)
+    case Nil
+    hence "cross3 x c b > 0" using Cons(2) list_check.simps(4)[of cup3 x c b "[]"]
+      unfolding cup3_def 
+      by (metis (no_types, lifting) append_eq_Cons_conv) 
+    then show ?thesis using Nil list_check.simps(4) 
+      by (metis s1 append_Cons append_Nil cup3_def) 
+  next
+    case (Cons y ys)
+    hence xs_is:"xs = y#ys" by argo
+    then show ?thesis 
+    proof(cases ys)
+      case Nil
+      hence "cup3 x y c" using Cons Cons1 by simp
+      then show ?thesis using Cons Cons1 cross3 unfolding cap3_def 
+        by (metis s1 append_Cons append_Nil list_check.simps(4) local.Nil) 
+    next
+      case (Cons z zs)
+      hence "cup3 x y z" using xs_is Cons Cons1 by simp
+      then show ?thesis using xs_is Cons s1 by auto
+    qed
+  qed
+qed
+
+lemma list_check_cup3_imp_cap3:
+  assumes "list_check cup3 xs"
+  shows "list_check cap3 (rev (map reflect xs))" using assms
+proof(induction xs)
+  case Nil
+  then show ?case by auto
 next
   case (Cons a xs)
-  then show ?case sorry
+  have lcc:"list_check cup3 (a # xs)" using Cons by argo
+  then show ?case
+  proof(cases xs)
+    case Nil
+    then show ?thesis by simp
+  next
+    case (Cons b ys)
+    hence b_ys: "xs = b#ys" by argo
+    then show ?thesis
+    proof(cases ys)
+      case Nil
+      have "a \<noteq> b" using  lcc unfolding Nil Cons lcc list_check.simps .
+      then show ?thesis unfolding Nil Cons lcc list_check.simps by simp
+    next
+      case (Cons c zs)
+      have 1:"(rev (map reflect (a # b # c # zs))) 
+                = (rev (map reflect zs))@([reflect c, reflect b, reflect a])"
+        by simp
+      have "cross3 a b c > 0" using lcc unfolding Cons b_ys lcc 
+        by (meson cup3_def list_check.simps(4)) 
+      hence "cross3 (reflect c) (reflect b) (reflect a) < 0" 
+        by (simp add: cross3_def)  
+
+      then show ?thesis unfolding lcc  implm_rev_reflect_inv 
+        unfolding b_ys   Cons using 
+          list_cap_tail[of "(rev (map reflect zs))" "reflect c" "reflect b" "reflect a"]
+             1 
+        by (metis Cons.IH Cons.prems Cons_eq_append_conv b_ys list.simps(9) list_check.simps(4)
+            local.Cons rev.simps(2) rev_append rev_swap)   
+    qed
+  qed
+qed
+
+
+lemma list_check_cap3_imp_cup3:
+  assumes "list_check cap3 xs"
+  shows "list_check cup3 (rev (map reflect xs))" using assms
+ using assms
+proof(induction xs)
+  case Nil
+  then show ?case by auto
+next
+  case (Cons a xs)
+  have lcc:"list_check cap3 (a # xs)" using Cons by argo
+  then show ?case
+  proof(cases xs)
+    case Nil
+    then show ?thesis by simp
+  next
+    case (Cons b ys)
+    hence b_ys: "xs = b#ys" by argo
+    then show ?thesis
+    proof(cases ys)
+      case Nil
+      have "a \<noteq> b" using  lcc unfolding Nil Cons lcc list_check.simps .
+      then show ?thesis unfolding Nil Cons lcc list_check.simps by simp
+    next
+      case (Cons c zs)
+      have 1:"(rev (map reflect (a # b # c # zs))) 
+                = (rev (map reflect zs))@([reflect c, reflect b, reflect a])"
+        by simp
+      have "cross3 a b c < 0" using lcc unfolding Cons b_ys lcc 
+        by (meson cap3_def list_check.simps(4))
+      hence "cross3 (reflect c) (reflect b) (reflect a) > 0" 
+        by (simp add: cross3_def)  
+      then show ?thesis unfolding lcc  implm_rev_reflect_inv 
+        unfolding b_ys   Cons using 
+          list_cap_tail[of "(rev (map reflect zs))" "reflect c" "reflect b" "reflect a"]
+             1 
+        by (smt (verit, ccfv_threshold) Cons.IH Cons.prems(1) append.assoc append_Cons append_Nil
+            b_ys list.simps(9) list_check.simps(4) list_cup_tail local.Cons rev.simps(2))
+    qed
+  qed
 qed
 
 lemma cap_orig_refl_rev:
   "cap k xs = cup k (rev (map reflect (xs::R2 list)))"
-  unfolding cap_def cup_def sorry
+proof(induction xs arbitrary: k)
+  case Nil
+  then show ?case unfolding cap_def cup_def 
+    by simp
+next
+  case (Cons a xs)
+  { assume asm:"cap k (a # xs)"
+    hence "sortedStrict (a#xs)" unfolding cap_def by argo
+    hence 1:"sortedStrict (rev (map reflect (a # xs)))" using sortedstrict_neg by fast
+    have 2:"length (rev (map reflect (a # xs))) = k" using asm unfolding cap_def
+      by auto
+    also have "list_check cap3 (a#xs)" using asm unfolding cap_def by argo
+    hence "list_check cup3 (rev (map reflect (a#xs)))" 
+      using list_check_cap3_imp_cup3 by blast
+    hence "cup k  (rev (map reflect (a#xs)))" 
+      using 1 2 asm unfolding cup_def cap_def by argo} note rs = this
+  then have s1:"cap k (a#xs) \<longrightarrow> cup k (rev (map reflect (a#xs)))" by argo
+  have "cup k (rev (map reflect (a#xs))) \<longrightarrow> (cap k  (a#xs))"
+  proof
+    assume asm:"cup k (rev (map reflect (a#xs)))"
+    hence "sortedStrict (rev (map reflect (a#xs)))" unfolding cup_def by argo
+    hence 1:"sortedStrict (a # xs)" using sortedstrict_neg by fast
+    have 2:"length (a # xs) = k" using asm unfolding cup_def
+      by auto
+    also have 3:"list_check cup3 (rev (map reflect (a#xs)))"
+      using asm unfolding cup_def by argo
+    hence "list_check cap3  (a#xs)" 
+    proof-
+      have "list_check cap3 (rev (map reflect (rev (map reflect (a#xs)))))"
+        using list_check_cup3_imp_cap3[OF 3] .
+      also have "(rev (map reflect (rev (map reflect (a#xs))))) = a#xs"
+        using implm_rev_reflect_inv[of "a#xs"] .
+      ultimately show ?thesis by argo
+    qed
+    thus "cap k  (a#xs)" 
+      using 1 2 asm unfolding cup_def cap_def by argo 
+  qed
+  then show ?case using s1 by argo
+qed
+
 (*
 {n :: nat. (\<forall>S . (card S \<ge> n \<and> general_pos S)
                 \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs)))
