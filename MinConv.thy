@@ -448,7 +448,7 @@ fix x
   thus      "x\<in>X" using 1 xsp Min_in asm by fastforce
 qed
 
-lemma min_conv_rec:
+lemma min_conv_lower_bnd:
 assumes "k\<ge>3" and "l\<ge>3"
 shows "min_conv k l \<le> min_conv (k - 1) l + min_conv k (l - 1) - 1"
             (is "?a \<le> ?b") 
@@ -578,8 +578,26 @@ proof
     by (smt (verit, ccfv_threshold) inf_upper ex_card general_pos_subs min_conv_def mem_Collect_eq order_trans)
 qed
 
+(* assume points are distinct -- making sure no two points have same x coord *)
+lemma min_conv_upper_bnd:
+  "min_conv (Suc (k+2)) (Suc (l+2)) > min_conv (k+2) (Suc (l+2)) + min_conv (Suc (k+2)) (l+2) - 2"
+(is "?P a b > ?n")
+  using min_conv_lower[of "?n" "Suc (k+2)" "Suc (l+2)"] sorry
+
+lemma min_conv_equality:
+  "min_conv (Suc (k+2)) (Suc (l+2)) = min_conv (k+2) (Suc (l+2)) + min_conv (Suc (k+2)) (l+2) - 1"
+proof-
+
+  have 1:"min_conv (Suc (k+2)) (Suc (l+2)) \<le> min_conv (k+2) (Suc (l+2)) + min_conv (Suc (k+2)) (l+2) - 1" using min_conv_lower_bnd 
+    by (metis One_nat_def Suc_1 Suc_eq_numeral diff_Suc_1 le_numeral_Suc le_numeral_extra(4) numeral_3_eq_3 trans_le_add2)
+  have "min_conv (Suc (k+2)) (Suc (l+2)) \<ge> min_conv (k+2) (Suc (l+2)) + min_conv (Suc (k+2)) (l+2) - 1" using min_conv_upper_bnd
+    by (smt (verit, del_insts) Suc_1 add.commute add_diff_inverse_nat diff_Suc_Suc less_Suc_eq_le less_diff_conv2 less_imp_diff_less less_or_eq_imp_le plus_1_eq_Suc trans_less_add1)
+
+  thus ?thesis using 1 by simp
+qed
+
 lemma min_conv_bin:
-  "min_conv (k+3) (l+3) \<le> ((k + l + 2) choose (k + 1)) + 1"
+  "min_conv (k+3) (l+3) = ((k + l + 2) choose (k + 1)) + 1"
 proof(induction "k+l" arbitrary: l k)
   case (Suc x)
   then show ?case
@@ -589,21 +607,24 @@ proof(induction "k+l" arbitrary: l k)
     show ?thesis
     proof(cases "l = 0")
       case True
-      hence "min_conv (k + 3) (l + 3) = k + 3" using min_conv_arg_swap min_conv_base[of "k+3"] by simp
+      hence "min_conv (k + 3) (l + 3) = k + 3" 
+        using min_conv_arg_swap min_conv_base[of "k+3"] by simp
       moreover have "(k + l + 2 choose k + 1) + 1 = k + 3" using True binomial_Suc_n by simp
       ultimately show ?thesis using min_conv_base by simp
     next
       case False
       hence 2:"l\<ge>1" by simp
       have    "x = (k-1) + l" using 1 Suc by linarith
-      hence 3:"min_conv (k + 2) (l + 3) \<le> (k + l + 1 choose k) + 1" using Suc by fastforce
+      hence 3:"min_conv (k + 2) (l + 3) = (k + l + 1 choose k) + 1" using Suc by fastforce
       have    "x = k + (l-1)" using 2 Suc by linarith
-      hence   "min_conv (k + 3) (l + 2) \<le> (k + l + 1 choose k + 1) + 1" using Suc by fastforce
-      hence   "min_conv (k+3) (l+3) \<le> (k + l + 1 choose k) + (k + l + 1 choose k + 1) + 1"
-        using 3 min_conv_rec[of "k+3" "l+3"] by simp
+      hence   "min_conv (k + 3) (l + 2) = (k + l + 1 choose k + 1) + 1" using Suc by fastforce
+      hence   "min_conv (k+3) (l+3) = (k + l + 1 choose k) + (k + l + 1 choose k + 1) + 1"
+        using 3 min_conv_equality
+        by (simp add: numeral_3_eq_3)
       then show ?thesis using binomial_Suc_Suc by simp
     qed
   qed(simp add: min_conv_base)
 qed(simp add: min_conv_base)
+
 
 end
