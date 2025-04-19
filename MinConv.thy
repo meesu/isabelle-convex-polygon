@@ -578,11 +578,189 @@ proof
     by (smt (verit, ccfv_threshold) inf_upper ex_card general_pos_subs min_conv_def mem_Collect_eq order_trans)
 qed
 
-(* assume points are distinct -- making sure no two points have same x coord *)
+abbreviation sdistinct :: "R2 list \<Rightarrow> bool" where
+  "sdistinct xs \<equiv> distinct (map fst xs) \<and> sorted xs"
+
+lemma distinctFst_distinct:
+  "distinct (map fst xs) \<longrightarrow> distinct xs"
+  by (simp add: distinct_map)
+
+value "sortedStrict [(1,2)::R2, (1,3)]"
+value "sdistinct [(1,2)::R2, (1,3)]"
+value "sdistinct [(1,2), (2,3)]"
+
+lemma sdistinct_sortedStrict:
+  assumes "sdistinct xs"
+  shows   "sortedStrict xs" 
+  using assms distinctFst_distinct strict_sorted_iff by auto
+
+lemma translated_bad:
+  assumes "card S = n" 
+      and "general_pos S" 
+      and "sdistinct(sorted_list_of_set S)"
+      and "\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs)" 
+      and "St = (\<lambda> p. p + t) ` S"
+    
+    shows "card St = n" and "general_pos St" and "sdistinct(sorted_list_of_set St)"
+      and "\<forall>xs. set xs \<subseteq> St \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs)"
+proof-
+  have 1:"bij (\<lambda> p. p + t)"
+    using bij_plus_right by blast
+  thus R1:"card St = n" using bij_def assms(1,5)
+    by (metis card_vimage_inj inj_vimage_image_eq top.extremum)
+
+  have "gpos St"
+  proof-
+    have 3:"gpos S"
+      using assms(2) gpos_generalpos by auto
+    {
+      fix a b c
+      assume asm:"a\<in>S" "b\<in>S" "c\<in>S" "distinct [a,b,c]"
+      hence 4:"\<not>collinear3 a b c" using 3 unfolding gpos_def by simp
+      have 5:"distinct [a + t, b + t, c + t]" using asm(4) by auto
+      have "\<not>collinear3 (a + t) (b + t) (c + t)" 
+        using 4 unfolding collinear3_def cross3_def by simp
+      then have "distinct [a + t, b + t, c + t] \<longrightarrow> \<not>collinear3 (a + t) (b + t) (c + t)"
+        using 5 by simp
+    }
+    thus ?thesis using 3 unfolding gpos_def
+      by (simp add: assms(5))
+  qed
+  thus R2:"general_pos St" using gpos_generalpos by simp
+
+  have "a\<noteq>b \<longrightarrow> (a+t)\<noteq>(b+t)" using 1 by auto
+  thus R3:"sdistinct(sorted_list_of_set St)" using assms(3) 1 sorry
+  
+  show "\<forall>xs. set xs \<subseteq> St \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs)" sorry
+qed
+
+lemma min_conv_lower_sdistinct:
+  assumes "\<exists>S. (card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
+                \<and> (\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
+  shows "min_conv k l > n"
+  using assms min_conv_lower by blast
+
+lemma min_conv_lower_imp:
+  assumes "min_conv k l > n"
+  shows   "\<exists>S. (card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
+                \<and> (\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
+proof-
+  have "\<exists>S. (card S \<ge> n \<and> general_pos S)
+                \<and> (\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
+    using assms unfolding min_conv_def
+    by (smt (verit, ccfv_SIG) inf_upper mem_Collect_eq order.strict_iff_not)
+  then obtain S where Sp: "(card S \<ge> n \<and> general_pos S)" 
+                          "\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs)"
+    by blast
+(* rotate S slightly to make sure no x coord is same ? *)
+  thus ?thesis sorry
+qed
+
+thm min_conv_lower[of "n" "Suc (k+2)" "Suc (l+2)"]
+
+lemma min_conv_least:
+  assumes "a \<ge> 1" and "b \<ge> a"
+    shows "a \<le> min_conv a b"
+proof-
+  have "a - 1 \<notin> {n. \<forall>S. n = card S \<and> general_pos S \<longrightarrow> 
+               (\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap a xs \<or> cup b xs))}"
+  proof-
+    {
+      assume asm:"a - 1 \<in> {n. \<forall>S. n = card S \<and> general_pos S \<longrightarrow>
+               (\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap a xs \<or> cup b xs))}"
+      fix S
+      have F1: "a-1 = card S \<and> general_pos S \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and>
+               (cap a xs \<or> cup b xs))" 
+        using asm by simp
+      have F2: "\<forall>xs. (a-1 = card S \<and> set xs \<subseteq> S \<and> sortedStrict xs \<longrightarrow> \<not>(cap a xs \<or> cup b xs))"
+      proof
+        fix xs
+        {
+          assume "a - 1 = card S \<and> set xs \<subseteq> S \<and> sortedStrict xs"
+          hence asmd: "a - 1 = card S" "set xs \<subseteq> S" "sortedStrict xs" by auto
+          hence "card (set xs) \<le> a-1"
+            by (smt (verit, del_insts) Orderings.order_eq_iff asm assms(1,2) cap_def card.empty card.infinite le_add_diff_inverse card_mono cup_def empty_subsetI general_pos_subs genpos_ex gpos_generalpos list.size(3) mem_Collect_eq nat.simps(3) plus_1_eq_Suc set_empty2) 
+          hence "length xs \<le> a-1" using asmd(2)
+            by (metis asmd(3) distinct_card strict_sorted_iff)
+          hence "\<not>(cap a xs \<or> cup b xs)"  
+            using assms(1,2) cap_def cup_def by auto
+        }
+        thus "a - 1 = card S \<and> set xs \<subseteq> S \<and> sortedStrict xs \<longrightarrow> \<not> (cap a xs \<or> cup b xs)" by simp
+      qed
+      {
+        assume A1:"a-1 = card S \<and> general_pos S"
+        hence A2: "a-1 = card S" "general_pos S" by auto
+        hence "(\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap a xs \<or> cup b xs))" using F1 by simp
+        then obtain xs where xspp:"set xs \<subseteq> S" "sortedStrict xs" "(cap a xs \<or> cup b xs)" by blast
+        hence "\<not>(cap a xs \<or> cup b xs)" using F2 A2(1) by simp
+        hence False using xspp(3) by simp
+      }
+    }
+    thus "a - 1 \<notin> {n. \<forall>S. n = card S \<and> general_pos S \<longrightarrow> 
+               (\<exists>xs. set xs \<subseteq> S \<and> sortedStrict xs \<and> (cap a xs \<or> cup b xs))}"
+      by (metis genpos_ex gpos_generalpos)
+  qed
+  thus "a \<le> min_conv a b"
+    using cap_def min_conv_lower by fastforce
+qed
+
+theorem min_conv_min:
+  assumes "a \<ge> 1" and "b \<ge> 1"
+    shows "min a b \<le> min_conv a b"
+  using min_conv_least assms(1,2) min_conv_arg_swap 
+  by (metis min_le_iff_disj nat_le_linear)
+
 lemma min_conv_upper_bnd:
-  "min_conv (Suc (k+2)) (Suc (l+2)) > min_conv (k+2) (Suc (l+2)) + min_conv (Suc (k+2)) (l+2) - 2"
-(is "?P a b > ?n")
-  using min_conv_lower[of "?n" "Suc (k+2)" "Suc (l+2)"] sorry
+"min_conv (Suc (k+2)) (Suc (l+2)) 
+  > (min_conv (k+2) (Suc (l+2)) - 1) + (min_conv (Suc (k+2)) (l+2) - 1)"
+(is "?P a b > ?n1 + ?n2")
+proof-
+  have 1:"min_conv (k+2) (Suc (l+2)) \<ge> 1" using min_conv_min
+    by (metis One_nat_def Suc_leI add_2_eq_Suc' bot_nat_0.not_eq_extremum linorder_not_less min_Suc_Suc zero_less_Suc)
+  hence "?n1 < min_conv (k+2) (Suc (l+2))" by simp
+  hence "\<exists>S. (min_conv (k + 2) (Suc (l + 2)) - 1 \<le> card S \<and>
+       general_pos S \<and> sdistinct (sorted_list_of_set S)) \<and>
+      (\<forall>xs. set xs \<subseteq> S \<and> sortedStrict xs \<longrightarrow> \<not> (cap (k + 2) xs \<or> cup (Suc (l + 2)) xs))"
+    using min_conv_lower_imp[of "?n1" "k+2" "Suc (l+2)"] by simp
+  then obtain S1 where S1p: "card S1 = ?n1" "general_pos S1" "sdistinct(sorted_list_of_set S1)"
+               "\<forall>xs. set xs \<subseteq> S1 \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap (k+2) xs \<or> cup (Suc (l+2)) xs)"
+    by (metis (no_types, lifting) "1" le_add_diff_inverse min_conv_num_out not_less_eq_eq
+        order_antisym_conv plus_1_eq_Suc)
+
+  have 2:"min_conv (Suc (k+2)) (l+2) \<ge> 1" using min_conv_min
+    by (metis Suc_le_D Suc_le_mono add_2_eq_Suc' min_Suc_Suc numeral_1_eq_Suc_0 numeral_One zero_le)
+  hence "?n2 < min_conv (Suc (k+2)) (l+2)" by simp
+  hence "\<exists>S. (min_conv (Suc(k + 2)) (l + 2) - 1 \<le> card S \<and>
+       general_pos S \<and> sdistinct (sorted_list_of_set S)) \<and>
+      (\<forall>xs. set xs \<subseteq> S \<and> sortedStrict xs \<longrightarrow> \<not> (cap (Suc(k + 2)) xs \<or> cup (l + 2) xs))"
+    using min_conv_lower_imp[of "?n2" "Suc (k+2)" "l+2"] by simp
+  then obtain S2 where S2p: "card S2 = ?n2" "general_pos S2" "sdistinct(sorted_list_of_set S2)"
+               "\<forall>xs. set xs \<subseteq> S2 \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (l+2) xs)"
+    by (metis (no_types, lifting) "2" le_add_diff_inverse min_conv_num_out not_less_eq_eq
+        order_antisym_conv plus_1_eq_Suc)
+(* assume points are distinct in x coords
+-- 
+Note that we have already observed this to be the case when k or l is 3.
+We proceed by induction. Suppose that we have a set A of (k+l-5 choose k-3)
+points with no (k − 1)-cup and no l-cap, and a set B of (k+l-5 choose k-2) 
+points with no k-cup and no (l − 1)-cap. Translate these sets so that the 
+following conditions are satisfied:
+(i) every point of B has greater first coordinate than the first coordinates of
+points of A,
+(ii) the slope of any line connecting a point of A to a point of B is greater than
+the slope of any line connecting two points of A or two points of B.
+Let X = A \<union> B be the resulting configuration. Any cup in X that contains
+elements of both A and B may have only one element of B. It follows that X
+contains no k-cup. We similarly see that X contains no l-cap.
+--
+ *)
+
+(*
+construct S3 using S1 and S2 which has no Suc(k+2) cup nor Suc(l+2) cup
+for this S2 needs to be translated appropriately. *)
+    show ?thesis sorry
+qed
+
 
 lemma min_conv_equality:
   "min_conv (Suc (k+2)) (Suc (l+2)) = min_conv (k+2) (Suc (l+2)) + min_conv (Suc (k+2)) (l+2) - 1"
@@ -590,7 +768,14 @@ proof-
 
   have 1:"min_conv (Suc (k+2)) (Suc (l+2)) \<le> min_conv (k+2) (Suc (l+2)) + min_conv (Suc (k+2)) (l+2) - 1" using min_conv_lower_bnd 
     by (metis One_nat_def Suc_1 Suc_eq_numeral diff_Suc_1 le_numeral_Suc le_numeral_extra(4) numeral_3_eq_3 trans_le_add2)
-  have "min_conv (Suc (k+2)) (Suc (l+2)) \<ge> min_conv (k+2) (Suc (l+2)) + min_conv (Suc (k+2)) (l+2) - 1" using min_conv_upper_bnd
+  have 2:"min_conv (k+2) (Suc (l+2)) \<ge> 1"
+    by (metis "1" Suc_eq_plus1 diff_0_eq_0 less_Suc_eq linorder_not_less min_conv_upper_bnd nat_arith.rule0 not_add_less2 plus_nat.add_0)
+  hence 3:"min_conv (Suc (k+2)) (l+2) \<ge> 1"
+    by (metis "1" One_nat_def add_lessD1 diff_0_eq_0 diff_Suc_diff_eq1 linorder_not_less min_conv_upper_bnd not_less_eq_eq)
+  have "(min_conv (k+2) (Suc (l+2)) - 1) + (min_conv (Suc (k+2)) (l+2) - 1)
+        = min_conv (k+2) (Suc (l+2)) + min_conv (Suc (k+2)) (l+2) - 2"
+    using 2 3 by auto
+  hence "min_conv (Suc (k+2)) (Suc (l+2)) \<ge> min_conv (k+2) (Suc (l+2)) + min_conv (Suc (k+2)) (l+2) - 1" using min_conv_upper_bnd
     by (smt (verit, del_insts) Suc_1 add.commute add_diff_inverse_nat diff_Suc_Suc less_Suc_eq_le less_diff_conv2 less_imp_diff_less less_or_eq_imp_le plus_1_eq_Suc trans_less_add1)
 
   thus ?thesis using 1 by simp
