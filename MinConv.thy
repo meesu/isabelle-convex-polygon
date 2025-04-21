@@ -594,9 +594,177 @@ lemma sdistinct_sortedStrict:
   shows   "sortedStrict xs" 
   using assms distinctFst_distinct strict_sorted_iff by auto
 
-lemma translated_bad:
+lemma distinct_fst_translated:
+  fixes   L :: "R2 list" and t :: R2
+  assumes "distinct (map fst L)" and "tr \<equiv> (\<lambda>p. p + t)"
+  shows   "distinct (map fst (map tr L))"
+  using assms
+proof(induction L)
+  case (Cons a L)
+  have "distinct (map fst L)"
+    using Cons.hyps(2) by auto
+  hence "distinct (map fst (map tr L))" using Cons.hyps by simp
+  have F1:"fst a \<notin> set (map fst L)" "distinct (map fst L)" using Cons.hyps(2) by auto
+  have "fst (a+t) \<notin> set (map fst (map tr L))"
+  proof
+    assume asm: "fst (a + t) \<in> set (map fst (map tr L))"
+    then obtain x :: R2 where xp:"fst (x+t)\<in>set(map fst(map tr L))" "fst (x+t)=fst(a+t)" by force
+    hence "fst x = fst a" by simp
+    hence "fst (a+t) \<in> set(map fst(map tr L))" using xp(1) by simp
+    hence "fst a \<in> set(map fst L)"
+      by (smt (verit, ccfv_threshold) assms(2) fst_add imageE image_eqI list.set_map)
+    thus False using F1(1) by simp
+  qed
+  then show ?case using Cons.hyps by simp
+qed(simp)
+
+lemma prod_addright_le:
+  fixes   a s t :: R2 
+  assumes "a \<le> s"
+  shows   "a + t \<le> s + t"
+proof(cases "fst a < fst s")
+  case True
+  hence "fst (a + t) < fst (s + t)" by simp
+  then show ?thesis
+    by (smt (verit, best) assms fst_add prod_le_def snd_add)
+next
+  case False
+  hence I8:"fst a = fst s" using assms
+    by (simp add: prod_le_def)
+  hence "snd a \<le> snd s" using assms prod_le_def False by blast
+  hence "snd (a + t) \<le> snd (s + t)" by simp
+  then show ?thesis
+    by (auto simp add: I8 less_eq_prod_def)
+qed
+
+lemma bij_tr:
+  "bij (\<lambda> p. p + (t::R2))"
+  by (simp add: bij_plus_right)
+
+lemma map_sorted_list_set:
+  fixes t :: R2
+  shows "map (\<lambda> p. p + t) (sorted_list_of_set S) = sorted_list_of_set ((\<lambda> p. p + t) ` S)"
+proof(induction "sorted_list_of_set S" arbitrary: S)
+  case Nil
+  then show ?case using bij_tr
+    by (metis (no_types, lifting) bij_def card_seteq card_vimage_inj dual_order.refl empty_subsetI top.extremum inj_vimage_image_eq list.simps(8) sorted_list_of_set.fold_insort_key.infinite
+        sorted_list_of_set.length_sorted_key_list_of_set sorted_list_of_set.sorted_key_list_of_set_empty)
+next
+  case (Cons a x)
+  hence I1:"x  = sorted_list_of_set (S - {a})"
+    by (metis list.inject neq_Nil_conv sorted_list_of_set.fold_insort_key.infinite
+        sorted_list_of_set.sorted_key_list_of_set_eq_Nil_iff sorted_list_of_set_nonempty)
+  hence I2:"map (\<lambda> p. p + t) (sorted_list_of_set (S-{a})) = 
+            sorted_list_of_set ((\<lambda> p. p + t) ` (S-{a}))" using Cons.hyps(1,2) by presburger
+  have I4: "a = Min S"
+    by (metis Cons.hyps(2) list.inject neq_Nil_conv sorted_list_of_set.fold_insort_key.infinite
+        sorted_list_of_set.sorted_key_list_of_set_empty sorted_list_of_set_nonempty)
+  hence "a \<in> S"
+    by (metis Cons.hyps(2) Diff_insert_absorb I1 insert_Diff1 not_Cons_self2 singleton_iff)
+  hence I5:"a + t \<in> (\<lambda>s. s + t) ` S" by simp
+  have I6:"\<forall>s\<in>S. a\<le>s" using I4
+    by (metis Cons.hyps(2) Min.coboundedI neq_Nil_conv
+        sorted_list_of_set.fold_insort_key.infinite)
+  hence "\<forall>s\<in>S. a + t \<le> s + t" using prod_addright_le by simp
+  hence "\<forall>s\<in>((\<lambda>s. s + t) ` S). a + t \<le> s" by simp
+  hence I3:"a + t = Min ((\<lambda> p. p + t) ` S)" using I5
+    by (metis Cons.hyps(2) I1 Min_eqI finite_imageI infinite_remove not_Cons_self
+        sorted_list_of_set.fold_insort_key.infinite)
+  then show ?case
+    by (smt (z3) Cons.hyps(2) Diff_empty Diff_insert0 Diff_insert_absorb I2 add_right_cancel
+        empty_not_insert finite_imageI insert_absorb list.inject list.set(1,2) list.set_map
+        list.simps(8,9) sorted_list_of_set.fold_insort_key.infinite
+        sorted_list_of_set.set_sorted_key_list_of_set sorted_list_of_set_nonempty)
+qed
+
+lemma translated_cross3:
+  shows "cross3 a b c = cross3 (a+t) (b+t) (c+t)"
+  unfolding cross3_def by simp
+
+lemma translated_cup:
+  assumes "cup k xs"
+  shows   "cup k (map (\<lambda>p. p + t) xs)" using assms
+proof(induction xs arbitrary: k)
+  case (Cons a xs)
+  hence "cup (k-1) xs" using cup_reduct
+    by (metis Suc_eq_plus1 Suc_pred' bot_nat_0.not_eq_extremum cup_def length_0_conv
+        neq_Nil_conv)
+  hence F1:"cup (k-1) (map (\<lambda>p. p + t) xs)" 
+    using Cons.IH by blast
+  then show ?case
+  proof(cases "length (a#xs) \<le> 2")
+    case True
+    then show ?thesis
+      by (metis (no_types, lifting) Cons.prems add_right_cancel cup_def lcheck_len2_T length_map nless_le prod_addright_le sorted_wrt_map_mono strict_sorted_iff)
+  next
+    case False
+    hence "length (a#xs) \<ge> 3" by simp
+    hence "\<exists>a u v rest. (a#xs) = (a#u#v#rest)"
+      by (metis One_nat_def Suc_eq_plus1 list.size(3,4) neq_Nil_conv nle_le not_less_eq_eq
+          numeral_3_eq_3)
+    then obtain u v rest where xsp: "xs = u#v#rest" by blast
+    hence "cup3 a u v" "list_check cup3 (u#v#rest)"
+      using assms cup_def Cons.prems by auto
+    hence F2:"cup3 (a+t) (u+t) (v+t)" using translated_cross3
+      by (metis cup3_def)
+    have "list_check cup3 (map (\<lambda>p. p+t) (u#v#rest))"
+      using F1 cup_def xsp by blast
+    then show ?thesis using F2
+      by (smt (verit, best) Cons.prems add_right_imp_eq cup_def length_map list.simps(9)
+          list_check.simps(4) nless_le prod_addright_le sorted_wrt_map_mono xsp)
+  qed
+qed(simp)
+corollary translated_cup_eq:
+  "\<forall>t. cup k xs = cup k (map (\<lambda>p. p + t) xs)" using translated_cup sorry
+(* proof
+  define ys where ysp:"ys \<equiv> map (\<lambda>p. p - t) xs"
+  hence F1: "map (\<lambda>p. p+t) ys = xs" sorry
+  have "cup k ys \<Longrightarrow> cup k (map (\<lambda>p. p+t) ys)" using translated_cup by auto
+  hence "cup k (map (\<lambda>p. p - t) xs) \<Longrightarrow> cup k xs" using F1 ysp
+    by argo
+  thus "\<forall>t. cup k (map (\<lambda>p. p + t) xs) \<Longrightarrow> cup k xs" sledgehammer
+qed(simp add: translated_cup)
+ *)
+lemma translated_cap:
+  assumes "cap k xs"
+  shows   "cap k (map (\<lambda>p. p + t) xs)" using assms
+proof(induction xs arbitrary: k)
+  case (Cons a xs)
+  hence "cap (k-1) xs" using cap_reduct
+    by (metis Suc_eq_plus1 Suc_pred' bot_nat_0.not_eq_extremum cap_def length_0_conv
+        neq_Nil_conv)
+  hence F1:"cap (k-1) (map (\<lambda>p. p + t) xs)" 
+    using Cons.IH by blast
+  then show ?case
+  proof(cases "length (a#xs) \<le> 2")
+    case True
+    then show ?thesis
+      by (metis (no_types, lifting) Cons.prems add_right_cancel cap_def lcheck_len2_T length_map nless_le prod_addright_le sorted_wrt_map_mono strict_sorted_iff)
+  next
+    case False
+    hence "length (a#xs) \<ge> 3" by simp
+    hence "\<exists>a u v rest. (a#xs) = (a#u#v#rest)"
+      by (metis One_nat_def Suc_eq_plus1 list.size(3,4) neq_Nil_conv nle_le not_less_eq_eq
+          numeral_3_eq_3)
+    then obtain u v rest where xsp: "xs = u#v#rest" by blast
+    hence "cap3 a u v" "list_check cap3 (u#v#rest)"
+      using assms cap_def Cons.prems by auto
+    hence F2:"cap3 (a+t) (u+t) (v+t)" using translated_cross3
+      by (metis cap3_def)
+    have "list_check cap3 (map (\<lambda>p. p+t) (u#v#rest))"
+      using F1 cap_def xsp by blast
+    then show ?thesis using F2
+      by (smt (verit, best) Cons.prems add_right_imp_eq cap_def length_map list.simps(9)
+          list_check.simps(4) nless_le prod_addright_le sorted_wrt_map_mono xsp)
+  qed
+qed(simp)
+corollary translated_cap_eq:
+  "\<forall>t. cap k xs = cap k (map (\<lambda>p. p + t) xs)" using translated_cap sorry
+
+
+lemma translated_set:
   assumes "card S = n" 
-      and "general_pos S" 
+      and "general_pos S"
       and "sdistinct(sorted_list_of_set S)"
       and "\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs)" 
       and "St = (\<lambda> p. p + t) ` S"
@@ -604,9 +772,7 @@ lemma translated_bad:
     shows "card St = n" and "general_pos St" and "sdistinct(sorted_list_of_set St)"
       and "\<forall>xs. set xs \<subseteq> St \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs)"
 proof-
-  have 1:"bij (\<lambda> p. p + t)"
-    using bij_plus_right by blast
-  thus R1:"card St = n" using bij_def assms(1,5)
+  show "card St = n" using bij_tr bij_def assms(1,5)
     by (metis card_vimage_inj inj_vimage_image_eq top.extremum)
 
   have "gpos St"
@@ -626,12 +792,24 @@ proof-
     thus ?thesis using 3 unfolding gpos_def
       by (simp add: assms(5))
   qed
-  thus R2:"general_pos St" using gpos_generalpos by simp
+  thus "general_pos St" using gpos_generalpos by simp
 
-  have "a\<noteq>b \<longrightarrow> (a+t)\<noteq>(b+t)" using 1 by auto
-  thus R3:"sdistinct(sorted_list_of_set St)" using assms(3) 1 sorry
-  
-  show "\<forall>xs. set xs \<subseteq> St \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs)" sorry
+  have 6:"distinct (map fst (sorted_list_of_set S))" using assms(3) by simp
+  have 8:"distinct (map fst (map (\<lambda> p. p + t) (sorted_list_of_set S)))" 
+    using 6 distinct_fst_translated by blast
+  hence "distinct (map fst (sorted_list_of_set ((\<lambda> p. p + t) ` S)))" 
+    using map_sorted_list_set 8 by simp
+  thus "sdistinct(sorted_list_of_set St)" using assms(3, 5) by simp
+
+  have "\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict (map (\<lambda> p. p + t) xs)) \<longrightarrow> 
+        \<not>(cap k (map (\<lambda> p. p + t) xs) \<or> cup l (map (\<lambda> p. p + t) xs))" 
+    using translated_cup_eq translated_cap_eq
+    by (meson assms(4) cap_def cup_def)
+  hence 9:"\<forall>xs. set xs \<subseteq> S \<and> (ys = map (\<lambda>p. p+t) xs) \<and> (sortedStrict ys) 
+        \<longrightarrow> \<not>(cap k ys \<or> cup l ys)" by blast
+  have "\<exists>xs .set xs \<subseteq> S \<and> (ys = map (\<lambda>p. p+t) xs) \<longleftrightarrow> set ys \<subseteq> (\<lambda>p. p+t) ` S" sorry
+  thus "\<forall>xs. set xs \<subseteq> St \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs)"
+    using assms(5) 9 sorry
 qed
 
 lemma min_conv_lower_sdistinct:
@@ -680,8 +858,8 @@ proof-
           hence asmd: "a - 1 = card S" "set xs \<subseteq> S" "sortedStrict xs" by auto
           hence "card (set xs) \<le> a-1"
             by (smt (verit, del_insts) Orderings.order_eq_iff asm assms(1,2) cap_def card.empty card.infinite le_add_diff_inverse card_mono cup_def empty_subsetI general_pos_subs genpos_ex gpos_generalpos list.size(3) mem_Collect_eq nat.simps(3) plus_1_eq_Suc set_empty2) 
-          hence "length xs \<le> a-1" using asmd(2)
-            by (metis asmd(3) distinct_card strict_sorted_iff)
+          hence "length xs \<le> a-1" using asmd(2,3)
+            by (metis distinct_card strict_sorted_iff)
           hence "\<not>(cap a xs \<or> cup b xs)"  
             using assms(1,2) cap_def cup_def by auto
         }

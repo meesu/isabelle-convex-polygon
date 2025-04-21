@@ -26,6 +26,12 @@ lemma cap_reduct:
   using assms add_left_cancel length_Cons list.distinct(1) list.inject list_check.elims(2)
   unfolding cap_def by fastforce
 
+lemma cup_reduct:
+  assumes "cup (k+1) (a#xs)"
+  shows "cup k xs"
+  using assms add_left_cancel length_Cons list.distinct(1) list.inject list_check.elims(2)
+  unfolding cup_def by fastforce
+
 lemma  card_of_s:
   assumes "set xs \<subseteq> S" "cap k xs" "distinct xs" "finite S"
   shows "card S \<ge> k"
@@ -291,8 +297,8 @@ next
 qed
 
 lemma bad3_from_bad:
-  assumes "distinct P" and "\<not> list_check f P"
-  shows   "\<exists>a b c. (sublist [a,b,c] P) \<and> \<not> f a b c"
+  assumes "distinct P" and "\<not> list_check cc P"
+  shows   "\<exists>a b c. (sublist [a,b,c] P) \<and> \<not> cc a b c"
   using assms
 proof(induction "length P" arbitrary: P)
   case (Suc x)
@@ -302,18 +308,18 @@ proof(induction "length P" arbitrary: P)
     hence "\<exists>a u v rest. P = (a#u#v#rest)" using Suc(2) Suc.prems(2) assms(1) list.size(3)
       by (metis One_nat_def Suc_1 bot_nat_0.extremum length_Cons list.exhaust not_less_eq_eq)
     then obtain a u v rest where aP: "P = (a#u#v#rest)" by blast
-    hence "\<not> f a u v \<or> \<not> list_check f (u#v#rest)" using Suc by simp
+    hence "\<not> cc a u v \<or> \<not> list_check cc (u#v#rest)" using Suc by simp
     then show ?thesis
     proof
-      assume "\<not> f a u v"
-      thus "\<exists>a b c. sublist [a, b, c] P \<and> \<not> f a b c" using aP
+      assume "\<not> cc a u v"
+      thus "\<exists>a b c. sublist [a, b, c] P \<and> \<not> cc a b c" using aP
         by (metis append_Cons append_Nil sublist_append_rightI)
     next
-      assume "\<not> list_check f (u#v#rest)"
+      assume "\<not> list_check cc (u#v#rest)"
       moreover have "length (u#v#rest) = x" using aP Suc(2) by simp
       moreover have "distinct (u#v#rest)" using Suc(3) aP by simp
-      ultimately have "\<exists>a b c. sublist [a, b, c] (u#v#rest) \<and> \<not> f a b c" using Suc(1) by blast
-      thus "\<exists>a b c. sublist [a, b, c] P \<and> \<not> f a b c" using aP Suc by (meson sublist_Cons_right)
+      ultimately have "\<exists>a b c. sublist [a, b, c] (u#v#rest) \<and> \<not> cc a b c" using Suc(1) by blast
+      thus "\<exists>a b c. sublist [a, b, c] P \<and> \<not> cc a b c" using aP Suc by (meson sublist_Cons_right)
     qed
   qed(metis lcheck_len2_T)
 qed(auto)
