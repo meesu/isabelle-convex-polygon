@@ -714,17 +714,25 @@ proof(induction xs arbitrary: k)
           list_check.simps(4) nless_le prod_addright_le sorted_wrt_map_mono xsp)
   qed
 qed(simp)
-corollary translated_cup_eq:
-  "\<forall>t. cup k xs = cup k (map (\<lambda>p. p + t) xs)" using translated_cup sorry
-(* proof
-  define ys where ysp:"ys \<equiv> map (\<lambda>p. p - t) xs"
-  hence F1: "map (\<lambda>p. p+t) ys = xs" sorry
-  have "cup k ys \<Longrightarrow> cup k (map (\<lambda>p. p+t) ys)" using translated_cup by auto
-  hence "cup k (map (\<lambda>p. p - t) xs) \<Longrightarrow> cup k xs" using F1 ysp
-    by argo
-  thus "\<forall>t. cup k (map (\<lambda>p. p + t) xs) \<Longrightarrow> cup k xs" sledgehammer
-qed(simp add: translated_cup)
- *)
+
+lemma translated_cup_eq:
+  "\<And>t. cup k xs = cup k (map (\<lambda>p. p + t) xs)"
+proof
+  define ys where ysp: "ys \<equiv> map (\<lambda>p. p - t) xs"
+  have "cup k ys \<Longrightarrow> cup k (map (\<lambda>p. p + t) ys)" using translated_cup by simp
+  hence "cup k (map (\<lambda>p. p - t) xs) \<Longrightarrow> cup k xs"
+    by (simp add: o_def ysp)
+  thus "\<And>t. cup k (map (\<lambda>p. p + t) xs) \<Longrightarrow> cup k xs"
+  proof -
+    fix ta :: "real \<times> real"
+    assume a1: "cup k (map (\<lambda>p. p + ta) xs)"
+    have "\<forall>ps. map ((+) (reflect ta)) (map (\<lambda>p. p + ta) ps) = ps"
+      by (simp add: o_def)
+    then show "cup k xs"
+      using a1 by (metis (lifting) add.commute map_ext translated_cup)
+  qed
+qed(simp add:translated_cup)
+
 lemma translated_cap:
   assumes "cap k xs"
   shows   "cap k (map (\<lambda>p. p + t) xs)" using assms
@@ -758,17 +766,33 @@ proof(induction xs arbitrary: k)
           list_check.simps(4) nless_le prod_addright_le sorted_wrt_map_mono xsp)
   qed
 qed(simp)
-corollary translated_cap_eq:
-  "\<forall>t. cap k xs = cap k (map (\<lambda>p. p + t) xs)" using translated_cap sorry
+
+lemma translated_cap_eq:
+  "\<And>t. cap k xs = cap k (map (\<lambda>p. p + t) xs)"
+proof
+  define ys where ysp: "ys \<equiv> map (\<lambda>p. p - t) xs"
+  have "cap k ys \<Longrightarrow> cap k (map (\<lambda>p. p + t) ys)" using translated_cap by simp
+  hence "cap k (map (\<lambda>p. p + (-t)) xs) \<Longrightarrow> cap k xs"
+    by (simp add: o_def ysp)
+  thus "\<And>t. cap k (map (\<lambda>p. p + t) xs) \<Longrightarrow> cap k xs"
+  proof -
+    fix ta :: "real \<times> real"
+    assume a1: "cap k (map (\<lambda>p. p + ta) xs)"
+    have "\<forall>ps. map ((+) (reflect ta)) (map (\<lambda>p. p + ta) ps) = ps"
+      by (simp add: o_def)
+    then show "cap k xs"
+      using a1 by (metis (lifting) add.commute map_ext translated_cap)
+  qed
+qed(simp add:translated_cap)
 
 
 lemma translated_set:
+  fixes   t :: R2
   assumes "card S = n" 
       and "general_pos S"
       and "sdistinct(sorted_list_of_set S)"
       and "\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs)" 
-      and "St = (\<lambda> p. p + t) ` S"
-    
+      and "St = (\<lambda> p. p + t) ` S"   
     shows "card St = n" and "general_pos St" and "sdistinct(sorted_list_of_set St)"
       and "\<forall>xs. set xs \<subseteq> St \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs)"
 proof-
@@ -805,11 +829,14 @@ proof-
         \<not>(cap k (map (\<lambda> p. p + t) xs) \<or> cup l (map (\<lambda> p. p + t) xs))" 
     using translated_cup_eq translated_cap_eq
     by (meson assms(4) cap_def cup_def)
-  hence 9:"\<forall>xs. set xs \<subseteq> S \<and> (ys = map (\<lambda>p. p+t) xs) \<and> (sortedStrict ys) 
+  hence 9:"\<forall>xs. \<forall>ys. set xs \<subseteq> S \<and> (ys = map (\<lambda>p. p+t) xs) \<and> (sortedStrict ys) 
         \<longrightarrow> \<not>(cap k ys \<or> cup l ys)" by blast
-  have "\<exists>xs .set xs \<subseteq> S \<and> (ys = map (\<lambda>p. p+t) xs) \<longleftrightarrow> set ys \<subseteq> (\<lambda>p. p+t) ` S" sorry
+  hence "\<forall>xs. \<forall>ys. set ys \<subseteq> ((\<lambda>p. p+t) ` S) \<and> (ys = map (\<lambda>p. p+t) xs) \<and> (sortedStrict ys) 
+        \<longrightarrow> \<not>(cap k ys \<or> cup l ys)"
+    by (simp add: image_iff image_subset_iff subsetI)
   thus "\<forall>xs. set xs \<subseteq> St \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap k xs \<or> cup l xs)"
-    using assms(5) 9 sorry
+    using assms(5) 9
+    by (metis (no_types, lifting) diff_add_cancel ex_map_conv)
 qed
 
 lemma min_conv_lower_sdistinct:
