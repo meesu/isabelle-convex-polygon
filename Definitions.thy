@@ -6,8 +6,13 @@ theory Definitions
 
 begin
 
+type_synonym R2 = "real \<times> real"
+
 abbreviation
   "sortedStrict \<equiv> sorted_wrt (<)"
+
+abbreviation sdistinct :: "R2 list \<Rightarrow> bool" where
+  "sdistinct xs \<equiv> distinct (map fst xs) \<and> sorted xs"
 
 definition nsubset::"'a set \<Rightarrow> nat \<Rightarrow> ('a set) set" (infix "~" 76)  where
   "nsubset S k = {X. X \<subseteq> S \<and>  card X = k}"
@@ -22,8 +27,6 @@ belong to the convex hull of the rest*)
 of a convex hull*)
 definition convex_pos::"('a::euclidean_space set) \<Rightarrow> bool" where
   "convex_pos S \<equiv>  (\<forall> s \<in> S. convex hull S \<noteq> convex hull (S - {s}))"
-
-type_synonym R2 = "real \<times> real"
 
 definition cross3 :: "R2 \<Rightarrow> R2 \<Rightarrow> R2 \<Rightarrow> real" where
   "cross3 a b c \<equiv> (fst b - fst a) * (snd c - snd b) - (fst c - fst b) * (snd b - snd a)"

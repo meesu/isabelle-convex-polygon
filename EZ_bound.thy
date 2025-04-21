@@ -499,7 +499,11 @@ proof-
 qed
 
 lemma min_conv_3_k_bnd:
-  "min_conv 3 (Suc k) > k"
+  shows "min_conv 3 (Suc k) > k"
+(*     and "\<exists>S. (card S = min_conv 3 (Suc k) - 1 \<and> general_pos S \<and> 
+        sdistinct (sorted_list_of_set S)) \<and> 
+        (\<forall>xs. set xs \<subseteq> S \<and> sortedStrict xs \<longrightarrow> \<not> (cap 3 xs \<or> cup (Suc k) xs))"
+ *)
 proof-
   have "\<exists>S. (card S \<ge> k \<and> general_pos S)
                 \<and> (\<forall>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<longrightarrow> \<not>(cap 3 xs \<or> cup (Suc k) xs))"
