@@ -48,6 +48,7 @@ fun list_check :: "(_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool) \<Righ
 | "list_check f (a#b#[]) = (a \<noteq> b)"
 | "list_check f (a#b#c#rest) = (f a b c \<and> list_check f (b#c#rest))"
 
+(* the definition of cup cap in papers assumes that the x coordinates are distinct *)
 definition cap::"nat \<Rightarrow> (real\<times>real) list \<Rightarrow> bool" where
 "cap k L \<equiv> (k = length L) \<and> (sortedStrict L) \<and> (list_check cap3 L)"
 
