@@ -8,6 +8,9 @@ begin
 
 type_synonym R2 = "real \<times> real"
 
+definition slope :: "R2 \<Rightarrow> R2 \<Rightarrow> real" where
+  "slope a b = (snd b - snd a) / (fst b - fst a)"
+
 abbreviation
   "sortedStrict \<equiv> sorted_wrt (<)"
 
@@ -29,7 +32,7 @@ definition convex_pos::"('a::euclidean_space set) \<Rightarrow> bool" where
   "convex_pos S \<equiv>  (\<forall> s \<in> S. convex hull S \<noteq> convex hull (S - {s}))"
 
 definition cross3 :: "R2 \<Rightarrow> R2 \<Rightarrow> R2 \<Rightarrow> real" where
-  "cross3 a b c \<equiv> (fst b - fst a) * (snd c - snd b) - (fst c - fst b) * (snd b - snd a)"
+  "cross3 a b c = (fst b - fst a) * (snd c - snd b) - (fst c - fst b) * (snd b - snd a)"
 
 definition cup3 :: "_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool" where
   "cup3 a b c \<equiv>  cross3 a b c > 0"
@@ -48,18 +51,19 @@ fun list_check :: "(_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool) \<Righ
 | "list_check f (a#b#[]) = (a \<noteq> b)"
 | "list_check f (a#b#c#rest) = (f a b c \<and> list_check f (b#c#rest))"
 
-(* the definition of cup cap in papers assumes that the x coordinates are distinct *)
-definition cap::"nat \<Rightarrow> (real\<times>real) list \<Rightarrow> bool" where
-"cap k L \<equiv> (k = length L) \<and> (sortedStrict L) \<and> (list_check cap3 L)"
+(* the definition of cup cap in Morris/Soltan paper assumes that the x coordinates are distinct *)
+definition cap :: "nat \<Rightarrow> (real\<times>real) list \<Rightarrow> bool" where
+  "cap k L \<equiv> (k = length L) \<and> (sdistinct L) \<and> (list_check cap3 L)"
 
 definition cup :: "nat \<Rightarrow> (real \<times> real) list \<Rightarrow> bool" where
-  "cup k L \<equiv> (k = length L) \<and> (sortedStrict L) \<and> (list_check cup3 L)"
+  "cup k L \<equiv> (k = length L) \<and> (sdistinct L) \<and> (list_check cup3 L)"
 
 (* definition of minimum number of points containing an l-cup or k-cap *)
 (* distinctness is taken care of by the fact that cap or cup needs to have distinct points*)
 (*distinctness *)
 
 definition min_conv :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "min_conv k l = (Inf {n :: nat. (\<forall>S :: R2 set. (card S \<ge> n \<and> general_pos S)
-                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> (sortedStrict xs) \<and> (cap k xs \<or> cup l xs)))})"
+  "min_conv k l = 
+    Inf {n :: nat. (\<forall>S :: R2 set. (card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs)))}"
 end
