@@ -416,8 +416,8 @@ qed
 
 lemma sdistinct_subl:
   fixes   X Y :: "R2 list"
-  assumes "sublist X Y" and "sdistinct (Y)"
-  shows   "sdistinct(X)"
+  assumes "sublist X Y" and "sdistinct Y"
+  shows   "sdistinct X"
 proof
   have "distinct (map fst Y)" using assms(2) by simp
   thus "distinct (map fst X)" sorry

@@ -1195,50 +1195,95 @@ lemma min_conv_lower_imp2:
   shows "min_conv k l > n"
   using assms min_conv_lower by blast
 
-lemma shift_more_set_above:
+lemma shift_set_above:
   fixes S1 S2 :: "R2 set"
   assumes "distinct (map fst (sorted_list_of_set S1))" 
       and "distinct (map fst (sorted_list_of_set S2))"
       and "finite S1"
       and "finite S2"
-      and "(\<forall>x\<in>S1. \<forall>y\<in>S2. fst x < fst y) \<and>
-           (\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2. slope x y < slope y z) \<and>
-           (\<forall>a\<in>S1. \<forall>b\<in>S2. \<forall>c\<in>S2. slope a b > slope b c)"
-
-    shows "(  \<forall>ty. \<forall>S2t. ty > 0 \<longrightarrow> 
-                   (S2t = (\<lambda>p. p + (0,ty)) ` S2 \<and>
-                   (\<forall>x\<in>S1. \<forall>y\<in>S2t. fst x < fst y) \<and>
-                   (\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2t. slope x y < slope y z) \<and>
-                   (\<forall>a\<in>S1. \<forall>b\<in>S2t. \<forall>c\<in>S2t. slope a b > slope b c) )  )"
-  sorry (* check the conditions if this is even true *)
-
-lemma shift_set_above:
-  fixes S1 S2' :: "R2 set"
-  assumes "distinct (map fst (sorted_list_of_set S1))" 
-      and "distinct (map fst (sorted_list_of_set S2'))"
-      and "finite S1"
-      and "finite S2'"
-    obtains S2 t where "( S2 = (\<lambda>p. p + t) ` S2' \<and>
-                   (\<forall>x\<in>S1. \<forall>y\<in>S2. fst x < fst y) \<and>
-                   (\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2. slope x y < slope y z) \<and>
-                   (\<forall>a\<in>S1. \<forall>b\<in>S2. \<forall>c\<in>S2. slope a b > slope b c) )"
-proof(induction "card S2'")
-  case 0
-  define S2 where "S2 = (\<lambda>p. p + 0) ` S2'"
-  moreover have "S2 = {}" 
-    using 0(1) Finite_Set.card.empty assms(4) using calculation by simp
-  moreover have "(\<forall>x\<in>S1. \<forall>y\<in>S2. fst x < fst y) \<and>
-         (\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2. slope x y < slope y z) \<and>
-         (\<forall>a\<in>S1. \<forall>b\<in>S2. \<forall>c\<in>S2. slope a b > slope b c)"
-    using calculation by blast
-  ultimately show ?case
-    using that by auto
-
-next
+      and "card S2 \<ge> 1"
+      and "card S1 \<ge> 2"
+    obtains S2t t where 
+              "( S2t = (\<lambda>p. p + t) ` S2 \<and>
+               (\<forall>x\<in>S1. \<forall>y\<in>S2t. fst x < fst y) \<and>
+               (\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2t.  x < y \<longrightarrow> slope x y < slope y z) \<and>
+               (\<forall>a\<in>S1. \<forall>b\<in>S2t. \<forall>c\<in>S2t. b < c \<longrightarrow> slope a b > slope b c) )"
+  using assms
+proof(induction "card S2" arbitrary: S2)
   case (Suc x)
-  then show ?case sorry
-qed
+  then show ?case
+  proof(cases "card S2 = 1")
+    case True
+    then obtain p2 where p2:"S2 = {p2}"
+      using card_1_singletonE by blast
 
+    define tx where "tx = Max (fst ` S1) + 1"
+(*     obtain ty where ty:
+      "ty = Max{snd b + (slope a b) * (tx - fst b)|a b. a \<in> S1 \<and> b \<in> S1 \<and> a<b} + 1"
+      by blast
+ *)  
+    define S1pr where "S1pr = {(u,v)|u v. u \<in> S1 \<and> v \<in> S1 \<and> u<v}"
+    then obtain s1 s2 where "s1\<in>S1" "s2\<in>S1" "s1<s2" using assms (1,6)
+      by (meson card_2_iff' ex_card linorder_less_linear
+          subset_iff)
+    hence "(s1, s2) \<in> S1pr" using S1pr_def by blast
+    hence S1pr_nonE:"S1pr \<noteq> {}" by force
+    have S1pr_fin:"finite S1pr" using assms(3) S1pr_def sorry
+    define ty where ty:
+      "ty=(MAX (a,b) \<in> S1pr. snd b + (slope a b) * (tx - fst b)) + 1"
+
+    define S2t where "S2t = (\<lambda>p. p + (-fst p2 + tx, -snd p2 + ty)) ` S2"
+    
+    have f1:"(\<forall>x\<in>S1. fst x < Max (fst ` S1) + 1)"
+      by (smt (verit, best) Max_ge assms(3) finite_imageI image_eqI)
+    hence r1:"(\<forall>x\<in>S1. \<forall>y\<in>S2t. fst x < fst y)" using tx_def S2t_def p2 by auto
+    
+    have "\<forall>a\<in>S1. \<forall>b\<in>S1. a < b \<longrightarrow> slope a b < slope b (tx, ty)"
+    proof(rule+)
+      fix a b assume asm:"a \<in> S1" "b \<in> S1" "a < b"
+      have f2:"(a,b) \<in> S1pr" using asm S1pr_def by blast
+       have "ty-1=(MAX (a,b) \<in> S1pr. snd b + (slope a b) * (tx - fst b))"
+        using ty by argo
+      hence "ty - 1 \<ge> (snd b + (slope a b) * (tx - fst b))"
+        using f2 S1pr_nonE S1pr_fin
+        by (metis (no_types, lifting) Max_ge finite_imageI
+            pair_imageI)
+      hence "slope a b < (ty - snd b) / (tx - fst b)"
+        by (smt (verit, ccfv_threshold) f1 asm(2) divide_diff_eq_iff divide_pos_pos tx_def)
+      thus "slope a b < slope b (tx, ty)" using slope_def
+        by simp
+    qed
+    hence r2:"\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2t. x < y \<longrightarrow> slope x y < slope y z"
+      by (smt (verit, del_insts) S2t_def add_Pair imageE p2
+          prod.collapse singletonD)
+    have "\<forall>a\<in>S1. \<forall>b\<in>S2t. \<forall>c\<in>S2t. b < c \<longrightarrow> slope a b > slope b c"
+      using S2t_def p2 by blast
+    then show ?thesis using r1 r2 S2t_def Suc.prems(1) by auto
+  next
+    case False
+    hence "card S2 \<ge> 2"
+      using Suc.prems(6) by linarith
+(* obtain a point in S2 which would be at a higher slope than another wrt points in S1 *)
+    then obtain p1 p2 where "p1 \<noteq> p2" "p1\<in>S2" "p2\<in>S2"
+      by (meson card_2_iff' ex_card subset_iff)
+    then show ?thesis sorry
+  qed
+qed(simp add: assms(5))
+
+lemma shift_set_above_fin:
+  fixes S1 S2 :: "R2 set"
+  assumes "distinct (map fst (sorted_list_of_set S1))" 
+      and "distinct (map fst (sorted_list_of_set S2))"
+      and "finite S1"
+      and "finite S2"
+      and "card S2 \<ge> 1"
+      and "card S1 \<ge> 1"
+    obtains S2t t where 
+              "( S2t = (\<lambda>p. p + t) ` S2 \<and>
+               (\<forall>x\<in>S1. \<forall>y\<in>S2t. fst x < fst y) \<and>
+               (\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2t.  x < y \<longrightarrow> slope x y < slope y z) \<and>
+               (\<forall>a\<in>S1. \<forall>b\<in>S2t. \<forall>c\<in>S2t. b < c \<longrightarrow> slope a b > slope b c) )"
+  sorry
 
 lemma min_conv_upper_bnd:
   shows "min_conv (Suc (k+2)) (Suc (l+2)) > 
@@ -1271,6 +1316,11 @@ next
       by (meson min_conv_lower_imp1o)
     hence S1f: "finite S1"
       by (smt (verit, ccfv_threshold) One_nat_def Suc_1 Suc_diff_1 add_2_eq_Suc' card.infinite le_add2 min_conv_lower min_conv_min min_def not_less_eq_eq)
+    have S1d: "distinct (map fst (sorted_list_of_set S1))" using S1
+      by meson
+    have S11:"card S1 \<ge> 1" using S1(1)
+      by (smt (verit, best) Suc_1 le_add1 le_add2 min_conv_min min_def
+          le_add_diff_inverse nle_le not_less_eq_eq plus_1_eq_Suc)
 
     have "min_conv (Suc (k + 2)) (l + 2) > min_conv (Suc (k + 2)) (l + 2) - 1"
       by (smt (verit) F1 FC1(2) Nat.add_diff_assoc2 Suc.hyps(1) Suc_diff_1 add_Suc_right diff_is_0_eq' nat_le_linear neq0_conv not_less_eq
@@ -1281,31 +1331,43 @@ next
       by (meson min_conv_lower_imp1o)
     hence S2tf: "finite S2t"
       by (smt (verit, ccfv_threshold) One_nat_def Suc_1 Suc_diff_1 add_2_eq_Suc' card.infinite le_add2 min_conv_lower min_conv_min min_def not_less_eq_eq)
+    have S2t1:"card S2t \<ge> 1" using S2t(1)
+      by (smt (verit, best) Suc_1 le_add1 le_add2 min_conv_min min_def
+          le_add_diff_inverse nle_le not_less_eq_eq plus_1_eq_Suc)
+    have S2td: "distinct (map fst (sorted_list_of_set S2t))" using S2t
+      by meson
         (* find t using which S2t can be translated while satisfying the conditions *)
 
-    fix t define S2 where "S2 = (\<lambda>p. p + t) ` S2t"
       (* show that S2 has no big cups or caps using the lemma translated_set *)
       (* make sure the chosen t allows for the following conditions *)
-    have set2higher:      "\<forall>x\<in>S1. \<forall>y\<in>S2. fst x < fst y" sorry
-    have slopeS1: "\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2. slope x y < slope y z" sorry
-    have slopeS2: "\<forall>a\<in>S1. \<forall>b\<in>S2. \<forall>c\<in>S2. slope a b > slope b c" sorry
+    obtain t S2 where S2_prop: "S2 = (\<lambda>p. p + t) ` S2t"
+                          "\<forall>x\<in>S1. \<forall>y\<in>S2. fst x < fst y"
+                          "\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2. x < y \<longrightarrow> slope x y < slope y z"
+                          "\<forall>a\<in>S1. \<forall>b\<in>S2. \<forall>c\<in>S2. b < c \<longrightarrow> slope a b > slope b c"
+      using shift_set_above_fin S1(3) S1f S2t(3) S2tf S2t1 S1d S2td S11
+      by (smt (verit, ccfv_SIG))
 
     have cupExtendS1FromS2: "\<forall>x\<in>S1. \<forall>y\<in>S1. \<forall>z\<in>S2. (sdistinct [x,y,z] \<longrightarrow> cup3 x y z)" 
-      using slope_cup3 slopeS1 by blast
+      using slope_cup3 S2_prop
+      by (metis distinct_length_2_or_more distinct_map
+          order_le_imp_less_or_eq sorted2)
     have capExtendS2FromS1: "\<forall>a\<in>S1. \<forall>b\<in>S2. \<forall>c\<in>S2. (sdistinct[a,b,c] \<longrightarrow> cap3 a b c)" 
-      using slope_cap3 slopeS2 by blast
+      using slope_cap3 S2_prop
+      by (metis distinct_length_2_or_more distinct_map
+          order_le_imp_less_or_eq sorted2)
+
     have S2:"card S2 = min_conv (Suc (k + 2)) (l + 2) - 1" 
-      "general_pos S2" "sdistinct(sorted_list_of_set S2)"
-      "\<forall>xs. set xs \<subseteq> S2 \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (l+2) xs)"
-      using translated_set S2t S2_def by blast+
+            "general_pos S2"     "sdistinct(sorted_list_of_set S2)"
+            "\<forall>xs. set xs \<subseteq> S2 \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (l+2) xs)"
+      using translated_set[of "S2t" _  ] S2t S2_prop(1) by blast+
 
     have f12_0: "general_pos (S1\<union>S2)" sorry
-    have f12_1:"S1 \<inter> S2 = {}" using set2higher by fast
+    have f12_1:"S1 \<inter> S2 = {}" using S2_prop(2) by fast
     hence f12_2:"card (S1\<union>S2) = card S1 + card S2" using S1(1) S2(1) S1f S2tf
-      by (metis S2_def card_Un_disjoint finite_imageI)
+      by (metis S2_prop(1) card_Un_disjoint finite_imageI)
     hence f12_3:"sorted_list_of_set (S1\<union>S2) = (sorted_list_of_set S1) @ (sorted_list_of_set S2)"      
-      using set2higher S2(3) S1(3) S1f S2tf sorry
-    hence f12_4:"sdistinct (sorted_list_of_set (S1 \<union> S2))" using S2(3) S1(3) set2higher sorry
+      using S2_prop(2) S2(3) S1(3) S1f S2tf sorry
+    hence f12_4:"sdistinct (sorted_list_of_set (S1 \<union> S2))" using S2(3) S1(3) S2_prop(2) sorry
     have "\<forall>xs. set xs \<subseteq> (S1\<union>S2) \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (Suc (l+2)) xs)" sorry
     then show ?thesis
       using f12_0 f12_2 f12_4 min_conv_lower_imp2 S1(1) S2(1)
