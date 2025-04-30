@@ -347,7 +347,7 @@ lemma distinct_is_triple:
       list.set(2) list.size(3) mem_Collect_eq not_less_iff_gr_or_eq nsubset_def
       numeral_3_eq_3)
 
-(*work with a simpler definition of general position*)
+(*work with a simpler definition of general position in 2 dimensions.*)
 definition
   "gpos S \<equiv> \<forall>a\<in>S. \<forall>b\<in>S. \<forall>c\<in>S. distinct [a,b,c] \<longrightarrow> \<not> collinear3 a b c"
 (*"general_pos S \<equiv>  (\<forall> P3 \<in> S~3. \<not> affine_dependent P3)"*)

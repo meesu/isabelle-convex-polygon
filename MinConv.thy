@@ -1161,21 +1161,12 @@ proof-
 qed
 
 lemma min_conv_finiteS:
-    assumes "min_conv (k+2) (l+2) = n"
-        and "card (S :: R2 set) = n" 
-        and "general_pos S"
-        and "sdistinct(sorted_list_of_set S)"
-      shows "finite S"
+    assumes "min_conv (k+2) (l+2) = card (S :: R2 set)"
+      shows "finite S" 
   using assms
-proof(induction "k+l" arbitrary: k l)
-  case 0
-  then show ?case
-    by (metis Nat.add_0_right Suc_1 add.commute add_is_0 card.infinite dual_order.refl min_conv_2 nat.distinct(1))
-next
-  case (Suc x)
-  then show ?case using min_conv_lower
-    by (metis Suc_eq_plus1 add_2_eq_Suc' card.infinite le_add2 linorder_not_less min_conv_min min_def zero_less_Suc)
-qed
+  by (metis Suc_eq_plus1 add_2_eq_Suc' card.infinite
+      le_add2 linorder_not_less min_conv_min min_def
+      zero_less_Suc)
 
 lemma min_conv_lower_imp1o:
   assumes "min_conv k l > n"
@@ -1195,47 +1186,233 @@ lemma min_conv_lower_imp2:
   shows "min_conv k l > n"
   using assms min_conv_lower by blast
 
-lemma shift_set_above:
+lemma dst_set_card2_ne:
+  fixes   S :: "R2 set"
+  assumes "card S \<ge> 2"
+  shows   "{(u,v)|u v. u \<in> S \<and> v \<in> S \<and> u < v}  \<noteq>  {}" 
+          (is "?Spr \<noteq> {}")
+proof-
+  obtain s1 s2 where "s1\<in>S" "s2\<in>S" "s1<s2" using assms
+    by (meson card_2_iff' ex_card linorder_less_linear subset_iff)
+  hence "(s1, s2) \<in> ?Spr" by blast
+  thus "?Spr \<noteq> {}" by force
+qed
+
+lemma width_non_zero:
+  fixes S :: "real set"
+  assumes "S \<noteq> {}" and "finite S"
+  shows   "Max S - Min S \<ge> 0"
+  using assms Min_in by fastforce
+
+lemma slope_div_ord:
+  fixes n1 n2 d1 d2 :: real
+  assumes "n1 \<le> n2" and "n1 > 0"
+      and "d1 \<ge> d2" and "d2 > 0"
+  shows   "n1 / d1 \<le> n2 / d2" 
+  using assms by (simp add: divide_mono)
+
+lemma finite_set_pr:
+  assumes "finite S"
+  shows   "finite {(u,v)|u v. u \<in> S \<and> v \<in> S \<and> u < v}"
+          (is "finite ?Spr")
+proof-
+  have "finite (S\<times>S)" using assms by blast
+  moreover have "?Spr \<subseteq> S\<times>S" by blast
+  ultimately show ?thesis by (meson rev_finite_subset)
+qed
+
+lemma shift_set_above_c2:
   fixes S1 S2 :: "R2 set"
+
   assumes "distinct (map fst (sorted_list_of_set S1))" 
-      and "distinct (map fst (sorted_list_of_set S2))"
       and "finite S1"
-      and "finite S2"
-      and "card S2 \<ge> 1"
       and "card S1 \<ge> 2"
-    obtains S2t t where 
-              "( S2t = (\<lambda>p. p + t) ` S2 \<and>
+
+      and "distinct (map fst (sorted_list_of_set S2))"
+      and "finite S2"
+      and "card S2 \<ge> 2"
+
+    shows "\<exists>t. \<exists>S2t.
+              ( S2t = (\<lambda>p. p + t) ` S2 \<and>
                (\<forall>x\<in>S1. \<forall>y\<in>S2t. fst x < fst y) \<and>
                (\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2t.  x < y \<longrightarrow> slope x y < slope y z) \<and>
                (\<forall>a\<in>S1. \<forall>b\<in>S2t. \<forall>c\<in>S2t. b < c \<longrightarrow> slope a b > slope b c) )"
-  using assms
-proof(induction "card S2" arbitrary: S2)
-  case (Suc x)
-  then show ?case
-  proof(cases "card S2 = 1")
+proof-
+  define s1_minx where "s1_minx = Min (fst ` S1)"
+  define s1_maxx where "s1_maxx = Max (fst ` S1)"
+  define s1_maxy where "s1_maxy = Max (snd ` S1)"
+
+  define s2_miny where "s2_miny = Min (snd ` S2)"
+  define s2_minx where "s2_minx = Min (fst ` S2)"
+  define s2_maxx where "s2_maxx = Max (fst ` S2)"
+  define w1      where "w1   = s1_maxx - s1_minx"
+  define w2      where "w2   = s2_maxx - s2_minx"
+
+  define S1pr where "S1pr = {(u,v)|u v. u \<in> S1 \<and> v \<in> S1 \<and> u < v}"
+  define S2pr where "S2pr = {(u,v)|u v. u \<in> S2 \<and> v \<in> S2 \<and> u < v}"
+
+  have s1pr_fin: "finite S1pr" using assms(2) S1pr_def finite_set_pr by fast
+  have s2pr_fin: "finite S2pr" using assms(5) S2pr_def finite_set_pr by fast
+  have s1pr_ne:   "S1pr \<noteq> {}" using assms(1,3) dst_set_card2_ne S1pr_def by blast
+  have s2pr_ne:   "S2pr \<noteq> {}" using assms(4,6) dst_set_card2_ne S2pr_def by blast
+
+  have w1_pos  : "w1 \<ge> 0" using w1_def assms(2,3) s1_maxx_def s1_minx_def width_non_zero
+    by (metis card.empty finite_imageI image_is_empty not_numeral_le_zero)
+  have w2_pos  : "w2 \<ge> 0" using w2_def assms(5,6) s2_maxx_def s2_minx_def width_non_zero
+    by (metis card.empty finite_imageI image_is_empty not_numeral_le_zero)
+
+  text \<open>\<close>
+  define tx where "tx = -s2_minx + s1_maxx + 1"
+  define ty1 where
+    "ty1 = max s1_maxy (MAX (a,b) \<in> S1pr. snd b + (slope a b) * ((s1_maxx + 1) + w2 - fst b))"
+  define ty2 where 
+    "ty2 =  max s1_maxy 
+      (MAX (b,c) \<in> S2pr. s1_maxy + s2_miny - snd b + (slope (b+(tx,0)) (c+(tx,0)))*(fst b+tx-s1_minx))"
+
+  define ty where "ty = max ty1 ty2"
+  define t where "t = (-s2_minx + s1_maxx + 1, -s2_miny + ty + 1)"
+  define S2t where "S2t = (\<lambda>p. p + t) ` S2"   (is "_ = ?tr ` _")
+
+  text \<open>Properties of max function follow.\<close>
+  have m1: "ty \<ge> ty1" "ty \<ge> ty2" using ty_def by simp+
+
+  text \<open>The result r1 below is obtained by translating all the points of S2 along the x-axis
+        after the point in S1 with highest x-coordinate.\<close>
+  have f1r1:"\<forall>x\<in>S1. fst x < s1_maxx + 1" using s1_maxx_def
+    by (smt (verit, best) Max_ge assms(2) finite_imageI image_eqI)
+  have f2r1:"\<forall>y\<in>S2t. s1_maxx + 1 \<le> fst y" using s2_minx_def S2t_def t_def
+    using assms(5) by auto
+  hence r1:"(\<forall>x\<in>S1. \<forall>y\<in>S2t. fst x < fst y)" using f1r1 f2r1 by fastforce
+
+  text \<open>We chose ty1 in such a way that the lower right corner of bounding box of S2 is above all
+        the lines passing through point pairs in S1.\<close>
+  have f0r2:"\<forall>a\<in>S1. \<forall>b\<in>S1. a < b \<longrightarrow> slope a b < slope b (s1_maxx+1 + w2, ty1+1)"
+  proof(rule+)
+    fix a b assume asm:"a \<in> S1" "b \<in> S1" "a < b"
+    have f2:"(a,b) \<in> S1pr" using asm S1pr_def by blast
+    have "ty1 \<ge> (MAX (a,b) \<in> S1pr. snd b + (slope a b) * (s1_maxx + 1 + w2 - fst b))"
+      using ty1_def by argo
+    hence "ty1 + 1 > snd b + ((slope a b) * (s1_maxx + 1 + w2 - fst b))"
+      using f2 s1pr_ne s1pr_fin Max_ge finite_imageI pair_imageI
+      by (smt (verit, best))
+    hence "slope a b < (ty1 + 1 - snd b) / (s1_maxx + 1 + w2 - fst b)"
+     using f1r1 asm divide_diff_eq_iff divide_pos_pos s1_maxx_def w2_pos by smt
+    thus "slope a b < slope b (s1_maxx+1 + w2, ty1+1)" using slope_def
+      by simp
+  qed
+
+  text \<open>We show that the slope of any point y in S1 to the lower left corner of bounding box of S2t is at most the slope to any other point in S2t.\<close>
+  have "\<forall>y\<in>S1. \<forall>z\<in>S2t. y < z \<longrightarrow> slope y (s1_maxx+1 + w2, ty1+1) \<le> slope y z"
+  proof(rule+)
+    fix y z assume asm:"y \<in> S1" "z\<in>S2t" "y<z"
+    then obtain z2 
+      where z2: "z2 \<in> S2" "z = (\<lambda>p. p + t) z2"
+      using S2t_def t_def by blast
+ 
+    have fx:"snd (?tr z2) \<ge> ty + 1" using s2_miny_def asm ty_def t_def z2(1) assms(5)
+      by simp
+    moreover have "... \<ge> s1_maxy" using m1(1) ty1_def calculation by linarith
+    moreover have "... \<ge> snd y" using asm(1) assms(2) s1_maxy_def
+      by (smt (verit) Max_ge calculation(2) finite_imageI imageI)
+    ultimately have 0:"snd (?tr z2) - snd y \<ge> 0" using ty1_def by argo
+
+    have 1:"snd (?tr z2) - snd y  \<ge> ty1 + 1 - snd y" 
+      using fx assms s2_miny_def z2(1) t_def m1(1) by argo
+    have 2:"fst (?tr z2) - fst y \<le> s1_maxx+1+w2 - fst y"
+      by (simp add: assms s2_maxx_def z2(1) w2_def t_def)
+    have 3: "(fst (?tr z2) - fst y) > 0" using asm(1,2) r1 z2(2) by fastforce
+    show "slope y (s1_maxx + 1 + w2, ty1 + 1) \<le> slope y z" 
+      using 0 1 2 3 slope_def slope_div_ord
+      by (metis frac_le fst_eqD snd_eqD z2(2))
+  qed
+  hence r2:"\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2t. x < y \<longrightarrow> slope x y < slope y z"
+    using f0r2 r1 by (smt (verit, best) prod_less_def)
+
+  text \<open>We now apply the bounding box technique on S1. We make sure the upper left corner of bounding box of S1 is below the max slope in S2 after shifting.\<close>
+  have f0r3:"\<forall>b\<in>S2t. \<forall>c\<in>S2t. b < c \<longrightarrow> slope (s1_minx, s1_maxy) b > slope b c"
+  proof(rule+)
+    fix b c assume asm:"b \<in> S2t" "c \<in> S2t" "b < c"
+    then obtain b2 c2 where b2c2: "b2\<in>S2" "b = b2 + t" "c2\<in>S2" "c = c2 + t"
+      using S2t_def by blast
+    have f2:"(b2,c2) \<in> S2pr" using asm S2pr_def by (metis (mono_tags, lifting) b2c2(1,2,3,4) linorder_not_less mem_Collect_eq prod_addright_le)
+    have f3:"slope b c = slope (b2+(tx,0)) (c2+(tx,0))" by (simp add: b2c2(2,4) slope_def)
+    have "ty \<ge> 
+      (MAX (b,c) \<in> S2pr. s1_maxy + s2_miny - snd b +(slope (b+(tx,0)) (c+(tx,0)))*(fst b+tx-s1_minx))" 
+      using ty_def ty2_def f2 m1 by fastforce
+    hence "ty \<ge> s1_maxy + s2_miny - snd b2 + (slope (b2+(tx,0)) (c2+(tx,0)))*(fst b2 + tx-s1_minx)"
+      using f2 s2pr_fin s2pr_ne by auto
+    hence "ty + 1 > s1_maxy + s2_miny - snd b2 + (slope (b2+(tx,0)) (c2+(tx,0)))*(fst b2+tx-s1_minx)"
+      by linarith
+    hence "slope b c < (snd b - s1_maxy) / (fst b - s1_minx)" 
+      using f3 asm(1) b2c2(2) f2r1 less_divide_eq t_def tx_def w1_def w1_pos by fastforce
+    thus "slope (s1_minx, s1_maxy) b > slope b c" using slope_def by simp
+  qed
+
+  text \<open>Next we show that the slope across sets S1 and S2t is at least the slope of upper left corner to any point in the set S2t.\<close>
+  have "\<forall>a\<in>S1. \<forall>b\<in>S2t. a < b \<longrightarrow> slope a b \<ge> slope (s1_minx, s1_maxy) b"
+  proof(rule+)
+    fix a b assume asm:"a \<in> S1" "b\<in>S2t" "a<b"
+    then obtain b2 where b2: "b2 \<in> S2" "b = ?tr b2" using S2t_def t_def by blast
+ 
+    have fx:"snd b \<ge> ty + 1" using s2_miny_def t_def b2 assms(5) by simp
+    moreover have "... \<ge> s1_maxy" using m1(1) ty1_def calculation by linarith
+    ultimately have 0:"snd b - s1_maxy \<ge> 0" by argo
+
+    have 1:"snd b - snd a  \<ge> snd b - (s1_maxy)"
+      using fx assms s2_miny_def b2(1) t_def m1(1)
+      by (smt (verit, del_insts) Max.coboundedI asm(1)
+          finite_imageI imageI s1_maxy_def)
+    have 2:"fst b - fst a \<le> fst b - (s1_minx)"  by (simp add: asm(1) assms(2) s1_minx_def)
+    have 3: "(fst b - fst a) > 0"               by (simp add: asm(1,2) r1)
+    show "slope a b \<ge> slope (s1_minx, s1_maxy) b" using 0 1 2 3
+      by (simp add: b2(2) frac_le slope_def)
+  qed
+  hence "\<forall>a\<in>S1. \<forall>b\<in>S2t. \<forall>c\<in>S2t. b < c \<longrightarrow> slope a b > slope b c"
+    using S2t_def f0r3
+    by (metis order_less_le_trans prod_less_def r1)
+  then show ?thesis using r1 r2 S2t_def t_def by auto
+qed
+
+lemma shift_set_above:
+  fixes S1 S2 :: "R2 set"
+
+  assumes "distinct (map fst (sorted_list_of_set S1))" 
+      and "finite S1"
+      and "card S1 \<ge> 1"
+
+      and "distinct (map fst (sorted_list_of_set S2))"
+      and "finite S2"
+      and "card S2 \<ge> 1"
+
+    shows "\<exists>t. \<exists>S2t.
+              ( S2t = (\<lambda>p. p + t) ` S2 \<and>
+               (\<forall>x\<in>S1. \<forall>y\<in>S2t. fst x < fst y) \<and>
+               (\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2t.  x < y \<longrightarrow> slope x y < slope y z) \<and>
+               (\<forall>a\<in>S1. \<forall>b\<in>S2t. \<forall>c\<in>S2t. b < c \<longrightarrow> slope a b > slope b c) )"
+proof(cases "card S1 = 1 \<or> card S2 = 1")
+  case Tout:True
+  then show ?thesis
+  proof(cases "card S1 \<noteq> 1")
     case True
+    hence s2_c1:"card S2 = 1" using Tout by simp
+    have s1_c2:"card S1 \<ge> 2" using assms(3) True by simp
     then obtain p2 where p2:"S2 = {p2}"
-      using card_1_singletonE by blast
+      using card_1_singletonE s2_c1 by blast
 
     define tx where "tx = Max (fst ` S1) + 1"
-(*     obtain ty where ty:
-      "ty = Max{snd b + (slope a b) * (tx - fst b)|a b. a \<in> S1 \<and> b \<in> S1 \<and> a<b} + 1"
-      by blast
- *)  
     define S1pr where "S1pr = {(u,v)|u v. u \<in> S1 \<and> v \<in> S1 \<and> u<v}"
-    then obtain s1 s2 where "s1\<in>S1" "s2\<in>S1" "s1<s2" using assms (1,6)
-      by (meson card_2_iff' ex_card linorder_less_linear
-          subset_iff)
+    then obtain s1 s2 where "s1\<in>S1" "s2\<in>S1" "s1<s2" using assms s1_c2
+      by (meson card_2_iff' ex_card linorder_less_linear subset_iff)
     hence "(s1, s2) \<in> S1pr" using S1pr_def by blast
     hence S1pr_nonE:"S1pr \<noteq> {}" by force
-    have S1pr_fin:"finite S1pr" using assms(3) S1pr_def sorry
+    have S1pr_fin:"finite S1pr" using S1pr_def assms(2) finite_set_pr by blast
+
     define ty where ty:
       "ty=(MAX (a,b) \<in> S1pr. snd b + (slope a b) * (tx - fst b)) + 1"
-
     define S2t where "S2t = (\<lambda>p. p + (-fst p2 + tx, -snd p2 + ty)) ` S2"
     
     have f1:"(\<forall>x\<in>S1. fst x < Max (fst ` S1) + 1)"
-      by (smt (verit, best) Max_ge assms(3) finite_imageI image_eqI)
+      by (smt (verit, best) Max_ge assms finite_imageI image_eqI)
     hence r1:"(\<forall>x\<in>S1. \<forall>y\<in>S2t. fst x < fst y)" using tx_def S2t_def p2 by auto
     
     have "\<forall>a\<in>S1. \<forall>b\<in>S1. a < b \<longrightarrow> slope a b < slope b (tx, ty)"
@@ -1258,32 +1435,81 @@ proof(induction "card S2" arbitrary: S2)
           prod.collapse singletonD)
     have "\<forall>a\<in>S1. \<forall>b\<in>S2t. \<forall>c\<in>S2t. b < c \<longrightarrow> slope a b > slope b c"
       using S2t_def p2 by blast
-    then show ?thesis using r1 r2 S2t_def Suc.prems(1) by auto
+    then show ?thesis using r1 r2 S2t_def by auto
   next
     case False
-    hence "card S2 \<ge> 2"
-      using Suc.prems(6) by linarith
-(* obtain a point in S2 which would be at a higher slope than another wrt points in S1 *)
-    then obtain p1 p2 where "p1 \<noteq> p2" "p1\<in>S2" "p2\<in>S2"
-      by (meson card_2_iff' ex_card subset_iff)
-    then show ?thesis sorry
-  qed
-qed(simp add: assms(5))
+    then show ?thesis
+    proof(cases "card S2 = 1") (* and card S1 = 1 *)
+      case True
+      then obtain s1 s2 where s1s2: "S1 = {s1}" "S2 = {s2}" using False
+        by (meson card_1_singletonE)
+      define S2t where "S2t = (\<lambda>p. p + (-fst s2 + fst s1 + 1, 0)) ` S2"
+      have r1: "(\<forall>x\<in>S1. \<forall>y\<in>S2t. fst x < fst y)"
+        by (simp add: S2t_def s1s2(1,2))
+      have "(\<forall>x\<in>S1. \<forall>y\<in>S1. \<forall>z\<in>S2t. x < y \<longrightarrow> slope x y < slope y z) \<and>
+            (\<forall>a\<in>S1. \<forall>b\<in>S2t. \<forall>c\<in>S2t. b < c \<longrightarrow> slope b c < slope a b)" 
+        using s1s2 S2t_def by blast
+      then show ?thesis using r1
+        using S2t_def by auto
+    next
+      case False
+      hence s2_c2: "card S2 \<ge> 2" using assms(6) by linarith
+      have  s1_c1: "card S1 = 1" using False Tout by blast
+      then obtain s1x s1y where s1: "S1 = {(s1x, s1y)}"
+        using card_1_singletonE by (metis surj_pair)
 
-lemma shift_set_above_fin:
-  fixes S1 S2 :: "R2 set"
-  assumes "distinct (map fst (sorted_list_of_set S1))" 
-      and "distinct (map fst (sorted_list_of_set S2))"
-      and "finite S1"
-      and "finite S2"
-      and "card S2 \<ge> 1"
-      and "card S1 \<ge> 1"
-    obtains S2t t where 
-              "( S2t = (\<lambda>p. p + t) ` S2 \<and>
-               (\<forall>x\<in>S1. \<forall>y\<in>S2t. fst x < fst y) \<and>
-               (\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2t.  x < y \<longrightarrow> slope x y < slope y z) \<and>
-               (\<forall>a\<in>S1. \<forall>b\<in>S2t. \<forall>c\<in>S2t. b < c \<longrightarrow> slope a b > slope b c) )"
-  sorry
+      define s2_miny where "s2_miny = Min (snd ` S2)"
+      define s2_minx where "s2_minx = Min (fst ` S2)"
+      define S2pr where "S2pr = {(u,v)|u v. u \<in> S2 \<and> v \<in> S2 \<and> u < v}"
+
+      have s2pr_fin: "finite S2pr" using assms(5) S2pr_def finite_set_pr by fast
+      have s2pr_ne:   "S2pr \<noteq> {}" using assms(4,6) dst_set_card2_ne S2pr_def s2_c2 by presburger
+
+      define tx where "tx = -s2_minx + s1x + 1"
+      define ty2 where 
+        "ty2 =  max s1y 
+      (MAX (b,c) \<in> S2pr. s1y + s2_miny - snd b + (slope (b+(tx,0)) (c+(tx,0)))*(fst b+tx-s1x))"
+
+      define t where "t = (-s2_minx + s1x + 1, -s2_miny + ty2 + 1)"
+      define S2t where "S2t = (\<lambda>p. p + t) ` S2"   (is "_ = ?tr ` _")
+
+      have f1r1:"\<forall>x\<in>S1. fst x < s1x + 1" using s1 by simp
+      have f2r1:"\<forall>y\<in>S2t. s1x + 1 \<le> fst y" using s2_minx_def S2t_def t_def
+        using assms(5) by auto
+      hence r1:"(\<forall>x\<in>S1. \<forall>y\<in>S2t. fst x < fst y)" using f1r1 f2r1 by fastforce
+
+      have "\<forall>b\<in>S2t. \<forall>c\<in>S2t. b < c \<longrightarrow> slope (s1x, s1y) b > slope b c"
+      proof(rule+)
+        fix b c assume asm:"b \<in> S2t" "c \<in> S2t" "b < c"
+        then obtain b2 c2 where b2c2: "b2\<in>S2" "b = b2 + t" "c2\<in>S2" "c = c2 + t"
+          using S2t_def by blast
+        have f2:"(b2,c2) \<in> S2pr" using asm S2pr_def by (metis (mono_tags, lifting) b2c2(1,2,3,4) linorder_not_less mem_Collect_eq prod_addright_le)
+        have f3:"slope b c = slope (b2+(tx,0)) (c2+(tx,0))" by (simp add: b2c2(2,4) slope_def)
+        have "ty2 \<ge> 
+          (MAX (b,c) \<in> S2pr. s1y + s2_miny - snd b +(slope (b+(tx,0)) (c+(tx,0)))*(fst b+tx-s1x))" 
+          using ty2_def by fastforce
+        hence "ty2 + 1 > s1y + s2_miny - snd b2 + slope b c * (fst b2+tx-s1x)"
+          using f3 f2 s2pr_fin s2pr_ne by auto
+        hence "slope b c < (snd b2 - s2_miny + ty2 + 1 - s1y) / (fst b2 + tx - s1x)"
+          using asm(1) b2c2(2) f2r1 less_divide_eq t_def tx_def
+          by fastforce
+        thus "slope (s1x, s1y) b > slope b c" using slope_def t_def S2t_def
+          by (smt (verit, best) b2c2(2) fst_add fst_conv snd_add
+              snd_eqD tx_def)
+      qed
+      hence r3:"\<forall>a\<in>S1. \<forall>b\<in>S2t. \<forall>c\<in>S2t. b < c \<longrightarrow> slope a b > slope b c"
+        using s1 by blast
+      have r2: "\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2t.  x < y \<longrightarrow> slope x y < slope y z" using s1 by blast
+      show ?thesis using S2t_def r1 r2 r3 t_def
+        by auto
+    qed
+  qed
+next
+  case False
+  hence "card S1 \<ge> 2" "card S2 \<ge> 2"
+    using assms(3,6) by fastforce+
+  then show ?thesis using shift_set_above_c2 assms by presburger
+qed
 
 lemma min_conv_upper_bnd:
   shows "min_conv (Suc (k+2)) (Suc (l+2)) > 
@@ -1344,8 +1570,8 @@ next
                           "\<forall>x\<in>S1. \<forall>y\<in>S2. fst x < fst y"
                           "\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2. x < y \<longrightarrow> slope x y < slope y z"
                           "\<forall>a\<in>S1. \<forall>b\<in>S2. \<forall>c\<in>S2. b < c \<longrightarrow> slope a b > slope b c"
-      using shift_set_above_fin S1(3) S1f S2t(3) S2tf S2t1 S1d S2td S11
-      by (smt (verit, ccfv_SIG))
+      using shift_set_above S1(3) S1f S2t(3) S2tf S2t1 S1d S2td S11
+      by (smt (verit, best))
 
     have cupExtendS1FromS2: "\<forall>x\<in>S1. \<forall>y\<in>S1. \<forall>z\<in>S2. (sdistinct [x,y,z] \<longrightarrow> cup3 x y z)" 
       using slope_cup3 S2_prop
@@ -1390,117 +1616,6 @@ Let X = A \<union> B be the resulting configuration. Any cup in X that contains
 elements of both A and B may have only one element of B. It follows that X
 contains no k-cup. We similarly see that X contains no l-cap.
 --
- *)
-
-(* lemma min_conv_upper_bnd:
-  shows "min_conv (Suc (k+2)) (Suc (l+2)) > 
-        (min_conv (k+2) (Suc (l+2)) - 1) + (min_conv (Suc (k+2)) (l+2) - 1)"
-        (is "?P a b > ?n1 + ?n2")
-    and "\<exists>S. (card S = min_conv (Suc (k+2)) (Suc (l+2)) - 1
-          \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
-          \<and> (\<forall>xs. set xs \<subseteq> S \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (Suc (l+2)) xs))"
-proof(induction "k+l" arbitrary: k l)
-  case 0
-  {
-    case 1
-    then show ?case
-      using "0" min_conv_arg_swap min_conv_base numeral_3_eq_3 by fastforce
-  next
-    case 2
-    hence 21:"k=0" "l=0" using "0" by auto
-    hence 22:"min_conv (Suc (k + 2)) (Suc (l + 2)) - 1 = 2" using min_conv_base
-      by (simp add: numeral_3_eq_3)
-    define PS2 where ps2: "PS2 = {(0,1), (1,2)::R2}"
-    have F1_PS2: "card PS2 = 2" using ps2 by force
-    have "gpos PS2" by (simp add: gpos_def ps2)
-    hence F2_PS2: "general_pos PS2" using gpos_generalpos by simp
-    have F3_PS2: "sdistinct(sorted_list_of_set PS2)" by (simp add: ps2)
-    have "\<forall>xs. set xs \<subseteq> PS2 \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (Suc (l+2)) xs)" using F1_PS2 ps2 21 22
-      by (metis (mono_tags, lifting) One_nat_def Suc_1 Suc_n_not_le_n add_2_eq_Suc'
-          cap_def card_mono cup_def distinctFst_distinct distinct_card finite.intros(1)
-          finite_insert)
-    then show ?case using 22 F1_PS2 F2_PS2 F3_PS2 by force
-  }
-next
-  case (Suc x)
-  {
-    case 1
-    then show ?case 
-    proof(cases "k=0 \<or> l=0")
-      case True
-      then show ?thesis using min_conv_2 min_conv_arg_swap
-        by (metis (no_types, opaque_lifting) One_nat_def Suc_1 Suc_eq_plus1 add_Suc_shift diff_Suc_1'
-            diff_diff_cancel le_add2 less_one min_conv_base numeral_eq_Suc plus_1_eq_Suc pred_numeral_simps(3)
-            zero_less_diff)
-    next
-      case False
-      hence FC1:"k\<ge>1"  "l\<ge>1" by simp+
-      have F1:"(k)+(l-1) = x" using FC1 Suc by simp
-      have F2:"(k-1) + l = x" using FC1 Suc by simp
-
-      have s1x:"\<exists>S. (card S =
-         min_conv (k + 2) (Suc (l + 2)) - 1 \<and>
-         general_pos S \<and>
-         sdistinct (sorted_list_of_set S)) \<and>
-        (\<forall>xs. set xs \<subseteq> S \<and> sdistinct xs \<longrightarrow>
-              \<not> (cap (k + 2) xs \<or>
-                  cup (Suc (l + 2)) xs))" using Suc F2
-        by (metis (no_types, opaque_lifting) FC1(1) add_2_eq_Suc' le_add_diff_inverse
-            plus_1_eq_Suc)
-
-      have s2x:"\<exists>S. (card S =
-         min_conv (Suc (k + 2)) (l + 2) - 1 \<and>
-         general_pos S \<and>
-         sdistinct (sorted_list_of_set S)) \<and>
-        (\<forall>xs. set xs \<subseteq> S \<and> sdistinct xs \<longrightarrow>
-              \<not> (cap (Suc (k + 2)) xs \<or>
-                  cup (l + 2) xs))" using Suc F1
-        by (metis add_2_eq_Suc' add_Suc_right add_diff_cancel_left')
-
-      obtain S1 where S1: "card S1 = min_conv (k + 2) (Suc (l + 2)) - 1" 
-        "general_pos S1"  "sdistinct(sorted_list_of_set S1)"
-        "\<forall>xs. set xs \<subseteq> S1 \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (k+2) xs \<or> cup (Suc (l+2)) xs)" using s1x by blast
-      hence S1f: "finite S1"
-        by (smt (verit, ccfv_threshold) One_nat_def Suc_1 Suc_diff_1 add_2_eq_Suc' card.infinite le_add2 min_conv_lower min_conv_min min_def not_less_eq_eq)
-
-      obtain S2t where S2t: "card S2t = min_conv (Suc (k + 2)) (l + 2) - 1" 
-        "general_pos S2t" "sdistinct(sorted_list_of_set S2t)"
-        "\<forall>xs. set xs \<subseteq> S2t \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (l+2) xs)" using s2x by blast
-      hence S2tf: "finite S2t"
-        by (smt (verit, ccfv_threshold) One_nat_def Suc_1 Suc_diff_1 add_2_eq_Suc' card.infinite le_add2 min_conv_lower min_conv_min min_def not_less_eq_eq)
-(* find t using which S2t can be translated while satisfying the conditions *)
-      fix t define S2 where "S2 = (\<lambda>p. p + t) ` S2t"
-        (* show that S2 has no big cups or caps using the lemma translated_set *)
-        (* make sure the chosen t allows for the following conditions *)
-      have set2higher:      "\<forall>x\<in>S1. \<forall>y\<in>S2. fst x < fst y" sorry
-      have slopeS1: "\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2. slope x y < slope y z" sorry
-      have slopeS2: "\<forall>b\<in>S2. \<forall>c\<in>S2. \<forall>a\<in>S1. slope b c < slope a b" sorry
-
-      have cupExtendS1FromS2: "\<forall>x\<in>S1. \<forall>y\<in>S1. \<forall>z\<in>S2. (sdistinct [x,y,z] \<longrightarrow> cup3 x y z)" 
-        using slope_cup3 slopeS1 by blast
-      have capExtendS2FromS1: "\<forall>a\<in>S1. \<forall>b\<in>S2. \<forall>c\<in>S2. (sdistinct[a,b,c] \<longrightarrow> cap3 a b c)" 
-        using slope_cap3 slopeS2 by blast
-      have S2:"card S2 = min_conv (Suc (k + 2)) (l + 2) - 1" 
-        "general_pos S2" "sdistinct(sorted_list_of_set S2)"
-        "\<forall>xs. set xs \<subseteq> S2 \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (l+2) xs)"
-        using translated_set S2t S2_def by blast+
-
-      have f12_0: "general_pos (S1\<union>S2)" sorry
-      have f12_1:"S1 \<inter> S2 = {}" using set2higher by fast
-      hence f12_2:"card (S1\<union>S2) = card S1 + card S2" using S1(1) S2(1) S1f S2tf
-        by (metis S2_def card_Un_disjoint finite_imageI)
-      hence f12_3:"sorted_list_of_set (S1\<union>S2) = (sorted_list_of_set S1) @ (sorted_list_of_set S2)" using set2higher S2(3) S1(3) S1f S2tf sorry
-      hence f12_4:"sdistinct (sorted_list_of_set (S1 \<union> S2))" using S2(3) S1(3) set2higher sorry
-      have "\<forall>xs. set xs \<subseteq> (S1\<union>S2) \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (Suc (l+2)) xs)" sorry
-      then show ?thesis
-        using f12_0 f12_2 f12_4 min_conv_lower_imp2 S1(1) S2(1)
-        by metis
-    qed
-  next
-    case 2
-    then show ?case sorry
-  }
-qed
  *)
 
 lemma min_conv_equality:
