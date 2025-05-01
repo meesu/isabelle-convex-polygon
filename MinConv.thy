@@ -1609,6 +1609,17 @@ next
       have xs2p2:"sdistinct xs2" using xs2_def XS2_def by (meson Int_lower1 S2(3) sdistinct_sub)
       have "\<not>(cap (Suc (k+2)) xs2 \<or> cup (l+2) xs2)" using S2(4) xs2p1 xs2p2 by simp
 
+      have "XS1 \<inter> XS2 = {}" using f12_1 asm XS1_def XS2_def by auto
+      hence "xs = xs1 @ xs2" 
+        using xs1_def xs2_def S2_prop(2) XS1_def XS2_def asm(1) S1f f12_3 f12_4 xs1p2 xs2p2
+            S2_prop(1) S2tf
+        by (smt (verit, best) Int_Un_distrib2 Int_iff Un_Int_eq(1)
+            distinct_append distinct_map finite_Int
+            finite_imageI set_append sorted_append
+            sorted_distinct_set_unique
+            sorted_list_of_set.set_sorted_key_list_of_set
+            subset_Un_eq)
+
       show False
       proof(cases "cap (Suc (k + 2)) xs")
         case True
@@ -1616,6 +1627,25 @@ next
       next
         case False
         hence "cup (Suc (l + 2)) xs" using asm(2) by simp
+        have "length xs1 \<le> 1 \<or> length xs2 \<le> 1"
+        proof(rule ccontr)
+          assume asm:"\<not> (length xs1 \<le> 1 \<or> length xs2 \<le> 1)"
+          hence "length xs1 \<ge> 2"  "length xs2 \<ge> 2"  by simp+
+          then obtain l1 l2 prexs1 where l1l2:"xs1 = prexs1 @ [l1,l2]"
+            by (metis One_nat_def
+                append.assoc asm
+                append_Cons append_Nil length_Cons list.size(3) nle_le
+                not_less_eq_eq rev_exhaust)
+          hence "l1 < l2"
+            by (metis distinct_append distinct_length_2_or_more
+                nless_le sorted2 sorted_append
+                sorted_list_of_set.distinct_sorted_key_list_of_set
+                xs1_def xs1p2)
+          have "l1 \<in> S1 \<and> l2 \<in> S1" using l1l2 xs1p1 by auto
+          obtain l3 where "l3 = hd xs2" using asm by blast
+          have "sublist [l1, l2, l3] xs" sorry
+          show False sorry
+        qed
         then show ?thesis sorry
       qed
     qed
