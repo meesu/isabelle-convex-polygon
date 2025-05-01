@@ -1575,12 +1575,10 @@ next
 
     have cupExtendS1FromS2: "\<forall>x\<in>S1. \<forall>y\<in>S1. \<forall>z\<in>S2. (sdistinct [x,y,z] \<longrightarrow> cup3 x y z)" 
       using slope_cup3 S2_prop
-      by (metis distinct_length_2_or_more distinct_map
-          order_le_imp_less_or_eq sorted2)
+      by (metis distinct_length_2_or_more distinct_map order_le_imp_less_or_eq sorted2)
     have capExtendS2FromS1: "\<forall>a\<in>S1. \<forall>b\<in>S2. \<forall>c\<in>S2. (sdistinct[a,b,c] \<longrightarrow> cap3 a b c)" 
       using slope_cap3 S2_prop
-      by (metis distinct_length_2_or_more distinct_map
-          order_le_imp_less_or_eq sorted2)
+      by (metis distinct_length_2_or_more distinct_map order_le_imp_less_or_eq sorted2)
 
     have S2:"card S2 = min_conv (Suc (k + 2)) (l + 2) - 1" 
             "general_pos S2"     "sdistinct(sorted_list_of_set S2)"
@@ -1589,12 +1587,38 @@ next
 
     have f12_0: "general_pos (S1\<union>S2)" sorry
     have f12_1:"S1 \<inter> S2 = {}" using S2_prop(2) by fast
-    hence f12_2:"card (S1\<union>S2) = card S1 + card S2" using S1(1) S2(1) S1f S2tf
-      by (metis S2_prop(1) card_Un_disjoint finite_imageI)
+    hence f12_2:"card (S1\<union>S2) = card S1 + card S2" using S1(1) S2(1) S1f S2tf S2_prop(1)
+      by (metis card_Un_disjoint finite_imageI)
     hence f12_3:"sorted_list_of_set (S1\<union>S2) = (sorted_list_of_set S1) @ (sorted_list_of_set S2)"      
       using S2_prop(2) S2(3) S1(3) S1f S2tf sorry
     hence f12_4:"sdistinct (sorted_list_of_set (S1 \<union> S2))" using S2(3) S1(3) S2_prop(2) sorry
-    have "\<forall>xs. set xs \<subseteq> (S1\<union>S2) \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (Suc (l+2)) xs)" sorry
+    have "\<forall>xs. set xs \<subseteq> (S1\<union>S2) \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (Suc (l+2)) xs)"
+    proof(rule+)
+      fix xs
+      assume asm:"set xs \<subseteq> S1 \<union> S2 \<and> sdistinct xs" "cap (Suc (k + 2)) xs \<or> cup (Suc (l + 2)) xs"
+      define XS1 where "XS1 = S1 \<inter> set xs"
+      define XS2 where "XS2 = S2 \<inter> set xs"
+      define xs1 where "xs1 = sorted_list_of_set XS1"
+      define xs2 where "xs2 = sorted_list_of_set XS2"
+      
+      have xs1p1:"set xs1 \<subseteq> S1" using xs1_def XS1_def by fastforce
+      have xs1p2:"sdistinct xs1" using xs1_def XS1_def by (meson Int_lower1 S1(3) sdistinct_sub)
+      have "\<not>(cap (k+2) xs1 \<or> cup (Suc (l+2)) xs1)" using S1(4) xs1p1 xs1p2 by simp
+
+      have xs2p1:"set xs2 \<subseteq> S2" using xs2_def XS2_def by fastforce
+      have xs2p2:"sdistinct xs2" using xs2_def XS2_def by (meson Int_lower1 S2(3) sdistinct_sub)
+      have "\<not>(cap (Suc (k+2)) xs2 \<or> cup (l+2) xs2)" using S2(4) xs2p1 xs2p2 by simp
+
+      show False
+      proof(cases "cap (Suc (k + 2)) xs")
+        case True
+        then show ?thesis sorry
+      next
+        case False
+        hence "cup (Suc (l + 2)) xs" using asm(2) by simp
+        then show ?thesis sorry
+      qed
+    qed
     then show ?thesis
       using f12_0 f12_2 f12_4 min_conv_lower_imp2 S1(1) S2(1)
       by metis
