@@ -25,6 +25,13 @@ lemma slope_cup3:
   shows   "cup3 x y z" using slope_cross3
   by (smt (verit, del_insts) assms(1,2) cup3_def distinct_length_2_or_more less_eq_prod_def list.simps(9) sorted2 zero_less_mult_iff)
 
+lemma cup3_slope:
+  assumes "sdistinct [x,y,z]" "cup3 x y z"
+  shows   "slope x y < slope y z"
+  using assms
+  by (smt (verit) cup3_def less_eq_prod_def mult_less_0_iff
+      slope_cross3 sorted2 zero_less_mult_iff)
+
 lemma slope_cap3:
   assumes "sdistinct [x,y,z]" "slope x y > slope y z"
   shows   "cap3 x y z"
@@ -39,6 +46,14 @@ proof-
     by (smt (verit, best) cap3_def diff_frac_eq divide_cancel_right mult.commute
         nonzero_mult_div_cancel_left right_minus_eq)
 qed
+
+lemma cap3_slope:
+  assumes "sdistinct [x,y,z]" "cap3 x y z"
+  shows   "slope x y > slope y z"
+  using assms
+  by (smt (verit) cap3_def less_eq_prod_def mult_less_0_iff
+      slope_cross3 sorted2 zero_less_mult_iff)
+
 
 lemma slope_coll3:
   assumes "sdistinct [x,y,z]" "slope x y = slope y z"
@@ -59,7 +74,7 @@ proof-
   thus "cup (length xs) xs" using assms cup_def by simp
 qed
 
-lemma list_check_slope:
+lemma list_check_cup3_slope:
   assumes "sdistinct xs" "list_check cup3 xs"
   shows   "i\<in>{..<(length xs - 2)} \<longrightarrow> slope (xs!i) (xs!(i+1)) < slope (xs!(i+1)) (xs!(i+2))"
   using assms
@@ -69,14 +84,45 @@ proof(induction xs)
     by simp
 next
   case (Cons a xs)
-  hence "sdistinct xs" by simp
-  also have "list_check cup3 xs" using Cons(3)
-    using list_check.elims(3) by fastforce
-  ultimately have 
+  show ?case
+  proof(cases "length (a#xs) \<ge> 3")
+    case True
+    have  1:"i \<in> {..<length xs - 2} \<longrightarrow> xs!i = (tl (a#xs))!i" by simp
+    hence 2:"i \<in> {..<length xs - 2} \<longrightarrow> xs!i = (a#xs)!(i+1)" by simp
+    hence 3:"i \<in> {1..<length (a#xs) - 2} \<longrightarrow> xs!(i-1) = (a#xs)!i" by simp
+    have "sdistinct xs" using Cons(2) by simp
+    also have "list_check cup3 xs" using Cons(3)
+      using list_check.elims(3) by fastforce
+    ultimately have 
       "i \<in> {..<length xs - 2} \<longrightarrow> 
       slope (xs ! i) (xs ! (i + 1)) < slope (xs ! (i + 1)) (xs ! (i + 2))" 
       using Cons(1) by simp
-  then show ?case sorry
+    hence 4:"i \<in> {0..<length xs - 2} \<longrightarrow> 
+      slope ((a#xs) ! (i+1)) ((a#xs) ! (i+2)) < slope ((a#xs) ! (i+2)) ((a#xs) ! (i + 3))" 
+      by simp
+    hence 5:"i \<in> {1..<1 + length (xs) - 2} \<longrightarrow> 
+      slope ((a#xs) ! i) ((a#xs) ! (i + 1)) < slope ((a#xs) ! (i + 1)) ((a#xs) ! (i + 2))"
+      sorry
+
+    have 6:"[(a#xs)!0, (a#xs)!1, (a#xs)!2] = take 3 (a#xs)" sorry
+    have "sublist (take 3 (a#xs)) (a#xs)" using True by blast
+    hence 7:"sdistinct [(a#xs)!0, (a#xs)!1, (a#xs)!2]" using Cons(2) True
+      using sdistinct_subl 6
+      by presburger
+    have "cup3 ((a#xs)!0) ((a#xs)!1) ((a#xs)!2)" using Cons(3)
+      by (smt (verit, ccfv_SIG) One_nat_def Suc_1 Suc_eq_plus1
+          True diff_Suc_1 diff_add_0 diff_is_0_eq list.size(3,4)
+          list_check.elims(2) not_less_eq_eq nth_Cons_0
+          nth_Cons_Suc numeral_3_eq_3) 
+    hence "slope ((a#xs) ! 0) ((a#xs) ! (1)) < slope ((a#xs) ! (1)) ((a#xs) ! (2))"
+      using Cons(3) cup3_slope 7 by simp
+
+    then show ?thesis using 4
+      by (metis "5" One_nat_def Suc_eq_plus1 add_2_eq_Suc'
+          atLeastLessThan_iff bot_nat_0.extremum_unique
+          length_Cons lessThan_iff not_less_eq_eq nth_Cons_Suc
+          plus_1_eq_Suc)
+  qed(auto)
 qed
 
 lemma farey_prop1:
@@ -98,6 +144,11 @@ lemma farey_prop2:
   shows "(n1+n2) / (d1+d2) \<le> n2 / d2"
   by (smt (verit, best) assms(1,2,3) divide_minus_left farey_prop1)
 
+lemma slope_trans:
+  assumes "distinct (map fst [a,b,c,d])" and
+    "slope a b < slope b c" and "slope b c < slope c d"
+  shows "slope a c < slope c d" sorry (* need this prop for proof below *)
+
 lemma cup_is_slopeinc:
   assumes "cup (length xs) xs"
   shows   "\<forall>x y z. sublist [x,y,z] xs \<longrightarrow> slope x y < slope y z"
@@ -110,7 +161,7 @@ next
   hence "length xs \<ge> 3" by simp
   have cp:"sdistinct xs" "list_check cup3 xs" using cup_def assms by simp+
   have "i\<in>{..<(length xs - 2)} \<longrightarrow>
-    slope (xs!i) (xs!(i+1)) < slope (xs!(i+1)) (xs!(i+2))" using list_check_slope cp(1,2) by blast
+    slope (xs!i) (xs!(i+1)) < slope (xs!(i+1)) (xs!(i+2))" using list_check_cup3_slope cp(1,2) by blast
   then show ?thesis sorry
 qed
 
