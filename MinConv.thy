@@ -100,16 +100,22 @@ next
     hence 4:"i \<in> {0..<length xs - 2} \<longrightarrow> 
       slope ((a#xs) ! (i+1)) ((a#xs) ! (i+2)) < slope ((a#xs) ! (i+2)) ((a#xs) ! (i + 3))" 
       by simp
+    (* hence by change of vars i' \<rightarrow> i+1 *)
     hence 5:"i \<in> {1..<1 + length (xs) - 2} \<longrightarrow> 
       slope ((a#xs) ! i) ((a#xs) ! (i + 1)) < slope ((a#xs) ! (i + 1)) ((a#xs) ! (i + 2))"
       sorry
 
-    have 6:"[(a#xs)!0, (a#xs)!1, (a#xs)!2] = take 3 (a#xs)" sorry
     have "sublist (take 3 (a#xs)) (a#xs)" using True by blast
+    hence "sublist [(a#xs)!0, (a#xs)!1, (a#xs)!2] (a#xs)" using True
+      by (smt (verit) One_nat_def Suc_1 diff_Suc_1
+          diff_is_0_eq length_0_conv length_Cons
+          list_check.elims(2) local.Cons(3) not_less_eq_eq
+          nth_Cons_0 nth_Cons_Suc numeral_3_eq_3 take0
+          take_Suc_Cons)
     hence 7:"sdistinct [(a#xs)!0, (a#xs)!1, (a#xs)!2]" using Cons(2) True
-      using sdistinct_subl 6
+      using sdistinct_subl
       by presburger
-    have "cup3 ((a#xs)!0) ((a#xs)!1) ((a#xs)!2)" using Cons(3)
+    hence "cup3 ((a#xs)!0) ((a#xs)!1) ((a#xs)!2)" using Cons(3)
       by (smt (verit, ccfv_SIG) One_nat_def Suc_1 Suc_eq_plus1
           True diff_Suc_1 diff_add_0 diff_is_0_eq list.size(3,4)
           list_check.elims(2) not_less_eq_eq nth_Cons_0
@@ -160,9 +166,17 @@ next
   case False
   hence "length xs \<ge> 3" by simp
   have cp:"sdistinct xs" "list_check cup3 xs" using cup_def assms by simp+
-  have "i\<in>{..<(length xs - 2)} \<longrightarrow>
+  have 1:"i\<in>{..<(length xs - 2)} \<longrightarrow>
     slope (xs!i) (xs!(i+1)) < slope (xs!(i+1)) (xs!(i+2))" using list_check_cup3_slope cp(1,2) by blast
-  then show ?thesis sorry
+  show ?thesis
+  proof(rule+)
+    fix x y z
+    assume "sublist [x, y, z] xs"
+    then obtain u v w where "u \<in> {..<length xs}" "v \<in> {..<length xs}" "w \<in> {..<length xs}"
+        "u < v" "v < w" "x = xs!u" "y = xs!v" "z = xs!w" sorry
+    hence "i \<in> {u..<(w-1)} \<longrightarrow> slope (xs!i) (xs!(i+1)) < slope (xs!(i+1)) (xs!(i+2))" 
+      using 1 less_diff_conv by auto
+
 qed
 
 lemma cap_is_slopedec:
