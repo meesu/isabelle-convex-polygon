@@ -414,17 +414,17 @@ proof-
         sorted_list_of_set.strict_sorted_key_list_of_set)
 qed
 
+lemma sdistinct_subseq:
+  fixes   X Y :: "R2 list"
+  assumes "subseq X Y" and "sdistinct Y"
+  shows   "sdistinct X"
+  sorry
+
 lemma sdistinct_subl:
   fixes   X Y :: "R2 list"
   assumes "sublist X Y" and "sdistinct Y"
   shows   "sdistinct X"
-proof
-  have "distinct (map fst Y)" using assms(2) by simp
-  thus "distinct (map fst X)" sorry
-next
-  show "sorted X" using assms
-  by (metis sorted_wrt_append sublist_def)
-qed
+  using assms sdistinct_subseq by blast
 
 lemma sdistinct_sub:
   fixes   A B :: "R2 set"

@@ -76,35 +76,34 @@ qed
 
 lemma list_check_cup3_slope:
   assumes "sdistinct xs" "list_check cup3 xs"
-  shows   "i\<in>{..<(length xs - 2)} \<longrightarrow> slope (xs!i) (xs!(i+1)) < slope (xs!(i+1)) (xs!(i+2))"
+  shows   "\<And>i. i < length xs - 2 \<longrightarrow> slope (xs!i) (xs!(i+1)) < slope (xs!(i+1)) (xs!(i+2))"
   using assms
 proof(induction xs)
-  case Nil
-  then show ?case
-    by simp
-next
   case (Cons a xs)
   show ?case
   proof(cases "length (a#xs) \<ge> 3")
     case True
-    have  1:"i \<in> {..<length xs - 2} \<longrightarrow> xs!i = (tl (a#xs))!i" by simp
-    hence 2:"i \<in> {..<length xs - 2} \<longrightarrow> xs!i = (a#xs)!(i+1)" by simp
-    hence 3:"i \<in> {1..<length (a#xs) - 2} \<longrightarrow> xs!(i-1) = (a#xs)!i" by simp
+    have  1:"i < length xs - 2 \<longrightarrow> xs!i = (tl (a#xs))!i" by simp
+    hence 2:"i < length xs - 2 \<longrightarrow> xs!i = (a#xs)!(i+1)" by simp
+    hence 3:"i\<ge>1 \<and> i < length (a#xs) - 2 \<longrightarrow> xs!(i-1) = (a#xs)!i" by simp
     have "sdistinct xs" using Cons(2) by simp
     also have "list_check cup3 xs" using Cons(3)
       using list_check.elims(3) by fastforce
     ultimately have 
-      "i \<in> {..<length xs - 2} \<longrightarrow> 
+      "\<And>i. i < length xs - 2 \<longrightarrow> 
       slope (xs ! i) (xs ! (i + 1)) < slope (xs ! (i + 1)) (xs ! (i + 2))" 
       using Cons(1) by simp
-    hence 4:"i \<in> {0..<length xs - 2} \<longrightarrow> 
+    hence 4:"\<And>i. i <length xs - 2 \<longrightarrow> 
       slope ((a#xs) ! (i+1)) ((a#xs) ! (i+2)) < slope ((a#xs) ! (i+2)) ((a#xs) ! (i + 3))" 
       by simp
-    (* hence by change of vars i' \<rightarrow> i+1 *)
-    hence 5:"i \<in> {1..<1 + length (xs) - 2} \<longrightarrow> 
-      slope ((a#xs) ! i) ((a#xs) ! (i + 1)) < slope ((a#xs) ! (i + 1)) ((a#xs) ! (i + 2))"
-      sorry
-
+    (* hence by change of vars j \<rightarrow> i+1 *)
+    hence 50:"\<And>j i. j \<ge> 1 \<and> j < 1 + length (xs) - 2 \<and> j = i+1 \<longrightarrow> 
+      slope ((a#xs) ! j) ((a#xs) ! (j + 1)) < slope ((a#xs) ! (j + 1)) ((a#xs) ! (j + 2))"
+      by fastforce
+    hence 5:"\<And>j. j \<ge> 1 \<and> j < length (a#xs) - 2 \<longrightarrow> 
+      slope ((a#xs) ! j) ((a#xs) ! (j + 1)) < slope ((a#xs) ! (j + 1)) ((a#xs) ! (j + 2))"
+      by (metis Suc_eq_plus1 length_Cons nat_le_iff_add
+          plus_1_eq_Suc)
     have "sublist (take 3 (a#xs)) (a#xs)" using True by blast
     hence "sublist [(a#xs)!0, (a#xs)!1, (a#xs)!2] (a#xs)" using True
       by (smt (verit) One_nat_def Suc_1 diff_Suc_1
@@ -123,13 +122,13 @@ next
     hence "slope ((a#xs) ! 0) ((a#xs) ! (1)) < slope ((a#xs) ! (1)) ((a#xs) ! (2))"
       using Cons(3) cup3_slope 7 by simp
 
-    then show ?thesis using 4
+    then show ?thesis using 4 5 
       by (metis "5" One_nat_def Suc_eq_plus1 add_2_eq_Suc'
-          atLeastLessThan_iff bot_nat_0.extremum_unique
-          length_Cons lessThan_iff not_less_eq_eq nth_Cons_Suc
+          bot_nat_0.extremum_unique
+          length_Cons not_less_eq_eq nth_Cons_Suc
           plus_1_eq_Suc)
   qed(auto)
-qed
+qed(simp)
 
 lemma farey_prop1:
   fixes n1 n2 d1 d2 :: real
@@ -157,7 +156,7 @@ lemma slope_trans:
 
 lemma cup_is_slopeinc:
   assumes "cup (length xs) xs"
-  shows   "\<forall>x y z. sublist [x,y,z] xs \<longrightarrow> slope x y < slope y z"
+  shows   "\<forall>x y z. subseq [x,y,z] xs \<longrightarrow> slope x y < slope y z"
 proof(cases "length xs \<le> 2")
   case True
   then show ?thesis
@@ -166,33 +165,35 @@ next
   case False
   hence "length xs \<ge> 3" by simp
   have cp:"sdistinct xs" "list_check cup3 xs" using cup_def assms by simp+
-  have 1:"i\<in>{..<(length xs - 2)} \<longrightarrow>
+  have 1:"\<And>i. i<(length xs - 2) \<longrightarrow>
     slope (xs!i) (xs!(i+1)) < slope (xs!(i+1)) (xs!(i+2))" using list_check_cup3_slope cp(1,2) by blast
   show ?thesis
   proof(rule+)
     fix x y z
-    assume "sublist [x, y, z] xs"
-    then obtain u v w where "u \<in> {..<length xs}" "v \<in> {..<length xs}" "w \<in> {..<length xs}"
+    assume "subseq [x, y, z] xs"
+    then obtain u v w where "u < length xs" "v < length xs" "w < length xs"
         "u < v" "v < w" "x = xs!u" "y = xs!v" "z = xs!w" sorry
-    hence "i \<in> {u..<(w-1)} \<longrightarrow> slope (xs!i) (xs!(i+1)) < slope (xs!(i+1)) (xs!(i+2))" 
+    hence "\<And>i. i \<ge> u \<and> i < w-1 \<longrightarrow> slope (xs!i) (xs!(i+1)) < slope (xs!(i+1)) (xs!(i+2))" 
       using 1 less_diff_conv by auto
-
+    show "slope x y < slope y z" sorry
+  qed
 qed
 
 lemma cap_is_slopedec:
   assumes "cap (length xs) xs"
-  shows   "sdistinct xs" "\<forall>x y z. sublist [x,y,z] xs \<longrightarrow> slope x y < slope y z"
+  shows   "sdistinct xs" "\<forall>x y z. subseq [x,y,z] xs \<longrightarrow> slope x y < slope y z"
   sorry
 
 lemma slopedec_is_cap:
-  assumes "sdistinct xs" "\<forall>x y z. sublist [x,y,z] xs \<longrightarrow> slope x y > slope y z"
+  assumes "sdistinct xs" "\<forall>x y z. subseq [x,y,z] xs \<longrightarrow> slope x y > slope y z"
   shows   "cap (length xs) xs"
 proof-
-  have "sublist [x, y, z] xs  \<longrightarrow> sdistinct[x, y, z]"
-    using assms(1) sdistinct_subl by blast
+  have "subseq [x, y, z] xs  \<longrightarrow> sdistinct[x, y, z]"
+    using assms(1) sdistinct_subseq by blast
   hence "sublist[x, y, z] xs \<longrightarrow> cap3 x y z" using slope_cap3 assms(2) by blast
   hence "list_check cap3 xs"
-    by (metis assms(1,2) bad3_from_bad sdistinct_subl slope_cap3)
+    using assms(1,2) bad3_from_bad slope_cap3
+    by (metis sdistinct_subl sublist_imp_subseq)
   thus "cap (length xs) xs" using assms cap_def by simp
 qed
 
