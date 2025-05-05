@@ -83,9 +83,6 @@ proof(induction xs)
   show ?case
   proof(cases "length (a#xs) \<ge> 3")
     case True
-    have  1:"i < length xs - 2 \<longrightarrow> xs!i = (tl (a#xs))!i" by simp
-    hence 2:"i < length xs - 2 \<longrightarrow> xs!i = (a#xs)!(i+1)" by simp
-    hence 3:"i\<ge>1 \<and> i < length (a#xs) - 2 \<longrightarrow> xs!(i-1) = (a#xs)!i" by simp
     have "sdistinct xs" using Cons(2) by simp
     also have "list_check cup3 xs" using Cons(3)
       using list_check.elims(3) by fastforce
@@ -93,14 +90,14 @@ proof(induction xs)
       "\<And>i. i < length xs - 2 \<longrightarrow> 
       slope (xs ! i) (xs ! (i + 1)) < slope (xs ! (i + 1)) (xs ! (i + 2))" 
       using Cons(1) by simp
-    hence 4:"\<And>i. i <length xs - 2 \<longrightarrow> 
+    hence 1:"\<And>i. i <length xs - 2 \<longrightarrow> 
       slope ((a#xs) ! (i+1)) ((a#xs) ! (i+2)) < slope ((a#xs) ! (i+2)) ((a#xs) ! (i + 3))" 
       by simp
     (* hence by change of vars j \<rightarrow> i+1 *)
-    hence 50:"\<And>j i. j \<ge> 1 \<and> j < 1 + length (xs) - 2 \<and> j = i+1 \<longrightarrow> 
+    hence 2:"\<And>j i. j \<ge> 1 \<and> j < 1 + length (xs) - 2 \<and> j = i+1 \<longrightarrow> 
       slope ((a#xs) ! j) ((a#xs) ! (j + 1)) < slope ((a#xs) ! (j + 1)) ((a#xs) ! (j + 2))"
       by fastforce
-    hence 5:"\<And>j. j \<ge> 1 \<and> j < length (a#xs) - 2 \<longrightarrow> 
+    hence 3:"\<And>j. j \<ge> 1 \<and> j < length (a#xs) - 2 \<longrightarrow> 
       slope ((a#xs) ! j) ((a#xs) ! (j + 1)) < slope ((a#xs) ! (j + 1)) ((a#xs) ! (j + 2))"
       by (metis Suc_eq_plus1 length_Cons nat_le_iff_add
           plus_1_eq_Suc)
@@ -122,62 +119,138 @@ proof(induction xs)
     hence "slope ((a#xs) ! 0) ((a#xs) ! (1)) < slope ((a#xs) ! (1)) ((a#xs) ! (2))"
       using Cons(3) cup3_slope 7 by simp
 
-    then show ?thesis using 4 5 
-      by (metis "5" One_nat_def Suc_eq_plus1 add_2_eq_Suc'
-          bot_nat_0.extremum_unique
-          length_Cons not_less_eq_eq nth_Cons_Suc
-          plus_1_eq_Suc)
+    then show ?thesis using 1 2 3
+      by (metis One_nat_def Suc_eq_plus1 add_2_eq_Suc' bot_nat_0.extremum_unique
+          length_Cons not_less_eq_eq nth_Cons_Suc plus_1_eq_Suc)
   qed(auto)
 qed(simp)
 
 lemma farey_prop1:
   fixes n1 n2 d1 d2 :: real
-  assumes "d1 > 0" and "d2 > 0" and "n1 / d1 \<le> n2 / d2"
-  shows "n1 / d1 \<le> (n1+n2) / (d1+d2)"
+  assumes "d1 > 0" and "d2 > 0" and "n1 / d1 < n2 / d2"
+  shows "n1 / d1 < (n1+n2) / (d1+d2)"
 proof-
-  have "n1 * d2 \<le> d1 * n2" using assms
+  have "n1 * d2 < d1 * n2" using assms
     by (smt (verit) divide_pos_pos frac_le_eq mult.commute mult_le_0_iff)
-  hence "n1 * d2 + n1 * d1 \<le> d1 * n2 + d1 * n1" by simp
-  hence "n1 * (d1 + d2) \<le> d1 * (n1 + n2)" by argo
+  hence "n1 * d2 + n1 * d1 < d1 * n2 + d1 * n1" by simp
+  hence "n1 * (d1 + d2) < d1 * (n1 + n2)" by argo
   thus ?thesis
     by (smt (verit, best) assms(1,2) divide_pos_pos frac_le_eq mult.commute mult_le_0_iff)
 qed
 
 lemma farey_prop2:
   fixes n1 n2 d1 d2 :: real
-  assumes "d1 > 0" and "d2 > 0" and "n1 / d1 \<le> n2 / d2"
-  shows "(n1+n2) / (d1+d2) \<le> n2 / d2"
+  assumes "d1 > 0" and "d2 > 0" and "n1 / d1 < n2 / d2"
+  shows "(n1+n2) / (d1+d2) < n2 / d2"
   by (smt (verit, best) assms(1,2,3) divide_minus_left farey_prop1)
 
+(* need this prop for proof below *)
 lemma slope_trans:
-  assumes "distinct (map fst [a,b,c,d])" and
-    "slope a b < slope b c" and "slope b c < slope c d"
-  shows "slope a c < slope c d" sorry (* need this prop for proof below *)
+  assumes "sdistinct [a,b,c]" and
+    "slope a b < slope b c"
+  shows "slope a c < slope b c" 
+  using assms farey_prop2[of "fst b - fst a" "fst c - fst b" "snd b - snd a" "snd c - snd b"]
+  unfolding slope_def 
+  by (smt (verit) distinct_length_2_or_more less_eq_prod_def list.simps(9) sorted2)
+
+lemma slope_trans_star_aux:
+  assumes "cup (length xs) xs"
+  shows   "Suc i < k \<and> k < length xs \<Longrightarrow> slope (xs!i) (xs!k) < slope (xs!(Suc i)) (xs!k)"
+proof(induction k)
+  case 0
+  then show ?case by simp
+next
+  case (Suc k)
+  then show ?case
+  proof(cases "Suc i < k")
+    case True
+    hence "slope (xs ! i) (xs ! k) < slope (xs ! Suc i) (xs ! k)" using Suc by simp
+    then show ?thesis sorry
+  next
+    case False
+    hence F1:"Suc i = k" using Suc by simp
+    have F2:"slope (xs ! i) (xs ! Suc i) < slope (xs ! Suc i) (xs ! Suc (Suc i))"
+      using list_check_cup3_slope cup_def Suc.prems assms by fastforce
+    have "Suc (Suc i) < length xs" using F1 Suc.prems by argo
+    hence "sublist [xs!i, xs!Suc i, xs ! Suc (Suc i)] xs"
+    proof -
+      have f1: "\<forall>ps p. (p::real \<times> real) # ps = [p] @ ps"
+        by force
+      have "\<exists>ps psa. sublist (ps @ xs ! i # xs ! Suc i # xs ! Suc (Suc i) # psa) xs"
+        by (metis Cons_nth_drop_Suc Suc_lessD \<open>Suc (Suc i) < length xs\<close> append_Nil sublist_drop)
+      then show ?thesis
+        using f1 by (metis (no_types) append_Cons sublist_def sublist_order.order_trans)
+    qed
+    hence "sdistinct [xs!i, xs!Suc i, xs ! Suc (Suc i)]" using assms sdistinct_subl cup_def
+      by blast
+    hence "slope (xs ! i) (xs ! Suc (Suc i)) < slope (xs ! Suc i) (xs ! Suc (Suc i))" 
+      using slope_trans F2 by simp
+    then show ?thesis using F1 by simp
+  qed
+qed
+
+lemma slope_trans_star:
+  assumes "cup (length xs) xs"
+  shows   "i < j \<and> j < k \<and> k < length xs \<Longrightarrow> slope (xs!i) (xs!k) < slope (xs!j) (xs!k)"
+proof(induction j)
+  case 0
+  then show ?case by simp
+next
+  case (Suc j)
+  hence 1:"j < k" by simp
+  have  2:"i < Suc j" using Suc(2) by simp
+  then show ?case
+  proof(cases "i < j")
+    case True
+    hence T1:"slope (xs ! i) (xs ! k) < slope (xs ! j) (xs ! k)" using Suc by simp
+    show ?thesis
+    proof(cases "Suc j < k")
+      case True
+      have "slope (xs!j) (xs!k) < slope (xs!(Suc j)) (xs!k)" 
+        using slope_trans_star_aux assms Suc.prems by blast
+      then show ?thesis
+        using T1 by linarith
+    next
+      case False
+      then show ?thesis
+        by (simp add: Suc.prems)
+    qed
+  next
+    case False
+    hence F1:"i=j" using 2 by simp
+    hence "slope (xs ! i) (xs ! k) < slope (xs ! (Suc i)) (xs ! k)" 
+      using slope_trans_star_aux assms Suc.prems by presburger
+    then show ?thesis using F1 by simp
+  qed
+qed
 
 lemma cup_is_slopeinc:
   assumes "cup (length xs) xs"
-  shows   "\<forall>x y z. subseq [x,y,z] xs \<longrightarrow> slope x y < slope y z"
-proof(cases "length xs \<le> 2")
-  case True
-  then show ?thesis
-    using sublist_length_le by fastforce
-next
-  case False
-  hence "length xs \<ge> 3" by simp
-  have cp:"sdistinct xs" "list_check cup3 xs" using cup_def assms by simp+
-  have 1:"\<And>i. i<(length xs - 2) \<longrightarrow>
-    slope (xs!i) (xs!(i+1)) < slope (xs!(i+1)) (xs!(i+2))" using list_check_cup3_slope cp(1,2) by blast
-  show ?thesis
-  proof(rule+)
-    fix x y z
-    assume "subseq [x, y, z] xs"
-    then obtain u v w where "u < length xs" "v < length xs" "w < length xs"
-        "u < v" "v < w" "x = xs!u" "y = xs!v" "z = xs!w" sorry
-    hence "\<And>i. i \<ge> u \<and> i < w-1 \<longrightarrow> slope (xs!i) (xs!(i+1)) < slope (xs!(i+1)) (xs!(i+2))" 
-      using 1 less_diff_conv by auto
-    show "slope x y < slope y z" sorry
-  qed
-qed
+  shows   "i < j \<and> j < k \<and> k < length xs \<longrightarrow> slope (xs!i) (xs!j) < slope (xs!j) (xs!k)"
+proof(induction "k-i" arbitrary: i j k)
+  case (Suc x)
+  then show ?case
+  proof(cases "k\<ge>2")
+    case True
+    hence 1:"x = (k-1) - i" using Suc(2) by simp
+    hence "\<And>j. i < j \<and> j < (k-1) \<and> (k-1) < length xs \<longrightarrow>
+    slope (xs ! i) (xs ! j) < slope (xs ! j) (xs ! (k-1))" using Suc(1) by simp
+    have "x = k - (i+1)"
+      by (simp add: "1")
+    hence 2:"\<And>j. (i+1) < j \<and> j < k \<and> k < length xs \<longrightarrow>
+      slope (xs ! (i+1)) (xs ! j) < slope (xs ! j) (xs ! (k))" using Suc(1) by simp
+    have    "\<And>j. i + 1 < j \<and> j < length xs \<longrightarrow>
+      slope (xs ! i) (xs ! j) < slope (xs ! (i+1)) (xs ! (j))" using slope_trans_star_aux
+      by (simp add: assms)
+    hence 3:"\<And>j. i+1 < j \<and> j < k \<and> k < length xs \<longrightarrow>
+      slope (xs ! i) (xs ! j) < slope (xs ! (j)) (xs ! (k))" using 2
+      by (meson order_less_trans)
+    have   "\<And>j. i+1 = j \<and> j < k \<and> k < length xs \<longrightarrow>
+      slope (xs ! i) (xs ! (i+1)) < slope (xs ! (i+1)) (xs ! (k))" sorry
+    then show ?thesis using 3
+      by (metis Suc_eq_plus1 Suc_lessI)
+  qed(auto)
+qed(simp)
 
 lemma cap_is_slopedec:
   assumes "cap (length xs) xs"
