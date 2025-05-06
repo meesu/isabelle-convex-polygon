@@ -418,7 +418,10 @@ lemma sdistinct_subseq:
   fixes   X Y :: "R2 list"
   assumes "subseq X Y" and "sdistinct Y"
   shows   "sdistinct X"
-  sorry
+proof
+  show "distinct (map fst X)" sorry
+  show "sorted X" sorry
+qed
 
 lemma sdistinct_subl:
   fixes   X Y :: "R2 list"
@@ -544,10 +547,6 @@ qed
 
 lemma min_conv_3_k_bnd:
   shows "min_conv 3 (Suc k) > k"
-(*     and "\<exists>S. (card S = min_conv 3 (Suc k) - 1 \<and> general_pos S \<and> 
-        sdistinct (sorted_list_of_set S)) \<and> 
-        (\<forall>xs. set xs \<subseteq> S \<and> sdistinct xs \<longrightarrow> \<not> (cap 3 xs \<or> cup (Suc k) xs))"
- *)
 proof-
   have "\<exists>S. (card S \<ge> k \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
                 \<and> (\<forall>xs. set xs \<subseteq> S \<and> sdistinct xs \<longrightarrow> \<not>(cap 3 xs \<or> cup (Suc k) xs))"
