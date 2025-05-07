@@ -807,20 +807,38 @@ theorem min_conv_min:
   using min_conv_least assms(1,2) min_conv_arg_swap 
   by (metis min_le_iff_disj nat_le_linear)
 
-lemma min_conv_finiteS:
-    assumes "min_conv (k+2) (l+2) = card (S :: R2 set)"
-      shows "finite S" 
-  using assms
-  by (metis Suc_eq_plus1 add_2_eq_Suc' card.infinite
-      le_add2 linorder_not_less min_conv_min min_def
-      zero_less_Suc)
+(* lemma min_conv_finiteS:
+    assumes "min_conv (k+1) (l+1) \<ge> card (S :: R2 set)"
+    shows   "finite S"
+proof-
+  have 1:"min_conv (k+1) (l+1) = card (T :: R2 set) \<longrightarrow> finite T"
+    by (metis One_nat_def Suc_eq_plus1 Suc_le_mono card.infinite linorder_not_less min_Suc_Suc 
+        min_conv_min zero_le zero_less_Suc)
+  fix T
+  assume asm:"min_conv (k+1) (l+1) = card (T :: R2 set)"
+  hence 2:"finite T" using 1
+    by (metis Suc_eq_plus1 card.infinite le_add2 linorder_not_less min_Suc_Suc min_conv_min zero_less_Suc)
+  have "card S \<le> card T" using asm assms by simp
+  hence "finite S" using 2 assms(2) sorry
+qed
+ *)
+
+lemma min_conv_leImpe:
+  shows "Inf {n. \<forall>S . (card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs))}
+        =
+        Inf {n. \<forall>S . (card S = n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs))}"  
+      (is "?m = Inf {n. \<forall>S. card S = n \<and> ?GSET n S \<longrightarrow> (\<exists>xs. ?SS xs S \<and> ?CUPCAP k xs l)}")
+  by (smt (verit) Collect_cong add.commute add_diff_cancel_left' card.infinite diff_is_0_eq' dual_order.trans ex_card general_pos_subs le_add_diff_inverse linorder_not_less nless_le
+      sdistinct_sub)
+
 
 lemma min_conv_lower_bnd:
 assumes "k\<ge>3" and "l\<ge>3"
 shows "min_conv k l \<le> min_conv (k - 1) l + min_conv k (l - 1) - 1"
             (is "?a \<le> ?b") 
   using inf_upper
-  
 proof
   show "?b \<in> {n. \<forall>S . (card S = n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
                 \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs))}"  
@@ -835,7 +853,7 @@ proof
         fix X
         assume asm: "?b = card X" "general_pos X" "sdistinct(sorted_list_of_set X)"
         hence   A1: "?b \<le> card X" by simp
-        have X_fin:"finite X" 
+        have X_fin:"finite X"
           by (smt (verit) add_leE asm(1)
               assms(1,2) card.infinite
               diff_is_0_eq
@@ -866,7 +884,7 @@ proof
             have XmY_fin: "finite (X-Y)" using X_fin by blast
             text\<open>The following is not possible as X-Y can not have a (l-1)-cup as their left points have been put in Y.\<close>
             hence "\<exists>xs. set xs \<subseteq> (X-Y)\<and> sdistinct xs \<and> cup (l-1) xs"
-              using outerFalse True extract_cap_cup[of "k" "l-1" _ "X - Y"] min_conv_num_out sdistinct_sub X_fin asm(3) xy1
+              using outerFalse True genpos_ex gpos_generalpos min_conv_num_out sdistinct_sub X_fin asm(3) xy1
               by (smt (verit, del_insts) Diff_subset dual_order.trans)
             then obtain lcs where lcs: "set lcs \<subseteq> (X-Y)" "cup (l-1) lcs"  by blast
             hence C1: "Min (set lcs) \<in> (X-Y)"
@@ -889,7 +907,7 @@ proof
             hence   "card Y \<ge> min_conv (k-1) l" using 2 asm(1) by linarith
 
             hence 3:"\<exists>xs. set xs \<subseteq> Y \<and> sdistinct xs \<and> (cap (k-1) xs)"
-              using ygen outerFalse extract_cap_cup[of "k-1" "l" _ "Y"] ysx min_conv_num_out sdistinct_sub X_fin Y_sd
+              using ygen outerFalse genpos_ex gpos_generalpos ysx min_conv_num_out sdistinct_sub X_fin Y_sd
               by (metis (full_types) dual_order.trans)
 
 (*  Y gets a (k-1) cap, say kap, in this case. Since each point of Y is a starting point of an (l-1) cup,
@@ -989,12 +1007,13 @@ proof
             qed
           qed
         qed
-      }  
+      } 
       thus ?thesis by presburger  
     qed
   qed
   thus ?thesis 
-    using inf_upper ex_card sdistinct_sub general_pos_subs min_conv_def mem_Collect_eq order_trans min_conv_finiteS min_conv_min sorry
+    using min_conv_def inf_upper min_conv_leImpe
+    by force
 qed
 
 lemma distinct_fst_translated:
@@ -1257,12 +1276,6 @@ proof-
   thus ?thesis using P1 P2 P3 by simp
 qed
 
-lemma min_conv_lower_sdistinct:
-  assumes "\<exists>S. (card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
-                \<and> (\<forall>xs. set xs \<subseteq> S \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
-  shows "min_conv k l > n"
-  using assms min_conv_lower by blast
-
 thm min_conv_lower[of "a-1" "a" "b"]
 
 lemma min_conv_1:
@@ -1302,9 +1315,7 @@ proof-
     {
       fix S
       assume asm:"card S = 2" "general_pos S" "sdistinct(sorted_list_of_set S)"
-      have S_fin: "finite S" using min_conv_finiteS
-        by (metis asm(1) card.infinite
-            zero_neq_numeral)
+      have S_fin: "finite S" by (metis asm(1) card.infinite zero_neq_numeral)
       have "(\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap 2 xs \<or> cup k xs))"
       proof-
         obtain p1 p2 where p1p2: "S = {p1, p2}" "p1 < p2"
@@ -1336,23 +1347,12 @@ qed
 --  finiteness and sdistinct subsets property \<longrightarrow> \<le> vs =    --
 fix the following two lemmas *)
 lemma min_conv_lower_imp1o:
-  assumes "min_conv k l > n" "k\<ge>2" "l\<ge>2"
-  obtains S where "(card S = n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
+  assumes "n < min_conv k l"
+  shows "\<exists>S. (card S = n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
                 \<and> (\<forall>xs. set xs \<subseteq> S \<and> sdistinct xs \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
-  using assms dual_order.trans ex_card general_pos_subs inf_upper min_conv_def sdistinct_sub min_conv_finiteS min_conv_min sorry
+  using assms inf_upper min_conv_def min_conv_leImpe
+  by (smt (verit, del_insts) linorder_not_less mem_Collect_eq sorted_list_of_set.sorted_sorted_key_list_of_set)
 
-lemma min_conv_lower_imp1:
-  assumes "min_conv k l > n"
-  shows   "\<exists>S. (card S = n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
-                \<and> (\<forall>xs. set xs \<subseteq> S \<and> sdistinct xs \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
-  using assms dual_order.trans ex_card general_pos_subs inf_upper min_conv_def sdistinct_sub min_conv_finiteS min_conv_min
-  by (smt (verit, best) assms dual_order.trans ex_card general_pos_subs inf_upper linorder_not_less mem_Collect_eq min_conv_def sdistinct_sub)
-
-lemma min_conv_lower_imp2:
-  assumes   "\<exists>S. (card S = n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
-                \<and> (\<forall>xs. set xs \<subseteq> S \<and> sdistinct xs \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
-  shows "min_conv k l > n"
-  using assms min_conv_lower by blast
 
 lemma dst_set_card2_ne:
   fixes   S :: "R2 set"
@@ -1759,7 +1759,7 @@ next
       by (metis card_Un_disjoint finite_imageI)
     hence f12_3:"sorted_list_of_set (S1\<union>S2) = (sorted_list_of_set S1) @ (sorted_list_of_set S2)"      
       using S2_prop(2) S2(3) S1(3) S1f S2tf sorry
-    hence f12_4:"sdistinct (sorted_list_of_set (S1 \<union> S2))" using S2(3) S1(3) S2_prop(2) sorry
+    hence f12_4:"sdistinct (sorted_list_of_set (S1 \<union> S2))" using S2(3) S1(3) S2_prop(2) f12_1 sorry
     have "\<forall>xs. set xs \<subseteq> (S1\<union>S2) \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (Suc (l+2)) xs)"
     proof(rule+)
       fix xs
@@ -1770,11 +1770,13 @@ next
       define xs2 where "xs2 = sorted_list_of_set XS2"
       
       have xs1p1:"set xs1 \<subseteq> S1" using xs1_def XS1_def by fastforce
-      have xs1p2:"sdistinct xs1" using xs1_def XS1_def by (meson Int_lower1 S1(3) sdistinct_sub)
+      have xs1p2:"sdistinct xs1" using xs1_def XS1_def S1(3) sdistinct_sub S1f
+        by (meson Int_lower1 finite_imageI)
       have "\<not>(cap (k+2) xs1 \<or> cup (Suc (l+2)) xs1)" using S1(4) xs1p1 xs1p2 by simp
 
       have xs2p1:"set xs2 \<subseteq> S2" using xs2_def XS2_def by fastforce
-      have xs2p2:"sdistinct xs2" using xs2_def XS2_def by (meson Int_lower1 S2(3) sdistinct_sub)
+      have xs2p2:"sdistinct xs2" using xs2_def XS2_def sdistinct_sub S2(3) S2_prop(1) S2tf
+        by (metis Int_lower1 finite_imageI)
       have "\<not>(cap (Suc (k+2)) xs2 \<or> cup (l+2) xs2)" using S2(4) xs2p1 xs2p2 by simp
 
       have "XS1 \<inter> XS2 = {}" using f12_1 asm XS1_def XS2_def by auto
@@ -1818,7 +1820,7 @@ next
       qed
     qed
     then show ?thesis
-      using f12_0 f12_2 f12_4 min_conv_lower_imp2 S1(1) S2(1)
+      using f12_0 f12_2 f12_4 min_conv_lower S1(1) S2(1)
       by metis
   qed
 qed
