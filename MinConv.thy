@@ -251,6 +251,18 @@ proof-
     by (smt (verit, best) add_diff_cancel_right' less_trans_Suc linorder_neqE_nat not_less_eq)
 qed
 
+lemma cup_sub_cup:
+  assumes "cup (length xs) xs" and "subseq ys xs"
+  shows   "cup (length ys) ys"
+proof-
+  have 1:"sdistinct ys" using sdistinct_subseq assms cup_def by simp
+  have "i < j \<and> j < k \<and> k < length xs \<Longrightarrow> slope (xs!i) (xs!j) < slope (xs!j) (xs!k)"
+    using assms(1) cup_is_slopeinc by simp
+  hence "i < j \<and> j < k \<and> k < length ys \<Longrightarrow> slope (ys!i) (ys!j) < slope (ys!j) (ys!k)"
+    using assms(2) sorry
+  thus ?thesis using 1 sorry
+qed
+
 theorem cap_is_slopedec:
   assumes "cap (length xs) xs" and "i < j \<and> j < k \<and> k < length xs"
   shows   "slope (xs!i) (xs!j) > slope (xs!j) (xs!k)"
@@ -268,6 +280,11 @@ proof-
     by (metis sdistinct_subl sublist_imp_subseq)
   thus "cap (length xs) xs" using assms cap_def by simp
 qed
+
+lemma cap_sub_cap:
+  assumes "cap (length xs) xs" and "subseq ys xs"
+  shows   "cap (length ys) ys"
+  sorry
 
 abbreviation
   "reflect \<equiv> (\<lambda> p. -(p :: R2))" 
@@ -325,6 +342,7 @@ proof(induction xs)
     by simp
   ultimately show ?case using Cons by simp
 qed(simp)
+
 lemma distinct_neg:
 "distinct xs = distinct (rev (map reflect (xs :: R2 list)))"
 by (simp add: distinct_map)
@@ -602,7 +620,6 @@ next
 qed
 
 lemma min_conv_sets_eq:
-  assumes rmr:"rmr \<equiv> (\<lambda> xs. (rev (map reflect xs)))"
     shows "{n :: nat. (\<forall>S :: R2 set. (card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
                 \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs)))}
          = {n :: nat. (\<forall>S :: R2 set. (card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
@@ -1343,12 +1360,9 @@ proof-
   thus ?thesis using 1 by simp
 qed
 
-(*TODO: High Priority: 
---  finiteness and sdistinct subsets property \<longrightarrow> \<le> vs =    --
-fix the following two lemmas *)
 lemma min_conv_lower_imp1o:
   assumes "n < min_conv k l"
-  shows "\<exists>S. (card S = n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
+  shows   "\<exists>S. (card S = n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
                 \<and> (\<forall>xs. set xs \<subseteq> S \<and> sdistinct xs \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
   using assms inf_upper min_conv_def min_conv_leImpe
   by (smt (verit, del_insts) linorder_not_less mem_Collect_eq sorted_list_of_set.sorted_sorted_key_list_of_set)
@@ -1780,7 +1794,7 @@ next
       have "\<not>(cap (Suc (k+2)) xs2 \<or> cup (l+2) xs2)" using S2(4) xs2p1 xs2p2 by simp
 
       have "XS1 \<inter> XS2 = {}" using f12_1 asm XS1_def XS2_def by auto
-      hence "xs = xs1 @ xs2" 
+      hence xs_cat: "xs = xs1 @ xs2" 
         using xs1_def xs2_def S2_prop(2) XS1_def XS2_def asm(1) S1f f12_3 f12_4 xs1p2 xs2p2
             S2_prop(1) S2tf
         by (smt (verit, best) Int_Un_distrib2 Int_iff Un_Int_eq(1)
@@ -1796,14 +1810,20 @@ next
         then show ?thesis sorry
       next
         case False
-        hence "cup (Suc (l + 2)) xs" using asm(2) by simp
+        hence F0:"cup (Suc (l + 2)) xs" using asm(2) by simp
+        hence xs_len:"length xs = l+3" using cup_def by simp
+        have xs1_cup: "cup (length xs1) xs1" using cup_sub_cup F0 xs_cat cup_def
+          by (metis subseq_order.dual_order.refl subseq_rev_drop_many)
+        have xs2_cup: "cup (length xs2) xs2" using cup_sub_cup F0 xs_cat cup_def
+          by (metis subseq_drop_many subseq_order.order_eq_iff)
+
         have "length xs1 \<le> 1 \<or> length xs2 \<le> 1"
         proof(rule ccontr)
-          assume asm:"\<not> (length xs1 \<le> 1 \<or> length xs2 \<le> 1)"
-          hence "length xs1 \<ge> 2"  "length xs2 \<ge> 2"  by simp+
+          assume asmF:"\<not> (length xs1 \<le> 1 \<or> length xs2 \<le> 1)"
+          hence F1:"length xs1 \<ge> 2"  "length xs2 \<ge> 2"  by simp+
           then obtain l1 l2 prexs1 where l1l2:"xs1 = prexs1 @ [l1,l2]"
             by (metis One_nat_def
-                append.assoc asm
+                append.assoc asmF
                 append_Cons append_Nil length_Cons list.size(3) nle_le
                 not_less_eq_eq rev_exhaust)
           hence "l1 < l2"
@@ -1811,9 +1831,25 @@ next
                 nless_le sorted2 sorted_append
                 sorted_list_of_set.distinct_sorted_key_list_of_set
                 xs1_def xs1p2)
+          have F2:"l1 = xs!(length xs1 - 2)" using F1(1) xs_cat l1l2 by simp
+          have F3:"l2 = xs!(length xs1 - 1)" using F1(1) xs_cat l1l2
+            by (simp add: nth_append_right)
           have "l1 \<in> S1 \<and> l2 \<in> S1" using l1l2 xs1p1 by auto
-          obtain l3 where "l3 = hd xs2" using asm by blast
-          have "sublist [l1, l2, l3] xs" sorry
+
+          obtain l3 where l3:"l3 = hd xs2" using asm by blast
+          hence F4:"l3 = xs!(length xs1)" using xs_cat F1(2)
+            by (metis Suc_1 add.right_neutral linorder_not_less list.collapse list.size(3)
+                nth_Cons_0 nth_append_length_plus zero_less_Suc)
+          have "length xs1 - 2 < length xs1 - 1" "length xs1 - 1 < length xs" 
+            using F1 xs_cat by simp+
+          hence "sdistinct [l1, l2, l3]" 
+            using F2 F3 F4 ind_seq_subseq[of _ "length xs1 - 1"] asm(1) xs_cat
+            by (metis (no_types, lifting) One_nat_def add_diff_inverse_nat asmF lessI less_eq_Suc_le list.size(3) nless_le nth_append_left nth_equalityI plus_1_eq_Suc self_append_conv)
+          have "l1 \<in> S1" "l2 \<in> S1" using l1l2 xs1p1 by auto
+          have "l3 \<in> S2" using l3 xs2p1 XS2_def xs2_def
+            by (metis F1(2) Int_iff List.finite_set Suc_1 Suc_le_D  finite_Int list.collapse
+                list.set_intros(1) list.size(3) nat.simps(3) sorted_list_of_set.set_sorted_key_list_of_set)
+               
           show False sorry
         qed
         then show ?thesis sorry
