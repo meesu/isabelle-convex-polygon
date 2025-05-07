@@ -415,15 +415,51 @@ proof-
 qed
 
 lemma sdistinct_subseq:
-  fixes   X Y :: "R2 list"
-  assumes "subseq X Y" and "sdistinct Y"
-  shows   "sdistinct X"
-proof
-  show "distinct (map fst X)" sorry
-  show "sorted X" sorry
+  fixes   xs ys :: "R2 list"
+  assumes "subseq xs ys" and "sdistinct ys"
+  shows   "sdistinct xs"
+  using assms
+proof(induction ys)
+  case (list_emb_Nil ys)
+  then show ?case by simp
+next
+  case (list_emb_Cons xs ys y)
+  then show ?case by simp
+next
+  case (list_emb_Cons2 x y xs ys)
+  hence F1: "sdistinct xs" by simp
+  then show ?case
+  proof
+    assume asm: "distinct (map fst xs)" "sorted xs"
+    have "fst x \<notin> set (map fst ys)"
+      using list_emb_Cons2.hyps(1)
+        list_emb_Cons2.prems
+      by auto
+    hence "fst x \<notin> set (map fst xs)"
+      by (metis (full_types, opaque_lifting)
+          list_emb_Cons2.hyps(2)
+          list_emb_set
+          subseq_map)
+    hence 1:"distinct (map fst (x#xs))"
+      by (simp add: asm(1))
+    have "((\<forall>y \<in> set ys. x\<le>y) \<and> sorted ys)"
+      using list_emb_Cons2.hyps(1)
+        list_emb_Cons2.prems
+        sorted_simps(2)
+      by blast
+    hence "((\<forall>y \<in> set xs. x\<le>y) \<and> sorted xs)"
+      using asm(2)
+        list_emb_Cons2.hyps(2)
+        list_emb_set
+      by fastforce
+    hence "sorted (x#xs)"
+      by simp
+    thus ?thesis using 1 by simp
+  qed
 qed
 
-lemma sdistinct_subl:
+
+corollary sdistinct_subl:
   fixes   X Y :: "R2 list"
   assumes "sublist X Y" and "sdistinct Y"
   shows   "sdistinct X"
@@ -431,12 +467,23 @@ lemma sdistinct_subl:
 
 lemma sdistinct_sub:
   fixes   A B :: "R2 set"
-  assumes "A \<subseteq> B" and "sdistinct(sorted_list_of_set B)"
+  assumes "finite B" and "A \<subseteq> B" and "sdistinct(sorted_list_of_set B)"
   shows   "sdistinct(sorted_list_of_set A)"
-proof
-  have "sublist (sorted_list_of_set A) (sorted_list_of_set B)" using assms(1) sorry
-  thus "distinct (map fst (sorted_list_of_set A))" using sdistinct_subl assms(2) by simp
-qed(simp)
+proof-
+  have "subseq (sorted_list_of_set A) (sorted_list_of_set B)" using assms(1,2)
+  proof(induction "sorted_list_of_set B")
+    case Nil
+    hence "B = {}"
+      by (metis sorted_list_of_set.sorted_key_list_of_set_eq_Nil_iff)
+    hence "A = {}" using Nil by simp
+    then show ?case by simp
+  next
+    case (Cons a x)
+    then show ?case sorry
+  qed
+  thus "sdistinct ((sorted_list_of_set A))" 
+    using sdistinct_subseq assms by simp
+qed
 
 lemma xyz:
   assumes "min_conv 3 k = k" and S_asm: "card S = Suc k" and S_gp: "general_pos S" and "sdistinct(sorted_list_of_set S)"
@@ -506,7 +553,10 @@ lemma abc:
               sdistinct(sorted_list_of_set S)
               \<longrightarrow> (\<exists>xs. (set xs \<subseteq> S) \<and> sdistinct xs \<and> (cap 3 xs \<or> cup (Suc k) xs))"
   using xyz assms sdistinct_sub general_pos_subs
-  by (smt (verit, ccfv_threshold) dual_order.trans ex_card)
+  by (smt (verit, ccfv_SIG)
+      Suc_le_D card.infinite
+      ex_card nat.distinct(1)
+      subset_trans)
 
 lemma inf_subset_bounds:
   assumes "X \<noteq> {}" and "(X :: nat set) \<subseteq> (Y :: nat set)"
