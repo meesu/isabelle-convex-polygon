@@ -6,22 +6,25 @@ begin
 
 
 lemma min_conv_leImpe:
-  shows "Inf {n. \<forall>S . (card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
-                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs))}
+  shows "Inf (min_conv_set k l)
         =
         Inf {n. \<forall>S . (card S = n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
                 \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs))}"  
-      (is "?m = Inf {n. \<forall>S. card S = n \<and> ?GSET n S \<longrightarrow> (\<exists>xs. ?SS xs S \<and> ?CUPCAP k xs l)}")
-  by (smt (verit) Collect_cong add.commute add_diff_cancel_left' card.infinite diff_is_0_eq' dual_order.trans ex_card general_pos_subs le_add_diff_inverse linorder_not_less nless_le
+  by (smt (verit) min_conv_set_def Collect_cong add.commute add_diff_cancel_left' card.infinite diff_is_0_eq' dual_order.trans ex_card general_pos_subs le_add_diff_inverse linorder_not_less nless_le
       sdistinct_sub)
 
 lemma min_conv_lower_imp1o:
   assumes "n < min_conv k l"
   shows   "\<exists>S. (card S = n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
                 \<and> (\<forall>xs. set xs \<subseteq> S \<and> sdistinct xs \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
-  using assms inf_upper min_conv_def min_conv_leImpe
+  using assms inf_upper min_conv_def min_conv_leImpe min_conv_set_def
   by (smt (verit, del_insts) linorder_not_less mem_Collect_eq sorted_list_of_set.sorted_sorted_key_list_of_set)
 
+lemma min_conv_num_out_set:
+  assumes "\<exists>S.         card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S) \<and> 
+                (\<forall>xs. set xs \<subseteq> S \<and> sdistinct xs \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
+  shows   "n \<notin> min_conv_set k l"
+  unfolding min_conv_set_def using assms by blast
 
 theorem non_empty_cup_cap:
   fixes k l
@@ -40,21 +43,16 @@ lemma extract_cap_cup:
   by (smt (verit, best) linorder_not_less nless_le non_empty_cup_cap)
 
 lemma min_conv_num_out:
-  assumes "\<exists>S.  card S \<ge> n \<and> general_pos S \<and> 
-                sdistinct(sorted_list_of_set S) \<and> 
+  assumes "min_conv_set k l \<noteq> {}"
+    and   "\<exists>S.  card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S) \<and> 
                 (\<forall>xs. set xs \<subseteq> S \<and> sdistinct xs \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
   shows "min_conv k l \<noteq> n"
-proof
-  assume "min_conv k l = n"
-  hence "\<forall>S . (card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
-                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs))"
-    by (smt (verit, del_insts) Inf_nat_def1 mem_Collect_eq min_conv_def non_empty_cup_cap)
-  thus False
-    using assms by blast
-qed
+  using assms min_conv_def min_conv_num_out_set min_conv_set_def
+  by (metis (lifting) Inf_nat_def1)
 
 lemma min_conv_lower:
-  assumes "\<exists>S.  card S = n \<and> general_pos S \<and> 
+  assumes "min_conv_set k l \<noteq> {}"
+    and   "\<exists>S.  card S = n \<and> general_pos S \<and> 
                 sdistinct(sorted_list_of_set S) \<and> 
                 (\<forall>xs. set xs \<subseteq> S \<and> sdistinct xs \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
   shows "min_conv k l > n"
@@ -63,7 +61,7 @@ proof-
           "sdistinct(sorted_list_of_set S)" 
           "\<forall>xs. set xs \<subseteq> S \<and> sdistinct xs \<longrightarrow> \<not>(cap k xs \<or> cup l xs)"
     using assms by blast
-  hence "\<forall>t. t \<le> n \<longrightarrow> min_conv k l \<noteq> t" using min_conv_num_out by (metis le_trans)
+  hence "\<forall>t. t \<le> n \<longrightarrow> min_conv k l \<noteq> t" using min_conv_num_out assms by metis
   thus ?thesis using min_conv_def not_le_imp_less by blast
 qed
 
@@ -111,7 +109,7 @@ proof-
       by (metis (no_types, lifting) genpos_ex gpos_generalpos)
   qed
   thus "a \<le> min_conv a b"
-    using cap_def min_conv_lower by fastforce
+    using cap_def min_conv_lower sledgehammer
 qed
 
 theorem min_conv_min:
@@ -202,8 +200,6 @@ proof-
   qed
   thus ?thesis using 1 by simp
 qed
-
-
 
 lemma xyz:
   assumes "min_conv 3 k = k"  and S_asm:  "card S = Suc k" and 

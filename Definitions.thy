@@ -66,4 +66,10 @@ definition min_conv :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "min_conv k l = 
     Inf {n :: nat. (\<forall>S :: R2 set. (card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
                 \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs)))}"
+
+definition min_conv_set :: "nat \<Rightarrow> nat \<Rightarrow> nat set" where
+  "min_conv_set k l = 
+        {n. (\<forall>S :: R2 set. (card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs)))}"
+
 end

@@ -2,7 +2,6 @@ theory MinConv
 imports EZ_bound SlopeCapCup Invariants
 
 begin
-  
 
 lemma cap_endpoint_subset:
   assumes "l\<ge>2" 
