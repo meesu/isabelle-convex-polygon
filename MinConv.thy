@@ -63,14 +63,14 @@ lemma slope_coll3:
       slope_def)
 
 lemma slopeinc_is_cup:
-  assumes "sdistinct xs" "\<forall>x y z. sublist [x,y,z] xs \<longrightarrow> slope x y < slope y z"
+  assumes "sdistinct xs" "\<forall>x y z. subseq [x,y,z] xs \<longrightarrow> slope x y < slope y z"
   shows   "cup (length xs) xs"
 proof-
   have "sublist [x, y, z] xs  \<longrightarrow> sdistinct[x, y, z]"
     using assms(1) sdistinct_subl by blast
   hence "sublist[x, y, z] xs \<longrightarrow> cup3 x y z" using slope_cup3 assms(2) by blast
-  hence "list_check cup3 xs"
-    by (metis assms(1,2) bad3_from_bad sdistinct_subl slope_cup3)
+  hence "list_check cup3 xs" using assms(1,2) bad3_from_bad sdistinct_subl slope_cup3
+    by (metis sublist_imp_subseq)
   thus "cup (length xs) xs" using assms cup_def by simp
 qed
 
@@ -251,16 +251,47 @@ proof-
     by (smt (verit, best) add_diff_cancel_right' less_trans_Suc linorder_neqE_nat not_less_eq)
 qed
 
+(* 
+"nths xs A = map fst (filter (\<lambda>p. snd p \<in> A) (zip xs [0..<size xs]))"
+ *)
+lemma subseq_index:
+  fixes xs :: "R2 list"
+  assumes "subseq [a,b,c] xs"
+  shows   "\<exists> i j k. i<j \<and> j<k \<and> k<length xs \<and> a = xs!i \<and> b = xs!j \<and> c = xs!k"
+proof-
+  obtain Ns where Ns: "[a,b,c] = nths xs Ns" using subseq_conv_nths assms by blast
+  define Nl where "Nl \<equiv> sorted_list_of_set Ns"
+  have "[a,b,c] = map fst (filter (\<lambda>p. snd p \<in> Ns) (zip xs [0..<size xs]))"
+    by (metis nths_def Ns)
+  hence "... = map fst (filter (\<lambda>p. snd p \<in> set Nl) (zip xs [0..<size xs]))" using Nl_def
+    sorry
+  show ?thesis sorry
+qed
+
+corollary cup_is_slopeinc_subseq:
+  assumes "cup (length xs) xs" and "subseq [a,b,c] xs"
+  shows   "slope a b < slope b c"
+  using subseq_index cup_is_slopeinc
+  by (metis assms(1,2))
+
 lemma cup_sub_cup:
   assumes "cup (length xs) xs" and "subseq ys xs"
   shows   "cup (length ys) ys"
 proof-
   have 1:"sdistinct ys" using sdistinct_subseq assms cup_def by simp
-  have "i < j \<and> j < k \<and> k < length xs \<Longrightarrow> slope (xs!i) (xs!j) < slope (xs!j) (xs!k)"
-    using assms(1) cup_is_slopeinc by simp
-  hence "i < j \<and> j < k \<and> k < length ys \<Longrightarrow> slope (ys!i) (ys!j) < slope (ys!j) (ys!k)"
-    using assms(2) sorry
-  thus ?thesis using 1 sorry
+  obtain Ns where Ns: "ys = nths xs Ns" using subseq_conv_nths assms by blast
+  have "\<And>a b c. sublist [a,b,c] ys \<Longrightarrow> slope a b < slope b c"
+  proof-
+    fix a b c 
+    assume "sublist [a,b,c] ys"
+    hence "subseq [a,b,c] xs"
+      using assms(2) subseq_order.dual_order.trans
+      by blast
+    thus "slope a b < slope b c" using assms(1) cup_is_slopeinc subseq_index
+      by metis
+  qed
+  thus ?thesis using 1 slopeinc_is_cup get_cap_from_bad_cup sdistinct_subl slope_cup3
+    by meson
 qed
 
 theorem cap_is_slopedec:
