@@ -1814,13 +1814,21 @@ next
       proof(rule ccontr)
         assume xs1asm:"\<not>length xs1 \<noteq> 0"
         hence C1:"cap (Suc (k+2)) xs \<Longrightarrow> cap (Suc (k+2)) xs2" 
-          using xs_cat by fastforce (* get a contradiction here *)
+          using xs_cat by fastforce
+        have C2: "cap (Suc (k+2)) xs2 \<Longrightarrow> cap (k+2) (tl xs2)"
+          by (metis Suc_eq_plus1 cap_reduct length_0_conv
+              list.collapse xs1asm xs1p3)
+
+        have C3:"sdistinct (tl xs2)" using xs2p2 sdistinct_subl by blast
+        have C4:"set (tl xs2) \<subseteq> S2" using xs2p1
+          by (metis list.sel(2) list.set_sel(2) subset_code(1))
+        have C5:"cap (k+2) (tl xs2) \<Longrightarrow> False" using S2(4) C3 C4 by blast
 
         have "length xs1 = 0" using xs1asm by simp
         hence xs2lexs:"length xs2 = length xs" using xs_len by simp
 
         have "cup (Suc (l+2)) xs \<Longrightarrow> False" using xs2p3 xs_cat xs1asm by auto
-        thus False using C1 sorry
+        thus False using C1 C2 C5 asm(2) by blast
       qed
 
       have xs2_len_ne_0: "length xs2 \<noteq> 0"
@@ -1830,10 +1838,17 @@ next
 
         have "length xs2 = 0" using xs2asm by simp
         hence xs2lexs:"length xs1 = length xs" using xs_len by simp
-        have "cup (Suc (l+2)) xs \<Longrightarrow> cup (Suc (l+2)) xs1" using xs2asm xs_cat by auto
-        (* get a contradiction here *)
+        have C2: "cup (Suc (l+2)) xs \<Longrightarrow> cup (Suc (l+2)) xs1" using xs2asm xs_cat by auto
+        have C3: "cup (Suc (l+2)) xs1 \<Longrightarrow> cup (l+2) (tl xs1)"
+          by (metis cup_def cup_sub_cup diff_Suc_1 length_tl
+              sublist_imp_subseq sublist_tl)
 
-        thus False using C1 sorry
+        have C4:"sdistinct (tl xs1)" using xs1p2 sdistinct_subl by blast
+        have C5:"set (tl xs1) \<subseteq> S1" using xs1p1
+          by (metis list.sel(2) list.set_sel(2) subset_code(1))
+
+        have "cup (l+2) (tl xs1) \<Longrightarrow> False" using S1(4) C4 C5 by blast
+        thus False using C2 C3 C1 asm(2) by blast
       qed
 
       have xs2_len1: "cup (Suc (l + 2)) xs \<Longrightarrow> length xs2 = 1"
