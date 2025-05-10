@@ -5,10 +5,6 @@ begin
 
 (* slope properties *)
 
-(* 
-(fst b - fst a) * (snd c - snd b) - (fst c - fst b) * (snd b - snd a)
- *)
-
 lemma slope_cross3:
   assumes "sdistinct [a,b,c]"
   shows   "cross3 a b c  = (fst b - fst a) * (fst c - fst b) * (slope b c - slope a b)"

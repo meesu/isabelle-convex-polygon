@@ -133,8 +133,7 @@ proof-
   define Nl where "Nl \<equiv> sorted_list_of_set Ns"
   have "[a,b,c] = map fst (filter (\<lambda>p. snd p \<in> Ns) (zip xs [0..<size xs]))"
     by (metis nths_def Ns)
-  hence "... = map fst (filter (\<lambda>p. snd p \<in> set Nl) (zip xs [0..<size xs]))" using Nl_def
-    sorry
+  hence "... = map fst (filter (\<lambda>p. snd p \<in> set Nl) (zip xs [0..<size xs]))" using Nl_def sorry
   show ?thesis sorry
 qed
 
