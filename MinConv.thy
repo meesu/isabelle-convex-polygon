@@ -291,6 +291,7 @@ proof-
     fix a b c
     assume  asm:"a \<in> S1 \<union> S2" "b \<in> S1 \<union> S2" "c \<in> S1 \<union> S2" 
                 "distinct [a, b, c]" "collinear3 a b c"
+    text \<open>This gives us 3!*2^3 = 48 cases to verify, we reduce it to 4 cases.\<close>
     then obtain u v w where uvw:"u<v" "v<w" "{u,v,w} = {a,b,c}"
       by (metis (full_types) distinct_length_2_or_more insert_commute linorder_less_linear)
     hence 0:"u < w" by simp
@@ -303,29 +304,31 @@ proof-
 
     have 4: "collinear3 a b c = collinear3 u v w"
       by (metis asm(4,5) coll_is_affDep collinear3_def cross_affine_dependent_conv uvw(3))
-
-    define s1 where "s1 = {u,v,w}\<inter>S1"
-    define s2 where "s2 = {u,v,w}\<inter>S2"
-    have "[u,v,w] = sorted_list_of_set(s1) @ sorted_list_of_set(s2)" sorry
+    have 5: "S1\<inter>S2 = {}" using assms(3) by blast
+    have 6: "u \<in> S1\<union>S2" "v \<in> S1 \<union> S2" "w \<in> S1 \<union> S2"
+      by (metis asm(1,2,3,4) distinct_is_triple uvw(3))+
 
     show False
-    proof(cases "card ({u,v,w} \<inter> S1) = 0")
+    proof(cases "v \<in> S1")
       case True
-      then show ?thesis
-        using asm(1,2,3,4,5) gp12(2) gpos_def uvw(3) by auto
+      have C1:"u \<in> S1" using 5 6(1) uvw(1) assms(3)
+        by (metis True Un_iff not_less_iff_gr_or_eq prod_less_def)
+      have C3:"w\<in>S1 \<Longrightarrow> False" using 4 asm True C1 "2" assms(1) distinctFst_distinct
+        by (meson collinear3_def genpos_cross0)
+      have "w\<in>S2 \<Longrightarrow> False" using 4 asm True C1 assms(4)
+        by (metis "3" collinear3_def cup3_def order_less_irrefl slope_cup3 uvw(1))
+      then show ?thesis using C3
+        by (metis UnE asm(1,2,3,4) distinct_is_triple uvw(3))     
     next
       case False
+      hence C1:"v \<in> S2" using 6(2) 5 by fast
+      hence "w \<in> S2" using uvw assms(3) 5 6(3)
+        by (meson Un_iff not_less_iff_gr_or_eq prod_less_def)
       then show ?thesis
-      proof(cases "card ({u,v,w} \<inter> S1) = 1")
-        case True
-        hence "{u,v,w} \<inter> S1 = {u}" using 0 uvw sd sorry
-        hence "{u,v,w} \<inter> S2 = {v, w}" sorry
-        then show ?thesis sorry
-      next
-        case False
-        then show ?thesis sorry
-      qed
-    qed
+        by (smt (verit, ccfv_SIG) "3" "4" "6"(1) UnE C1 asm(5) assms(2,5)
+            collinear3_def distinctFst_distinct exactly_one_true genpos_cross0
+            slope_cap3 uvw(2))
+    qed    
   qed
   thus "general_pos (S1\<union>S2)" using gpos_generalpos by simp
 qed
