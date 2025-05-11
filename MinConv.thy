@@ -205,7 +205,131 @@ lemma min_conv_lower_bnd_Suc:
   by (metis (no_types, lifting) 
       One_nat_def Suc_1 add_Suc_right diff_Suc_1 le_add2 numeral_3_eq_3, simp)
 
-(* non-empty marker *)
+(* some lemmas for min_conv_upper_bnd *)
+
+lemma sorted_union:
+  fixes   S1 S2 :: "R2 set"
+  assumes "finite S1" and "finite S2" and "\<forall>x\<in>S1. \<forall>y\<in>S2. fst x < fst y"
+    and   "sdistinct(sorted_list_of_set S1)" and "sdistinct(sorted_list_of_set S2)"
+  shows   "sorted_list_of_set (S1\<union>S2) = (sorted_list_of_set S1) @ (sorted_list_of_set S2)
+        \<and> sdistinct(sorted_list_of_set (S1\<union>S2))"
+  using assms
+proof(induction "sorted_list_of_set S1" arbitrary: S1)
+  case Nil
+  then show ?case
+    using sorted_list_of_set.set_sorted_key_list_of_set
+    by force
+next
+  case (Cons a x)
+  hence 1:"a = Min S1"
+    using sorted_list_of_set_nonempty by fastforce
+
+  obtain S1a where S1a:"S1a = S1 - {a}" using Cons(2) by blast
+  hence 2:"x = sorted_list_of_set S1a" using Cons(2,3) sorted_list_of_set_nonempty
+    by fastforce
+
+  have 3: "sdistinct (sorted_list_of_set S1a)" using S1a Cons.prems(1,4) sdistinct_sub
+    by (meson  Diff_subset)
+  hence 4:"sorted_list_of_set (S1a\<union>S2) = (sorted_list_of_set S1a) @ (sorted_list_of_set S2)"
+          "sdistinct (sorted_list_of_set (S1a\<union>S2))"
+    using Cons S1a "2" by blast+
+
+  have 6:"sorted_list_of_set (S1) = a # sorted_list_of_set(S1a)" using Cons(2) 2 by simp
+  hence 5:"a#sorted_list_of_set (S1a\<union>S2) = a#(sorted_list_of_set S1a) @ (sorted_list_of_set S2)"
+    using 4 by blast
+
+  have 7:"\<forall>b\<in>S1a. fst a < fst b" using 1 Cons.prems(1,4) S1a assms(4) 6
+    by (smt (verit, ccfv_SIG) Min_le list.simps(15,15,9)
+        distinct.simps(2) insert_Diff_single insert_absorb
+        insert_iff insert_iff less_eq_prod_def list.set_map
+        sorted_list_of_set.set_sorted_key_list_of_set)
+
+  hence 8:"\<forall>b\<in>S2. fst a < fst b" using assms(1,2,3) 
+    by (metis Cons.hyps(2) Cons.prems(1,3) insertI1 list.simps(15)
+        sorted_list_of_set.set_sorted_key_list_of_set) 
+  hence 9:"\<forall>b\<in>(S1a\<union>S2). fst a < fst b" using 7 8 assms(3) by fastforce
+  hence "\<forall>b\<in>(S1a\<union>S2). a \<le> b" 
+    by (meson "7" UnE 8 less_eq_prod_def)
+  hence 10:"a#sorted_list_of_set (S1a\<union>S2) = sorted_list_of_set (S1\<union>S2)"
+    by (smt (verit, del_insts) "1" "4" Cons.prems(1,3) 6
+        Diff_insert_absorb Min_in Min_le S1a Un_iff
+        append_Cons assms(2) empty_not_insert finite_Diff
+        finite_Un finite_has_minimal insert_absorb
+        list.simps(15) set_append
+        sorted_list_of_set.set_sorted_key_list_of_set
+        sorted_list_of_set_nonempty)
+  hence 11:"sorted_list_of_set (S1\<union>S2) = (sorted_list_of_set S1) @ (sorted_list_of_set S2)"
+    using 5 6 by simp
+
+  have "fst a \<notin> (fst `(S1a \<union> S2))" using 9
+    by (metis imageE order_less_irrefl)
+  hence "sdistinct(sorted_list_of_set (S1\<union>S2))" 
+    using Cons.prems(1) S1a "10" "3" "4" "9" distinct_def assms(2)
+    by (smt (verit, ccfv_SIG) sorted_list_of_set.sorted_sorted_key_list_of_set set_append
+        distinct.simps(2) finite_Diff list.set_map list.simps(9) sorted_list_of_set.set_sorted_key_list_of_set)
+
+  then show ?case using 11 by simp
+qed
+
+lemma general_pos_union:
+  assumes "general_pos S1" 
+      and "general_pos S2"
+      and "\<forall>x\<in>S1. \<forall>y\<in>S2. fst x < fst y"
+      and "\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2. x < y \<longrightarrow> slope x y < slope y z"
+      and "\<forall>a\<in>S1. \<forall>b\<in>S2. \<forall>c\<in>S2. b < c \<longrightarrow> slope a b > slope b c"
+      and "sdistinct (sorted_list_of_set S1)"
+      and "sdistinct (sorted_list_of_set S2)"
+      and "finite (S1\<union>S2)"
+    shows "general_pos (S1 \<union> S2)"
+proof-
+  have gp12:  "gpos S1" "gpos S2" using assms(1,2) gpos_generalpos by simp+
+  have gpint: "S1 \<inter> S2 = {}" using assms(3) by blast
+  have sd: "sdistinct (sorted_list_of_set (S1\<union>S2))" using assms(3,6,7) sorted_union
+    by (metis infinite_Un sorted_list_of_set.fold_insort_key.infinite)
+  have "gpos (S1\<union>S2)" unfolding gpos_def
+  proof(rule+)
+    fix a b c
+    assume  asm:"a \<in> S1 \<union> S2" "b \<in> S1 \<union> S2" "c \<in> S1 \<union> S2" 
+                "distinct [a, b, c]" "collinear3 a b c"
+    then obtain u v w where uvw:"u<v" "v<w" "{u,v,w} = {a,b,c}"
+      by (metis (full_types) distinct_length_2_or_more insert_commute linorder_less_linear)
+    hence 0:"u < w" by simp
+    hence 1:"sorted_list_of_set {a,b,c} = [u,v,w]" using uvw
+      by (metis distinct_length_2_or_more distinct_singleton empty_set nless_le
+          list.simps(15) sorted1 sorted2 sorted_list_of_set.idem_if_sorted_distinct)
+    hence 2:"distinct (map fst [u,v,w])" using uvw sdistinct_sub asm(1,2,3) assms(8) sd
+      by (metis bot.extremum insert_subset)
+    hence 3:"sdistinct [u,v,w]" using uvw(1,2) by fastforce
+
+    have 4: "collinear3 a b c = collinear3 u v w"
+      by (metis asm(4,5) coll_is_affDep collinear3_def cross_affine_dependent_conv uvw(3))
+
+    define s1 where "s1 = {u,v,w}\<inter>S1"
+    define s2 where "s2 = {u,v,w}\<inter>S2"
+    have "[u,v,w] = sorted_list_of_set(s1) @ sorted_list_of_set(s2)" sorry
+
+    show False
+    proof(cases "card ({u,v,w} \<inter> S1) = 0")
+      case True
+      then show ?thesis
+        using asm(1,2,3,4,5) gp12(2) gpos_def uvw(3) by auto
+    next
+      case False
+      then show ?thesis
+      proof(cases "card ({u,v,w} \<inter> S1) = 1")
+        case True
+        hence "{u,v,w} \<inter> S1 = {u}" using 0 uvw sd sorry
+        hence "{u,v,w} \<inter> S2 = {v, w}" sorry
+        then show ?thesis sorry
+      next
+        case False
+        then show ?thesis sorry
+      qed
+    qed
+  qed
+  thus "general_pos (S1\<union>S2)" using gpos_generalpos by simp
+qed
+
 
 lemma min_conv_upper_bnd:
   assumes "min_conv_set (Suc (k+2)) (Suc (l+2)) \<noteq> {}"
@@ -293,13 +417,15 @@ next
             "\<forall>xs. set xs \<subseteq> S2 \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (k+2) xs \<or> cup (Suc(l+2)) xs)"
       using translated_set[of "S2t" _  ] S2t S2_prop(1) by blast+
 
-    have f12_0: "general_pos (S1\<union>S2)" sorry (* use S2_prop *)
     have f12_1:"S1 \<inter> S2 = {}" using S2_prop(2) by fast
     hence f12_2:"card (S1\<union>S2) = card S1 + card S2" using S1(1) S2(1) S1f S2tf S2_prop(1)
       by (metis card_Un_disjoint finite_imageI)
-    hence f12_3:"sorted_list_of_set (S1\<union>S2) = (sorted_list_of_set S1) @ (sorted_list_of_set S2)"      
-      using S2_prop(2) S2(3) S1(3) S1f S2tf sorry
-    hence f12_4:"sdistinct (sorted_list_of_set (S1 \<union> S2))" using S2(3) S1(3) S2_prop(2) f12_1 sorry
+    hence f12_3:"sorted_list_of_set (S1\<union>S2) = (sorted_list_of_set S1) @ (sorted_list_of_set S2)"
+                "sdistinct (sorted_list_of_set (S1 \<union> S2))"
+      using S2_prop(2) S2(3) S1(3) S1f S2tf sorted_union S2_prop(1)
+      by (metis finite_imageI)+
+    hence f12_0: "general_pos (S1\<union>S2)" 
+      using S2_prop general_pos_union S1(2,3) S2(2,3) S1f S2tf by simp
 
     have gg:"\<forall>xs. set xs \<subseteq> (S1\<union>S2)\<and>(sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (Suc (l+2)) xs)"
     proof(rule+)
@@ -320,7 +446,7 @@ next
 
       have "XS1 \<inter> XS2 = {}" using f12_1 asm XS1_def XS2_def by auto
       hence xs_cat: "xs = xs1 @ xs2" 
-        using xs1_def xs2_def S2_prop(2) XS1_def XS2_def asm(1) S1f f12_3 f12_4 xs1p2 xs2p2
+        using xs1_def xs2_def S2_prop(2) XS1_def XS2_def asm(1) S1f f12_3 xs1p2 xs2p2
             S2_prop(1) S2tf
         by (smt (verit, best) Int_Un_distrib2 Int_iff Un_Int_eq(1)
             distinct_append distinct_map finite_Int
@@ -456,7 +582,8 @@ next
       using mcs1_ne mcs2_ne min_conv_lower_bnd(2) by auto
     then have "min_conv (k + 2) (Suc (l + 2)) - 1 + (min_conv (Suc (k + 2)) (l + 2) - 1)
              < min_conv (Suc (k + 2)) (Suc (l + 2))" 
-      using S1(1) S2(1) add.commute f12_0 f12_2 f12_4 min_conv_lower[of "Suc (k+2)" "Suc (l+2)"] min_conv_set_alt_def assms gg by (metis (no_types, opaque_lifting))
+      using S1(1) S2(1) add.commute f12_0 f12_2 min_conv_lower[of "Suc (k+2)" "Suc (l+2)"] min_conv_set_alt_def assms gg f12_3(2)
+      by (metis (lifting))
     thus ?thesis using asmf by simp
   qed
 qed
