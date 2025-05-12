@@ -245,14 +245,12 @@ lemma cup_sub_cup:
   shows   "cup (length ys) ys"
 proof-
   have 1:"sdistinct ys" using sdistinct_subseq assms cup_def by simp
-  obtain Ns where Ns: "ys = nths xs Ns" using subseq_conv_nths assms by blast
   have "\<And>a b c. sublist [a,b,c] ys \<Longrightarrow> slope a b < slope b c"
   proof-
     fix a b c 
     assume "sublist [a,b,c] ys"
-    hence "subseq [a,b,c] xs"
-      using assms(2) subseq_order.dual_order.trans
-      by blast
+    hence  "subseq [a,b,c] xs"
+      using assms(2) subseq_order.dual_order.trans by blast
     thus "slope a b < slope b c" using assms(1) cup_is_slopeinc subseq_index
       by metis
   qed
@@ -261,13 +259,15 @@ proof-
 qed
 
 theorem cap_is_slopedec:
-  assumes "cap (length xs) xs" and "i < j \<and> j < k \<and> k < length xs"
+  assumes "cap (length xs) xs" 
+      and "i < j \<and> j < k \<and> k < length xs"
   shows   "slope (xs!i) (xs!j) > slope (xs!j) (xs!k)"
   (* proof same as cup_is_slope_inc with similar prerequisite lemmas by cap \<longleftrightarrow> cup *)
   sorry
 
 lemma slopedec_is_cap:
-  assumes "sdistinct xs" "\<forall>x y z. subseq [x,y,z] xs \<longrightarrow> slope x y > slope y z"
+  assumes "sdistinct xs" 
+      and "\<forall>x y z. subseq [x,y,z] xs \<longrightarrow> slope x y > slope y z"
   shows   "cap (length xs) xs"
 proof-
   have "subseq [x, y, z] xs  \<longrightarrow> sdistinct[x, y, z]"

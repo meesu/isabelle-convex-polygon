@@ -124,17 +124,56 @@ next
     by (meson assms(1,2,3,4) less_or_eq_imp_le order.strict_trans1 sorted1 sorted2 sorted_nth_mono)
 qed
 
+(* 
+definition nths :: "'a list => nat set => 'a list" where
+"nths xs A = map fst (filter (\<lambda>p. snd p \<in> A) (zip xs [0..<size xs]))"
+ *)
 lemma subseq_index:
+  fixes xs :: "R2 list"
+  assumes "subseq ys xs"
+  shows "\<exists> idx. 
+    subseq idx [0..<length xs] \<and> 
+    ys = map (\<lambda> id. xs!id) idx \<and>
+    length idx = length ys \<and>
+    sortedStrict idx"
+  using assms
+proof(induction ys)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons a ys)
+  hence "subseq ys xs" by (metis subseq_Cons')
+  then obtain idx where idx:
+          "subseq idx [0..<length xs]"
+          "ys = map ((!) xs) idx"
+          "length idx = length ys"
+          "sortedStrict idx"
+    using Cons.IH by blast
+  obtain ai where ai: "xs!ai = a" using Cons(2) sorry
+  then show ?case sorry
+qed
+
+lemma subseq_index3:
   fixes xs :: "R2 list"
   assumes "subseq [a,b,c] xs"
   shows   "\<exists> i j k. i<j \<and> j<k \<and> k<length xs \<and> a = xs!i \<and> b = xs!j \<and> c = xs!k"
 proof-
-  obtain Ns where Ns: "[a,b,c] = nths xs Ns" using subseq_conv_nths assms by blast
-  define Nl where "Nl \<equiv> sorted_list_of_set Ns"
-  have "[a,b,c] = map fst (filter (\<lambda>p. snd p \<in> Ns) (zip xs [0..<size xs]))"
-    by (metis nths_def Ns)
-  hence "... = map fst (filter (\<lambda>p. snd p \<in> set Nl) (zip xs [0..<size xs]))" using Nl_def sorry
-  show ?thesis sorry
+  obtain idx where idx:
+    "subseq idx [0..<length xs]" 
+    "[a,b,c] = map (\<lambda> id. xs!id) idx" 
+    "sortedStrict idx" 
+    "length idx = 3"
+    using assms subseq_index
+    by (metis length_Cons list.size(3) numeral_3_eq_3)
+  obtain i j k where ijk: "idx = Cons i (Cons j (Cons k Nil))" using idx(4) numeral_3_eq_3
+    by (metis (no_types, lifting) ext Suc_length_conv length_0_conv)
+  have "set idx \<subseteq> {..<length xs}"
+    by (metis atLeast_upt idx(1) notin_set_nthsI subseq_conv_nths
+        subsetI)
+  hence 1:"k < length xs" using idx ijk
+    by (meson lessThan_iff list.set_intros(1) set_subset_Cons
+        subset_code(1))
+  thus ?thesis using idx(2,3) "1" ijk by auto
 qed
 
 

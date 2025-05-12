@@ -333,262 +333,233 @@ proof-
   thus "general_pos (S1\<union>S2)" using gpos_generalpos by simp
 qed
 
-
 lemma min_conv_upper_bnd:
-  assumes "min_conv_set (Suc (k+2)) (Suc (l+2)) \<noteq> {}"
-  shows   "min_conv (Suc (k+2)) (Suc (l+2)) > 
-          (min_conv (k+2) (Suc (l+2)) - 1) + (min_conv (Suc (k+2)) (l+2) - 1)
-          \<and> min_conv_set (Suc (k+2)) (Suc (l+2)) \<noteq> {}"
-          (is "?P a b > ?n1 + ?n2 \<and> _")
-proof(induction "k+l" arbitrary: k l)
-  case 0
-  then show ?case using "0" min_conv_arg_swap min_conv_base numeral_3_eq_3 by fastforce
-next
-  case (Suc x)
-  then show ?case
-  proof(cases "k=0 \<or> l=0")
-    case True
-    then have 1:"min_conv (k + 2) (Suc (l + 2)) - 1 + (min_conv (Suc (k + 2)) (l + 2) - 1)
-    < min_conv (Suc (k + 2)) (Suc (l + 2))"  
-      using min_conv_2 min_conv_arg_swap
-      by (metis (no_types, opaque_lifting) One_nat_def Suc_1 Suc_eq_plus1 add_Suc_shift diff_Suc_1'
-          diff_diff_cancel le_add2 less_one min_conv_base numeral_eq_Suc plus_1_eq_Suc pred_numeral_simps(3)
-          zero_less_diff)
-    have 2: "min_conv_set 3 (Suc (l + 2)) \<noteq> {}" using min_conv_base by simp
-    have    "min_conv_set (Suc (k + 2)) 3 \<noteq> {}" 
-      using min_conv_base min_conv_sets_eq min_conv_set_def by simp
-    thus ?thesis using 1 2 True numeral_3_eq_3 by auto
-  next
-    case False
-    hence FC1:"k\<ge>1"  "l\<ge>1" by simp+
-    have F1:"(k)+(l-1) = x" using FC1 Suc by simp
-    have F2:"(k-1) + l = x" using FC1 Suc by simp
+  assumes "min_conv_set (k+2) (Suc(l+2)) \<noteq> {}"
+    and   "min_conv_set (Suc(k+2)) (l+2) \<noteq> {}"
+    and   "min_conv_set (Suc(k+2)) (Suc(l+2)) \<noteq> {}" 
 
-    have mcs1_ne:"min_conv_set (k + 2) (Suc (l + 2)) \<noteq> {}" using Suc(1) F2
-      by (metis False add_eq_if)
-    have "min_conv (k + 2) (Suc (l + 2)) > min_conv (k + 2) (Suc (l + 2)) - 1"
-      by (smt (verit) F2 FC1(1) Suc.hyps(1) add_2_eq_Suc' add_diff_inverse_nat bot_nat_0.extremum_strict diff_le_self diff_less_Suc less_one nless_le
-          plus_1_eq_Suc)
-    then obtain S2t where S2t: "card S2t = min_conv (k + 2) (Suc (l + 2)) - 1" 
-      "general_pos S2t"  "sdistinct(sorted_list_of_set S2t)"
-      "\<forall>xs. set xs \<subseteq> S2t \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (k+2) xs \<or> cup (Suc (l+2)) xs)"
-      by (meson min_conv_lower_imp1o)
-    hence S2tf: "finite S2t" using mcs1_ne min_conv_min min_conv_lower
-      by (smt (verit, ccfv_threshold) One_nat_def Suc_1 Suc_diff_1 add_2_eq_Suc' card.infinite le_add2 min_def not_less_eq_eq)
-    have S2td: "distinct (map fst (sorted_list_of_set S2t))" using S2t
-      by meson
-    have S2t1:"card S2t \<ge> 1" using S2t(1) mcs1_ne min_conv_min
-      by (smt (verit, best) Suc_1 le_add1 le_add2 min_def
-          le_add_diff_inverse nle_le not_less_eq_eq plus_1_eq_Suc)
+  shows   "min_conv (Suc (k+2)) (Suc (l+2)) 
+        > (min_conv (k+2) (Suc (l+2)) - 1) 
+        + (min_conv (Suc (k+2)) (l+2) - 1)"
+proof-
+  have "min_conv (k + 2) (Suc (l + 2)) > min_conv (k + 2) (Suc (l + 2)) - 1"
+    using assms(1) min_conv_min add.assoc add_diff_inverse_nat le_add1 by fastforce
+  then obtain S2t where S2t: "card S2t = min_conv (k + 2) (Suc (l + 2)) - 1" 
+    "general_pos S2t"  "sdistinct(sorted_list_of_set S2t)"
+    "\<forall>xs. set xs \<subseteq> S2t \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (k+2) xs \<or> cup (Suc (l+2)) xs)"
+    by (meson min_conv_lower_imp1o)
+  hence S2tf: "finite S2t" using assms(1) min_conv_min min_conv_lower
+    by (smt (verit, ccfv_threshold) One_nat_def Suc_1 Suc_diff_1 add_2_eq_Suc' card.infinite le_add2 min_def not_less_eq_eq)
+  have S2td: "distinct (map fst (sorted_list_of_set S2t))" using S2t
+    by meson
+  have S2t1:"card S2t \<ge> 1" using S2t(1) assms(1) min_conv_min
+    by (smt (verit, best) Suc_1 le_add1 le_add2 min_def
+        le_add_diff_inverse nle_le not_less_eq_eq plus_1_eq_Suc)
 
-    have mcs2_ne:"min_conv_set (Suc (k + 2)) (l + 2) \<noteq> {}" using Suc(1) F1
-      by (metis False add_eq_if)
-    have "min_conv (Suc (k + 2)) (l + 2) > min_conv (Suc (k + 2)) (l + 2) - 1"
-      by (smt (verit) F1 FC1(2) Nat.add_diff_assoc2 Suc.hyps(1) Suc_diff_1 add_Suc_right diff_is_0_eq' nat_le_linear neq0_conv not_less_eq
-          zero_less_diff)
-    then obtain S1 where S1: "card S1 = min_conv (Suc (k + 2)) (l + 2) - 1" 
-      "general_pos S1" "sdistinct(sorted_list_of_set S1)"
-      "\<forall>xs. set xs \<subseteq> S1 \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (l+2) xs)"
-      by (meson min_conv_lower_imp1o)
-    hence S1f: "finite S1" using mcs2_ne
-      by (smt (verit, ccfv_threshold) One_nat_def Suc_1 Suc_diff_1 add_2_eq_Suc' card.infinite le_add2 min_conv_lower min_conv_min min_def not_less_eq_eq)
-    have S11:"card S1 \<ge> 1" using S1(1) mcs2_ne
-      by (smt (verit, best) Suc_1 le_add1 le_add2 min_conv_min min_def
-          le_add_diff_inverse nle_le not_less_eq_eq plus_1_eq_Suc)
-    have S1d: "distinct (map fst (sorted_list_of_set S1))" using S1
-      by meson
-        (* find t using which S2t can be translated while satisfying the conditions *)
+  have "min_conv (Suc (k + 2)) (l + 2) > min_conv (Suc (k + 2)) (l + 2) - 1"
+    using assms(2) min_conv_min add.assoc add_diff_inverse_nat le_add1 by fastforce
+  then obtain S1 where S1: "card S1 = min_conv (Suc (k + 2)) (l + 2) - 1" 
+    "general_pos S1" "sdistinct(sorted_list_of_set S1)"
+    "\<forall>xs. set xs \<subseteq> S1 \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (l+2) xs)"
+    by (meson min_conv_lower_imp1o)
+  hence S1f: "finite S1" using assms(2)
+    by (smt (verit, ccfv_threshold) One_nat_def Suc_1 Suc_diff_1 add_2_eq_Suc' card.infinite le_add2 min_conv_lower min_conv_min min_def not_less_eq_eq)
+  have S11:"card S1 \<ge> 1" using S1(1) assms(2)
+    by (smt (verit, best) Suc_1 le_add1 le_add2 min_conv_min min_def
+        le_add_diff_inverse nle_le not_less_eq_eq plus_1_eq_Suc)
+  have S1d: "distinct (map fst (sorted_list_of_set S1))" using S1
+    by meson
+      (* find t using which S2t can be translated while satisfying the conditions *)
 
-      (* show that S2 has no big cups or caps using the lemma translated_set *)
-      (* make sure the chosen t allows for the following conditions *)
-    obtain t S2 where S2_prop: "S2 = (\<lambda>p. p + t) ` S2t"
-                          "\<forall>x\<in>S1. \<forall>y\<in>S2. fst x < fst y"
-                          "\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2. x < y \<longrightarrow> slope x y < slope y z"
-                          "\<forall>a\<in>S1. \<forall>b\<in>S2. \<forall>c\<in>S2. b < c \<longrightarrow> slope a b > slope b c"
-      using shift_set_above S1(3) S1f S2t(3) S2tf S2t1 S1d S2td S11
-      by (smt (verit, best))
+(* show that S2 has no big cups or caps using the lemma translated_set *)
+(* make sure the chosen t allows for the following conditions *)
+  obtain t S2 where S2_prop: "S2 = (\<lambda>p. p + t) ` S2t"
+    "\<forall>x\<in>S1. \<forall>y\<in>S2. fst x < fst y"
+    "\<forall>x\<in>S1.\<forall>y\<in> S1. \<forall>z\<in>S2. x < y \<longrightarrow> slope x y < slope y z"
+    "\<forall>a\<in>S1. \<forall>b\<in>S2. \<forall>c\<in>S2. b < c \<longrightarrow> slope a b > slope b c"
+    using shift_set_above S1(3) S1f S2t(3) S2tf S2t1 S1d S2td S11
+    by (smt (verit, best))
 
-    have cupExtendS1FromS2: "\<forall>x\<in>S1. \<forall>y\<in>S1. \<forall>z\<in>S2. (sdistinct [x,y,z] \<longrightarrow> cup3 x y z)" 
-      using slope_cup3 S2_prop
-      by (metis distinct_length_2_or_more distinct_map order_le_imp_less_or_eq sorted2)
-    have capExtendS2FromS1: "\<forall>a\<in>S1. \<forall>b\<in>S2. \<forall>c\<in>S2. (sdistinct[a,b,c] \<longrightarrow> cap3 a b c)" 
-      using slope_cap3 S2_prop
-      by (metis distinct_length_2_or_more distinct_map order_le_imp_less_or_eq sorted2)
+  have cupExtendS1FromS2: "\<forall>x\<in>S1. \<forall>y\<in>S1. \<forall>z\<in>S2. (sdistinct [x,y,z] \<longrightarrow> cup3 x y z)" 
+    using slope_cup3 S2_prop
+    by (metis distinct_length_2_or_more distinct_map order_le_imp_less_or_eq sorted2)
+  have capExtendS2FromS1: "\<forall>a\<in>S1. \<forall>b\<in>S2. \<forall>c\<in>S2. (sdistinct[a,b,c] \<longrightarrow> cap3 a b c)" 
+    using slope_cap3 S2_prop
+    by (metis distinct_length_2_or_more distinct_map order_le_imp_less_or_eq sorted2)
 
-    have S2:"card S2 = min_conv (k + 2) (Suc (l + 2)) - 1" 
-            "general_pos S2"     "sdistinct(sorted_list_of_set S2)"
-            "\<forall>xs. set xs \<subseteq> S2 \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (k+2) xs \<or> cup (Suc(l+2)) xs)"
-      using translated_set[of "S2t" _  ] S2t S2_prop(1) by blast+
+  have S2:"card S2 = min_conv (k + 2) (Suc (l + 2)) - 1" 
+    "general_pos S2"     "sdistinct(sorted_list_of_set S2)"
+    "\<forall>xs. set xs \<subseteq> S2 \<and> (sdistinct xs) \<longrightarrow> \<not>(cap (k+2) xs \<or> cup (Suc(l+2)) xs)"
+    using translated_set[of "S2t" _  ] S2t S2_prop(1) by blast+
 
-    have f12_1:"S1 \<inter> S2 = {}" using S2_prop(2) by fast
-    hence f12_2:"card (S1\<union>S2) = card S1 + card S2" using S1(1) S2(1) S1f S2tf S2_prop(1)
-      by (metis card_Un_disjoint finite_imageI)
-    hence f12_3:"sorted_list_of_set (S1\<union>S2) = (sorted_list_of_set S1) @ (sorted_list_of_set S2)"
-                "sdistinct (sorted_list_of_set (S1 \<union> S2))"
-      using S2_prop(2) S2(3) S1(3) S1f S2tf sorted_union S2_prop(1)
-      by (metis finite_imageI)+
-    hence f12_0: "general_pos (S1\<union>S2)" 
-      using S2_prop general_pos_union S1(2,3) S2(2,3) S1f S2tf by simp
+  have f12_1:"S1 \<inter> S2 = {}" using S2_prop(2) by fast
+  hence f12_2:"card (S1\<union>S2) = card S1 + card S2" using S1(1) S2(1) S1f S2tf S2_prop(1)
+    by (metis card_Un_disjoint finite_imageI)
+  hence f12_3:"sorted_list_of_set (S1\<union>S2) = (sorted_list_of_set S1) @ (sorted_list_of_set S2)"
+    "sdistinct (sorted_list_of_set (S1 \<union> S2))"
+    using S2_prop(2) S2(3) S1(3) S1f S2tf sorted_union S2_prop(1)
+    by (metis finite_imageI)+
+  hence f12_0: "general_pos (S1\<union>S2)" 
+    using S2_prop general_pos_union S1(2,3) S2(2,3) S1f S2tf by simp
 
-    have gg:"\<forall>xs. set xs \<subseteq> (S1\<union>S2)\<and>(sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (Suc (l+2)) xs)"
-    proof(rule+)
-      fix xs
-      assume asm:"set xs \<subseteq> S1 \<union> S2 \<and> sdistinct xs" "cap (Suc (k + 2)) xs \<or> cup (Suc (l + 2)) xs"
-      define XS1 where "XS1 = S1 \<inter> set xs"
-      define XS2 where "XS2 = S2 \<inter> set xs"
-      define xs1 where "xs1 = sorted_list_of_set XS1"
-      define xs2 where "xs2 = sorted_list_of_set XS2"
+  have gg:"\<forall>xs. set xs \<subseteq> (S1\<union>S2)\<and>(sdistinct xs) \<longrightarrow> \<not>(cap (Suc (k+2)) xs \<or> cup (Suc (l+2)) xs)"
+  proof(rule+)
+    fix xs
+    assume asm:"set xs \<subseteq> S1 \<union> S2 \<and> sdistinct xs" "cap (Suc (k + 2)) xs \<or> cup (Suc (l + 2)) xs"
+    define XS1 where "XS1 = S1 \<inter> set xs"
+    define XS2 where "XS2 = S2 \<inter> set xs"
+    define xs1 where "xs1 = sorted_list_of_set XS1"
+    define xs2 where "xs2 = sorted_list_of_set XS2"
 
-      have xs1p1:"set xs1 \<subseteq> S1" using xs1_def XS1_def by fastforce
-      have xs1p2:"sdistinct xs1" using xs1_def XS1_def S1(3) sdistinct_sub S1f
-        by (meson Int_lower1 finite_imageI)
+    have xs1p1:"set xs1 \<subseteq> S1" using xs1_def XS1_def by fastforce
+    have xs1p2:"sdistinct xs1" using xs1_def XS1_def S1(3) sdistinct_sub S1f
+      by (meson Int_lower1 finite_imageI)
 
-      have xs2p1:"set xs2 \<subseteq> S2" using xs2_def XS2_def by fastforce
-      have xs2p2:"sdistinct xs2" using xs2_def XS2_def sdistinct_sub S2(3) S2_prop(1) S2tf
-        by (metis Int_lower1 finite_imageI)
+    have xs2p1:"set xs2 \<subseteq> S2" using xs2_def XS2_def by fastforce
+    have xs2p2:"sdistinct xs2" using xs2_def XS2_def sdistinct_sub S2(3) S2_prop(1) S2tf
+      by (metis Int_lower1 finite_imageI)
 
-      have "XS1 \<inter> XS2 = {}" using f12_1 asm XS1_def XS2_def by auto
-      hence xs_cat: "xs = xs1 @ xs2" 
-        using xs1_def xs2_def S2_prop(2) XS1_def XS2_def asm(1) S1f f12_3 xs1p2 xs2p2
-            S2_prop(1) S2tf
-        by (smt (verit, best) Int_Un_distrib2 Int_iff Un_Int_eq(1)
-            distinct_append distinct_map finite_Int
-            finite_imageI set_append sorted_append
-            sorted_distinct_set_unique
-            sorted_list_of_set.set_sorted_key_list_of_set
-            subset_Un_eq)
-      hence xs_len: "length xs = length xs1 + length xs2" by simp
+    have "XS1 \<inter> XS2 = {}" using f12_1 asm XS1_def XS2_def by auto
+    hence xs_cat: "xs = xs1 @ xs2" 
+      using xs1_def xs2_def S2_prop(2) XS1_def XS2_def asm(1) S1f f12_3 xs1p2 xs2p2
+        S2_prop(1) S2tf
+      by (smt (verit, best) Int_Un_distrib2 Int_iff Un_Int_eq(1)
+          distinct_append distinct_map finite_Int
+          finite_imageI set_append sorted_append
+          sorted_distinct_set_unique
+          sorted_list_of_set.set_sorted_key_list_of_set
+          subset_Un_eq)
+    hence xs_len: "length xs = length xs1 + length xs2" by simp
 
-      text\<open>The sets xs1 and xs2 satisfy the properties \<not>(cap (k+2) xs1 \<or> cup (Suc (l+2)) xs1) and 
+    text\<open>The sets xs1 and xs2 satisfy the properties \<not>(cap (k+2) xs1 \<or> cup (Suc (l+2)) xs1) and 
           \<not>(cap (Suc (k+2)) xs2 \<or> cup (l+2) xs2)\<close>
-      have xs1p3:"\<not>(cap (Suc(k+2)) xs1 \<or> cup (l+2) xs1)" using S1(4) xs1p1 xs1p2 by simp
-      have xs2p3:"\<not>(cap (k+2) xs2 \<or> cup (Suc(l+2)) xs2)" using S2(4) xs2p1 xs2p2 by simp
+    have xs1p3:"\<not>(cap (Suc(k+2)) xs1 \<or> cup (l+2) xs1)" using S1(4) xs1p1 xs1p2 by simp
+    have xs2p3:"\<not>(cap (k+2) xs2 \<or> cup (Suc(l+2)) xs2)" using S2(4) xs2p1 xs2p2 by simp
 
-      have xs1_len_ne_0: "length xs1 \<noteq> 0"
-      proof(rule ccontr)
-        assume xs1asm:"\<not>length xs1 \<noteq> 0"
-        hence C1:"cap (Suc (k+2)) xs \<Longrightarrow> cap (Suc (k+2)) xs2" 
-          using xs_cat by fastforce
-        have C2: "cap (Suc (k+2)) xs2 \<Longrightarrow> cap (k+2) (tl xs2)"
-          by (metis Suc_eq_plus1 cap_reduct length_0_conv
-              list.collapse xs1asm xs1p3)
+    have xs1_len_ne_0: "length xs1 \<noteq> 0"
+    proof(rule ccontr)
+      assume xs1asm:"\<not>length xs1 \<noteq> 0"
+      hence C1:"cap (Suc (k+2)) xs \<Longrightarrow> cap (Suc (k+2)) xs2" 
+        using xs_cat by fastforce
+      have C2: "cap (Suc (k+2)) xs2 \<Longrightarrow> cap (k+2) (tl xs2)"
+        by (metis Suc_eq_plus1 cap_reduct length_0_conv
+            list.collapse xs1asm xs1p3)
 
-        have C3:"sdistinct (tl xs2)" using xs2p2 sdistinct_subl by blast
-        have C4:"set (tl xs2) \<subseteq> S2" using xs2p1
-          by (metis list.sel(2) list.set_sel(2) subset_code(1))
-        have C5:"cap (k+2) (tl xs2) \<Longrightarrow> False" using S2(4) C3 C4 by blast
+      have C3:"sdistinct (tl xs2)" using xs2p2 sdistinct_subl by blast
+      have C4:"set (tl xs2) \<subseteq> S2" using xs2p1
+        by (metis list.sel(2) list.set_sel(2) subset_code(1))
+      have C5:"cap (k+2) (tl xs2) \<Longrightarrow> False" using S2(4) C3 C4 by blast
 
-        have "length xs1 = 0" using xs1asm by simp
-        hence xs2lexs:"length xs2 = length xs" using xs_len by simp
+      have "length xs1 = 0" using xs1asm by simp
+      hence xs2lexs:"length xs2 = length xs" using xs_len by simp
 
-        have "cup (Suc (l+2)) xs \<Longrightarrow> False" using xs2p3 xs_cat xs1asm by auto
-        thus False using C1 C2 C5 asm(2) by blast
-      qed
-
-      have xs2_len_ne_0: "length xs2 \<noteq> 0"
-      proof(rule ccontr)
-        assume xs2asm: "\<not>length xs2 \<noteq> 0"
-        hence C1:"cap (Suc (k+2)) xs \<Longrightarrow> False" using xs_cat xs1p3 by auto
-
-        have "length xs2 = 0" using xs2asm by simp
-        hence xs2lexs:"length xs1 = length xs" using xs_len by simp
-        have C2: "cup (Suc (l+2)) xs \<Longrightarrow> cup (Suc (l+2)) xs1" using xs2asm xs_cat by auto
-        have C3: "cup (Suc (l+2)) xs1 \<Longrightarrow> cup (l+2) (tl xs1)"
-          by (metis cup_def cup_sub_cup diff_Suc_1 length_tl
-              sublist_imp_subseq sublist_tl)
-
-        have C4:"sdistinct (tl xs1)" using xs1p2 sdistinct_subl by blast
-        have C5:"set (tl xs1) \<subseteq> S1" using xs1p1
-          by (metis list.sel(2) list.set_sel(2) subset_code(1))
-
-        have "cup (l+2) (tl xs1) \<Longrightarrow> False" using S1(4) C4 C5 by blast
-        thus False using C2 C3 C1 asm(2) by blast
-      qed
-
-      have xs2_len1: "cup (Suc (l + 2)) xs \<Longrightarrow> length xs2 = 1"
-      proof(rule ccontr)
-        assume asmF:"cup (Suc (l + 2)) xs" "length xs2 \<noteq> 1"
-        have F1:"length xs1 \<ge> 1" "length xs2 \<ge> 2" 
-          using xs1_len_ne_0 xs2_len_ne_0 asmF(2) by linarith+
-
-        then obtain l2 prexs1 where l1l2:"xs1 = prexs1 @ [l2]"
-          by (metis One_nat_def not_less_eq_eq rev_exhaust list.size(3) nle_le)
-
-        have F3:"l2 = xs!(length xs1 - 1)" using F1(1) xs_cat l1l2
-          by (simp add: nth_append_right)
-        have F7:"l2 \<in> S1" using l1l2 xs1p1 by auto
-
-        obtain l3 l4 sufxs2 where l3l4:"xs2 = l3#l4#sufxs2" using F1(2)
-          by (metis One_nat_def Suc_1 Suc_le_length_iff)
-        hence F4:"l3 = xs!(length xs1)"          by (simp add: xs_cat)
-        have F41: "xs = prexs1 @ [l2,l3,l4] @ sufxs2" using l3l4 l1l2 xs_cat
-          by auto
-        hence F42:"sublist [l2, l3, l4] xs" by fast
-        have F62: "sdistinct [l2, l3, l4]" using F42 asm(1) sdistinct_subl by fastforce
-        have F8:"l3 \<in> S2 \<and> l4 \<in> S2" using l3l4 xs2p1 XS2_def xs2_def by simp
-        have F10: "cap3 l2 l3 l4" using F62 F7 F8 capExtendS2FromS1 by blast
-
-        have "cup 3 [l2,l3,l4]" using cup_sub_cup F42 asmF sublist_imp_subseq
-          by (smt (verit, ccfv_threshold) cup_def length_Cons list.size(3) numeral_3_eq_3)
-         
-        thus False using asmF(1) F10 exactly_one_true cup_def
-          by (metis list_check.simps(4))
-      qed
-
-      have xs1_len1: "cap (Suc (k + 2)) xs \<Longrightarrow> length xs1 = 1"
-      proof(rule ccontr)
-        assume asmF: "cap (Suc (k + 2)) xs" "\<not> length xs1 = 1"
-        have F1:"length xs2 \<ge> 1" "length xs1 \<ge> 2"
-          using xs1_len_ne_0 xs2_len_ne_0 asmF(2) by linarith+
-
-        then obtain l1 l2 prexs1 where l1l2:"xs1 = prexs1 @ [l1,l2]"
-          by (metis One_nat_def append.assoc append_Cons
-              append_Nil asmF(2) length_Cons list.size(3)
-              rev_exhaust xs1_len_ne_0)
-
-        have F2:"l1 = xs!(length xs1 - 2)" using F1(1) xs_cat l1l2 by simp
-        have F3:"l2 = xs!(length xs1 - 1)" using F1(1) xs_cat l1l2
-          by (simp add: nth_append_right)
-        have F7:"l1 \<in> S1 \<and> l2 \<in> S1" using l1l2 xs1p1 by auto
-
-        obtain l3 sufxs2 where l3l4:"xs2 = l3#sufxs2"
-          by (metis length_0_conv list.exhaust xs2_len_ne_0)
-
-        hence F4:"l3 = xs!(length xs1)"          by (simp add: xs_cat)
-        have F41: "xs = prexs1 @ [l1,l2,l3] @ sufxs2" using l3l4 l1l2 xs_cat
-          by auto
-        hence F42:"sublist [l1, l2, l3] xs" by fast
-        hence F61:"sdistinct [l1, l2, l3]" using asm(1) sdistinct_subl by fastforce
-        have F8:"l3 \<in> S2" using l3l4 xs2p1 XS2_def xs2_def by simp
-        have F9:  "cup3 l1 l2 l3" using F61 F7 F8 cupExtendS1FromS2 by blast
-
-        have F11: "cap 3 [l1, l2, l3]" 
-          using cap_sub_cap F42 cap_def sublist_imp_subseq asmF(1)
-          by (smt (verit, del_insts) length_Cons list.size(3) numeral_3_eq_3)
-
-        thus False using F9 exactly_one_true cap_def
-          by (metis list_check.simps(4))
-      qed
-
-      have FF2:"cup (Suc (l + 2)) xs \<Longrightarrow> False" 
-        using xs_len xs2_len1 xs1p3 cup_sub_cup xs_cat cup_def
-        by (metis Suc_eq_plus1 subseq_rev_drop_many nat.inject subseq_order.order_refl)
-
-      have FF1:"cap (Suc (k + 2)) xs \<Longrightarrow> False"
-        using xs_len xs1_len1 xs2p3 cap_sub_cap xs_cat cap_def
-        by (metis list_emb_append2 old.nat.inject plus_1_eq_Suc subseq_order.order_refl)
-
-      show False using FF1 FF2 asm(2) by auto
-
+      have "cup (Suc (l+2)) xs \<Longrightarrow> False" using xs2p3 xs_cat xs1asm by auto
+      thus False using C1 C2 C5 asm(2) by blast
     qed
-    have asmf:"min_conv_set (Suc (k + 2)) (Suc (l + 2)) \<noteq> {}"
-      using mcs1_ne mcs2_ne min_conv_lower_bnd(2) by auto
-    then have "min_conv (k + 2) (Suc (l + 2)) - 1 + (min_conv (Suc (k + 2)) (l + 2) - 1)
-             < min_conv (Suc (k + 2)) (Suc (l + 2))" 
-      using S1(1) S2(1) add.commute f12_0 f12_2 min_conv_lower[of "Suc (k+2)" "Suc (l+2)"] min_conv_set_alt_def assms gg f12_3(2)
-      by (metis (lifting))
-    thus ?thesis using asmf by simp
+
+    have xs2_len_ne_0: "length xs2 \<noteq> 0"
+    proof(rule ccontr)
+      assume xs2asm: "\<not>length xs2 \<noteq> 0"
+      hence C1:"cap (Suc (k+2)) xs \<Longrightarrow> False" using xs_cat xs1p3 by auto
+
+      have "length xs2 = 0" using xs2asm by simp
+      hence xs2lexs:"length xs1 = length xs" using xs_len by simp
+      have C2: "cup (Suc (l+2)) xs \<Longrightarrow> cup (Suc (l+2)) xs1" using xs2asm xs_cat by auto
+      have C3: "cup (Suc (l+2)) xs1 \<Longrightarrow> cup (l+2) (tl xs1)"
+        by (metis cup_def cup_sub_cup diff_Suc_1 length_tl
+            sublist_imp_subseq sublist_tl)
+
+      have C4:"sdistinct (tl xs1)" using xs1p2 sdistinct_subl by blast
+      have C5:"set (tl xs1) \<subseteq> S1" using xs1p1
+        by (metis list.sel(2) list.set_sel(2) subset_code(1))
+
+      have "cup (l+2) (tl xs1) \<Longrightarrow> False" using S1(4) C4 C5 by blast
+      thus False using C2 C3 C1 asm(2) by blast
+    qed
+
+    have xs2_len1: "cup (Suc (l + 2)) xs \<Longrightarrow> length xs2 = 1"
+    proof(rule ccontr)
+      assume asmF:"cup (Suc (l + 2)) xs" "length xs2 \<noteq> 1"
+      have F1:"length xs1 \<ge> 1" "length xs2 \<ge> 2" 
+        using xs1_len_ne_0 xs2_len_ne_0 asmF(2) by linarith+
+
+      then obtain l2 prexs1 where l1l2:"xs1 = prexs1 @ [l2]"
+        by (metis One_nat_def not_less_eq_eq rev_exhaust list.size(3) nle_le)
+
+      have F3:"l2 = xs!(length xs1 - 1)" using F1(1) xs_cat l1l2
+        by (simp add: nth_append_right)
+      have F7:"l2 \<in> S1" using l1l2 xs1p1 by auto
+
+      obtain l3 l4 sufxs2 where l3l4:"xs2 = l3#l4#sufxs2" using F1(2)
+        by (metis One_nat_def Suc_1 Suc_le_length_iff)
+      hence F4:"l3 = xs!(length xs1)"          by (simp add: xs_cat)
+      have F41: "xs = prexs1 @ [l2,l3,l4] @ sufxs2" using l3l4 l1l2 xs_cat
+        by auto
+      hence F42:"sublist [l2, l3, l4] xs" by fast
+      have F62: "sdistinct [l2, l3, l4]" using F42 asm(1) sdistinct_subl by fastforce
+      have F8:"l3 \<in> S2 \<and> l4 \<in> S2" using l3l4 xs2p1 XS2_def xs2_def by simp
+      have F10: "cap3 l2 l3 l4" using F62 F7 F8 capExtendS2FromS1 by blast
+
+      have "cup 3 [l2,l3,l4]" using cup_sub_cup F42 asmF sublist_imp_subseq
+        by (smt (verit, ccfv_threshold) cup_def length_Cons list.size(3) numeral_3_eq_3)
+
+      thus False using asmF(1) F10 exactly_one_true cup_def
+        by (metis list_check.simps(4))
+    qed
+
+    have xs1_len1: "cap (Suc (k + 2)) xs \<Longrightarrow> length xs1 = 1"
+    proof(rule ccontr)
+      assume asmF: "cap (Suc (k + 2)) xs" "\<not> length xs1 = 1"
+      have F1:"length xs2 \<ge> 1" "length xs1 \<ge> 2"
+        using xs1_len_ne_0 xs2_len_ne_0 asmF(2) by linarith+
+
+      then obtain l1 l2 prexs1 where l1l2:"xs1 = prexs1 @ [l1,l2]"
+        by (metis One_nat_def append.assoc append_Cons
+            append_Nil asmF(2) length_Cons list.size(3)
+            rev_exhaust xs1_len_ne_0)
+
+      have F2:"l1 = xs!(length xs1 - 2)" using F1(1) xs_cat l1l2 by simp
+      have F3:"l2 = xs!(length xs1 - 1)" using F1(1) xs_cat l1l2
+        by (simp add: nth_append_right)
+      have F7:"l1 \<in> S1 \<and> l2 \<in> S1" using l1l2 xs1p1 by auto
+
+      obtain l3 sufxs2 where l3l4:"xs2 = l3#sufxs2"
+        by (metis length_0_conv list.exhaust xs2_len_ne_0)
+
+      hence F4:"l3 = xs!(length xs1)"          by (simp add: xs_cat)
+      have F41: "xs = prexs1 @ [l1,l2,l3] @ sufxs2" using l3l4 l1l2 xs_cat
+        by auto
+      hence F42:"sublist [l1, l2, l3] xs" by fast
+      hence F61:"sdistinct [l1, l2, l3]" using asm(1) sdistinct_subl by fastforce
+      have F8:"l3 \<in> S2" using l3l4 xs2p1 XS2_def xs2_def by simp
+      have F9:  "cup3 l1 l2 l3" using F61 F7 F8 cupExtendS1FromS2 by blast
+
+      have F11: "cap 3 [l1, l2, l3]" 
+        using cap_sub_cap F42 cap_def sublist_imp_subseq asmF(1)
+        by (smt (verit, del_insts) length_Cons list.size(3) numeral_3_eq_3)
+
+      thus False using F9 exactly_one_true cap_def
+        by (metis list_check.simps(4))
+    qed
+
+    have FF2:"cup (Suc (l + 2)) xs \<Longrightarrow> False" 
+      using xs_len xs2_len1 xs1p3 cup_sub_cup xs_cat cup_def
+      by (metis Suc_eq_plus1 subseq_rev_drop_many nat.inject subseq_order.order_refl)
+
+    have FF1:"cap (Suc (k + 2)) xs \<Longrightarrow> False"
+      using xs_len xs1_len1 xs2p3 cap_sub_cap xs_cat cap_def
+      by (metis list_emb_append2 old.nat.inject plus_1_eq_Suc subseq_order.order_refl)
+
+    show False using FF1 FF2 asm(2) by auto
+
   qed
+  have asmf:"min_conv_set (Suc (k + 2)) (Suc (l + 2)) \<noteq> {}"
+    using assms(1) assms(2) min_conv_lower_bnd(2) by auto
+  then have "min_conv (k + 2) (Suc (l + 2)) - 1 + (min_conv (Suc (k + 2)) (l + 2) - 1)
+             < min_conv (Suc (k + 2)) (Suc (l + 2))" 
+    using S1(1) S2(1) add.commute f12_0 f12_2 min_conv_lower[of "Suc (k+2)" "Suc (l+2)"] min_conv_set_alt_def assms gg f12_3(2)
+    by (metis (lifting))
+  thus ?thesis using asmf by simp
 qed
 
 (* assume points are distinct in x coords
@@ -619,22 +590,15 @@ next
   then show ?case
   proof(cases "k=0 \<or> l=0")
     case True
-    then have 1:"min_conv (k + 2) (Suc (l + 2)) + (min_conv (Suc (k + 2)) (l + 2) - 1)
-    \<le> min_conv (Suc (k + 2)) (Suc (l + 2))"  
-      using min_conv_2 min_conv_arg_swap
-      by (metis (no_types, opaque_lifting) One_nat_def Suc_1 Suc_eq_plus1 add_Suc_shift diff_Suc_1'
-          diff_diff_cancel le_add2 min_conv_base numeral_eq_Suc plus_1_eq_Suc pred_numeral_simps(3))
-    have 2:"min_conv (k + 2) (Suc (l + 2)) + (min_conv (Suc (k + 2)) (l + 2) - 1)
-    \<ge> min_conv (Suc (k + 2)) (Suc (l + 2))" using min_conv_upper_bnd 
-      by (smt (z3) One_nat_def Suc_eq_plus1_left Suc_numeral True add_2_eq_Suc'
-          add_One_commute add_Suc_shift diff_Suc_1 le_add1 min_conv_2(1)
-          min_conv_arg_swap min_conv_base semiring_norm(3))
-    have 3: "min_conv_set 3 (Suc (l + 2)) \<noteq> {}" using min_conv_base by simp
-    have    "min_conv_set (Suc (k + 2)) 3 \<noteq> {}" 
+    have 1: "min_conv (k + 2) (Suc (l + 2)) + (min_conv (Suc (k + 2)) (l + 2) - 1)
+           = min_conv (Suc (k + 2)) (Suc (l + 2))" 
+      using True min_conv_2(1) min_conv_arg_swap min_conv_base 
+      by (metis add_2_eq_Suc' add_Suc_shift diff_Suc_1 le_add1 numeral_3_eq_3 plus_nat.add_0)
+    have 2: "min_conv_set 3 (Suc (l + 2)) \<noteq> {}" using min_conv_base by simp
+    have 3: "min_conv_set (Suc (k + 2)) 3 \<noteq> {}"
       using min_conv_base min_conv_sets_eq min_conv_set_def by simp
-    thus ?thesis using 1 2 3 True numeral_3_eq_3
-      by (smt (z3) One_nat_def Suc_eq_plus1 add.commute diff_Suc_1 le_add2
-          min_conv_2(1) min_conv_arg_swap min_conv_base nat_1_add_1
+    thus ?thesis using 1 2 3 True numeral_3_eq_3 min_conv_2(1) min_conv_arg_swap min_conv_base
+      by (smt (z3) One_nat_def Suc_eq_plus1 add.commute diff_Suc_1 le_add2 nat_1_add_1
           nat_arith.suc1)
   next
     case False
@@ -648,11 +612,11 @@ next
 
     have LT:  "min_conv (Suc (k + 2)) (Suc (l + 2))
             \<le> min_conv (k + 2) (Suc (l + 2)) + min_conv (Suc (k + 2)) (l + 2) - 1"
-      "min_conv_set (Suc (k + 2)) (Suc (l + 2)) \<noteq> {}"
+              "min_conv_set (Suc (k + 2)) (Suc (l + 2)) \<noteq> {}"
       using min_conv_lower_bnd_Suc S1 S2 by simp+
     have GT:  "min_conv (Suc (k + 2)) (Suc (l + 2))
             > min_conv (k + 2) (Suc (l + 2)) - 1 + (min_conv (Suc (k + 2)) (l + 2) - 1)"
-      using LT(2) min_conv_upper_bnd by simp
+      using LT(2) S1 S2 min_conv_upper_bnd by simp
     show ?thesis using LT GT by linarith
   qed 
 qed
