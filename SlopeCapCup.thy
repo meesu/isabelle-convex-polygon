@@ -16,17 +16,24 @@ proof-
     by presburger
 qed
 
-lemma slope_cup3:
-  assumes "sdistinct [x,y,z]" "slope x y < slope y z"
-  shows   "cup3 x y z" using slope_cross3
-  by (smt (verit, del_insts) assms(1,2) cup3_def distinct_length_2_or_more less_eq_prod_def list.simps(9) sorted2 zero_less_mult_iff)
-
 lemma cup3_slope:
   assumes "sdistinct [x,y,z]" "cup3 x y z"
   shows   "slope x y < slope y z"
   using assms
   by (smt (verit) cup3_def less_eq_prod_def mult_less_0_iff
       slope_cross3 sorted2 zero_less_mult_iff)
+
+lemma cap3_slope:
+  assumes "sdistinct [x,y,z]" "cap3 x y z"
+  shows   "slope x y > slope y z"
+  using assms
+  by (smt (verit) cap3_def less_eq_prod_def mult_less_0_iff
+      slope_cross3 sorted2 zero_less_mult_iff)
+
+lemma slope_cup3:
+  assumes "sdistinct [x,y,z]" "slope x y < slope y z"
+  shows   "cup3 x y z" using slope_cross3 assms(1,2) cup3_def
+  by (smt (verit, del_insts) distinct_length_2_or_more less_eq_prod_def list.simps(9) sorted2 zero_less_mult_iff)
 
 lemma slope_cap3:
   assumes "sdistinct [x,y,z]" "slope x y > slope y z"
@@ -42,14 +49,6 @@ proof-
     by (smt (verit, best) cap3_def diff_frac_eq divide_cancel_right mult.commute
         nonzero_mult_div_cancel_left right_minus_eq)
 qed
-
-lemma cap3_slope:
-  assumes "sdistinct [x,y,z]" "cap3 x y z"
-  shows   "slope x y > slope y z"
-  using assms
-  by (smt (verit) cap3_def less_eq_prod_def mult_less_0_iff
-      slope_cross3 sorted2 zero_less_mult_iff)
-
 
 lemma slope_coll3:
   assumes "sdistinct [x,y,z]" "slope x y = slope y z"
@@ -258,33 +257,25 @@ proof-
     by meson
 qed
 
-(* 
-theorem cap_is_slope_dec:
+theorem cap_is_slopedec:
   assumes "cap (length xs) xs" 
       and "i < j \<and> j < k \<and> k < length xs"
-  shows   "slope (xs!i) (xs!j) > slope (xs!j) (xs!k)"
+    shows "slope (xs!i) (xs!j) > slope (xs!j) (xs!k)"
   (* proof same as cup_is_slopeinc with similar prerequisite lemmas by cap \<longleftrightarrow> cup *)
   sorry
- *)
+
 lemma slopedec_is_cap:
   assumes "sdistinct xs" 
       and "\<forall>x y z. subseq [x,y,z] xs \<longrightarrow> slope x y > slope y z"
-  shows   "cap (length xs) xs"
-proof-
-  have "subseq [x, y, z] xs  \<longrightarrow> sdistinct[x, y, z]"
-    using assms(1) sdistinct_subseq by blast
-  hence "sublist[x, y, z] xs \<longrightarrow> cap3 x y z" using slope_cap3 assms(2) by blast
-  hence "list_check cap3 xs"
-    using assms(1,2) bad3_from_bad slope_cap3
-    by (metis sdistinct_subl sublist_imp_subseq)
-  thus "cap (length xs) xs" using assms cap_def by simp
-qed
+    shows   "cap (length xs) xs"
+  using assms
+  by (metis get_cup_from_bad_cap sdistinct_subl slope_cap3 sublist_imp_subseq)
+
 
 lemma cap_sub_cap:
   assumes "cap (length xs) xs" and "subseq ys xs"
   shows   "cap (length ys) ys"
-  by (metis assms(1,2) cap_orig_refl_rev cup_sub_cup length_neg length_rev
-      subseq_map subseq_rev)
+  by (metis assms(1,2) cap_orig_refl_rev cup_sub_cup length_neg length_rev subseq_map subseq_rev)
 
 end
 

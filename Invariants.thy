@@ -273,35 +273,28 @@ lemma min_conv_sets_eq:
                 \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs)))}
          = {n :: nat. (\<forall>S :: R2 set. (card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
                 \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap l xs \<or> cup k xs)))}"
- (is "?P = ?Q")
-proof
-  show "?P \<subseteq> ?Q"
-  proof
-    fix x 
-    assume x_in:"x \<in> ?P"
-    have  "\<forall>S :: R2 set. card S \<ge> x \<and> general_pos S \<and> sdistinct(sorted_list_of_set S)
-                \<longrightarrow> (\<exists>xs. set xs \<subseteq> (reflect ` S) \<and> sdistinct xs \<and> (cap l xs \<or> cup k xs))"
-      by (smt (verit, best) cap_def cap_orig_refl_rev cup_def general_pos_neg_neg id_apply image_mono image_set mem_Collect_eq o_def rev_reflect_inv set_rev x_in)
-    hence "\<forall>S :: R2 set. card S \<ge> x \<and> general_pos S \<and> sdistinct(sorted_list_of_set S)
-                 \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap l xs \<or> cup k xs))" 
-      using card_neg general_pos_neg neg_neg sdistinct_refl_set
-      by (metis (no_types, lifting) eq_id_iff image_comp image_ident)
-    thus "x \<in> ?Q" by blast
-  qed
-next
-  show "?Q \<subseteq> ?P"
+    (is "?MCS k l = ?MCS l k")
+proof-
+
+  have "?MCS l k \<subseteq> ?MCS k l" for k l
   proof
     fix x
-    assume x_in:"x \<in> ?Q"
-    have "\<forall>S :: R2 set. card S \<ge> x \<and> general_pos S \<and> sdistinct(sorted_list_of_set S)
-                \<longrightarrow> (\<exists>xs. set xs \<subseteq> (reflect ` S) \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs))"
-      by (smt (verit, best) cap_def cap_orig_refl_rev cup_def general_pos_neg_neg id_apply image_mono image_set mem_Collect_eq o_def rev_reflect_inv set_rev x_in)
+    assume x_in:"x \<in> ?MCS l k"
+
     hence "\<forall>S :: R2 set. card S \<ge> x \<and> general_pos S \<and> sdistinct(sorted_list_of_set S)
-                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs))" 
+             \<longrightarrow> (\<exists>xs. set xs \<subseteq> (reflect ` S) \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs))"
+      by (smt (verit, best) cap_def cap_orig_refl_rev cup_def general_pos_neg_neg id_apply image_mono image_set mem_Collect_eq o_def rev_reflect_inv set_rev)
+
+    hence "\<forall>S :: R2 set.( card S \<ge> x \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs))"
       using card_neg general_pos_neg neg_neg sdistinct_refl_set
       by (metis (no_types, lifting) eq_id_iff image_comp image_ident)
-      thus "x \<in> ?P" by blast
+
+    thus "x \<in> ?MCS k l" by blast
   qed
+
+  thus ?thesis by blast
+
 qed
 
 lemma min_conv_arg_swap: "min_conv k l = min_conv l k"
@@ -438,6 +431,11 @@ proof(induction xs arbitrary: k)
   qed
 qed(simp)
 
+lemma tr_refl_inv: 
+  "map (\<lambda>p. p + reflect ta) (map (\<lambda>p. p + ta) ps) = ps"
+  by (simp add: comp_def)
+
+
 lemma translated_cup_eq:
   "\<And>t. cup k xs = cup k (map (\<lambda>p. p + t) xs)"
 proof
@@ -445,15 +443,9 @@ proof
   have "cup k ys \<Longrightarrow> cup k (map (\<lambda>p. p + t) ys)" using translated_cup by simp
   hence "cup k (map (\<lambda>p. p - t) xs) \<Longrightarrow> cup k xs"
     by (simp add: o_def ysp)
-  thus "\<And>t. cup k (map (\<lambda>p. p + t) xs) \<Longrightarrow> cup k xs"
-  proof -
-    fix ta :: "real \<times> real"
-    assume a1: "cup k (map (\<lambda>p. p + ta) xs)"
-    have "\<forall>ps. map ((+) (reflect ta)) (map (\<lambda>p. p + ta) ps) = ps"
-      by (simp add: o_def)
-    then show "cup k xs"
-      using a1 by (metis (lifting) add.commute map_ext translated_cup)
-  qed
+  thus "\<And>t. cup k (map (\<lambda>p. p + t) xs) \<Longrightarrow> cup k xs" 
+    using tr_refl_inv
+    by (metis translated_cup)
 qed(simp add:translated_cup)
 
 lemma translated_cap:
