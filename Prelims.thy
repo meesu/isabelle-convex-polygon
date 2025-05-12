@@ -3,6 +3,16 @@ theory Prelims
 
 begin
 
+lemma subseq_rev:
+  "subseq xs ys \<Longrightarrow> subseq (rev xs) (rev ys)"
+proof(induction xs)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons a xs)
+  then show ?case sorry
+qed
+
 lemma inf_subset_bounds:
   assumes "X \<noteq> {}" and "(X :: nat set) \<subseteq> (Y :: nat set)"
   shows "Inf Y \<le> Inf X"
@@ -11,7 +21,6 @@ lemma inf_subset_bounds:
 lemma inf_upper:
   "x \<in> (S::nat set) \<longrightarrow> Inf S \<le> x"
   by (simp add: wellorder_Inf_le1)
-
 
 lemma dst_set_card2_ne:
   fixes   S :: "R2 set"
@@ -124,33 +133,46 @@ next
     by (meson assms(1,2,3,4) less_or_eq_imp_le order.strict_trans1 sorted1 sorted2 sorted_nth_mono)
 qed
 
-(* 
-definition nths :: "'a list => nat set => 'a list" where
-"nths xs A = map fst (filter (\<lambda>p. snd p \<in> A) (zip xs [0..<size xs]))"
- *)
 lemma subseq_index:
   fixes xs :: "R2 list"
   assumes "subseq ys xs"
   shows "\<exists> idx. 
-    subseq idx [0..<length xs] \<and> 
+    set idx \<subseteq> {..<length xs} \<and> 
     ys = map (\<lambda> id. xs!id) idx \<and>
     length idx = length ys \<and>
-    sortedStrict idx"
+    sorted_wrt (<) idx"
   using assms
-proof(induction ys)
+proof(induction ys arbitrary: xs)
   case Nil
   then show ?case by simp
 next
   case (Cons a ys)
   hence "subseq ys xs" by (metis subseq_Cons')
+  obtain xsp xss where a_xs:"xs = xsp@a#xss" "subseq ys xss" using Cons(2) list_emb_ConsD
+    by (metis (full_types, opaque_lifting))
+  have "xs = (xsp@[a])@xss" using a_xs(1) by simp
+  hence id_tr:"\<forall>z < length xss. xss!z = xs!(1 + length xsp + z)" using a_xs(1)
+    by (metis add_Suc_shift nth_Cons_Suc nth_append_length_plus plus_1_eq_Suc)
+
   then obtain idx where idx:
-          "subseq idx [0..<length xs]"
-          "ys = map ((!) xs) idx"
+          "set idx \<subseteq> {..<length xss}"
+          "ys = map ((!) xss) idx"
           "length idx = length ys"
-          "sortedStrict idx"
-    using Cons.IH by blast
-  obtain ai where ai: "xs!ai = a" using Cons(2) sorry
-  then show ?case sorry
+          "sorted_wrt (<) idx"
+    using Cons.IH a_xs by blast
+
+  define idxsa where idxsa: "idxsa = (map (\<lambda>n. 1 + length xsp + n) idx)"
+  have idxsa_s:"set idxsa \<subseteq> {..<(1 + length xsp + length xss)}" 
+    using idxsa a_xs(1) idx(1) by auto
+  have    "sorted_wrt (<) idxsa" using idx(4) idxsa by (simp add: sorted_wrt_iff_nth_less)
+  hence 4:"sorted_wrt (<) ((length xsp)#idxsa)" using idxsa by simp 
+  hence ys_idxs: "ys = map ((!) xs) idxsa"
+    using idx(2) idxsa by (simp add: a_xs(1) nth_append)
+  hence aind:"xs!length xsp = a" using a_xs by simp
+  hence 2:"(a#ys) = map ((!) xs) ((length xsp)#idxsa)" using ys_idxs by simp
+  have  3:"length (a#ys) = length ((length xsp)#idxsa)" using idx(3) idxsa by simp
+  have 1:"set ((length xsp)#idxsa) \<subseteq> {..<length xs}"  using idxsa_s a_xs(1) by auto
+  then show ?case using 1 2 3 4 by metis
 qed
 
 lemma subseq_index3:
@@ -159,23 +181,18 @@ lemma subseq_index3:
   shows   "\<exists> i j k. i<j \<and> j<k \<and> k<length xs \<and> a = xs!i \<and> b = xs!j \<and> c = xs!k"
 proof-
   obtain idx where idx:
-    "subseq idx [0..<length xs]" 
+    "set idx \<subseteq> {..<length xs}" 
     "[a,b,c] = map (\<lambda> id. xs!id) idx" 
-    "sortedStrict idx" 
+    "sorted_wrt (<) idx" 
     "length idx = 3"
     using assms subseq_index
     by (metis length_Cons list.size(3) numeral_3_eq_3)
-  obtain i j k where ijk: "idx = Cons i (Cons j (Cons k Nil))" using idx(4) numeral_3_eq_3
-    by (metis (no_types, lifting) ext Suc_length_conv length_0_conv)
-  have "set idx \<subseteq> {..<length xs}"
-    by (metis atLeast_upt idx(1) notin_set_nthsI subseq_conv_nths
-        subsetI)
-  hence 1:"k < length xs" using idx ijk
-    by (meson lessThan_iff list.set_intros(1) set_subset_Cons
-        subset_code(1))
+  obtain a b c where ijk: "idx = Cons a (Cons b (Cons c Nil))" 
+    using idx(4) numeral_3_eq_3 length_0_conv Suc_length_conv length_Suc_conv by smt
+  hence 1:"c < length xs" using idx ijk
+    by (meson lessThan_iff list.set_intros(1) set_subset_Cons subset_code(1))
   thus ?thesis using idx(2,3) "1" ijk by auto
 qed
-
 
 lemma sdistinct_subseq:
   fixes   xs ys :: "R2 list"

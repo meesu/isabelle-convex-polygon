@@ -652,3 +652,5 @@ proof(induction "k+l" arbitrary: l k)
 qed(simp add: min_conv_base)
 
 end
+
+

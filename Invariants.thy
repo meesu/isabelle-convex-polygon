@@ -6,6 +6,22 @@ begin
 abbreviation
   "reflect \<equiv> (\<lambda> p. -(p :: R2))" 
 
+lemma subseq_neg:
+  "subseq ys xs \<Longrightarrow> subseq (map reflect ys) (map reflect xs)"
+  using subseq_map by blast
+
+lemma cross3_neg:
+  "cross3 x y z = cross3 (-x) (-y) (-z)"
+  unfolding cross3_def
+  by (simp add: left_diff_distrib' right_diff_distrib')
+
+lemma slope_neg:
+  "slope x y < slope y z \<Longrightarrow> slope (-x) (-y) < slope (-y) (-z)"
+  unfolding slope_def
+  by (metis (no_types, opaque_lifting) fst_uminus minus_diff_minus
+      minus_divide_left minus_divide_right snd_uminus
+      verit_minus_simplify(4))
+
 lemma gpos_neg:
   assumes "gpos S"
   shows   "gpos (reflect ` S)"
@@ -31,9 +47,15 @@ corollary general_pos_neg_neg:
   by (metis (no_types, opaque_lifting) general_pos_subs minus_equation_iff
     rev_image_eqI subset_eq)
 
-lemma card_neg:
+lemma card_neg1:
   "(card S = n) = (card (reflect ` (S :: R2 set)) = n)" using card_def
   by (simp add: card_image)
+
+lemma length_neg:
+  "length xs = length (map reflect xs)" by simp
+
+lemma length_rev_neg:
+  "length xs = length (rev (map reflect xs))" by simp
 
 lemma neg_neg:
   "reflect \<circ> reflect = id" by simp

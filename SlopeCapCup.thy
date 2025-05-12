@@ -1,5 +1,5 @@
 theory SlopeCapCup
-  imports Definitions Prelims
+  imports Definitions Prelims Invariants
 
 begin
 
@@ -237,7 +237,7 @@ qed
 corollary cup_is_slopeinc_subseq:
   assumes "cup (length xs) xs" and "subseq [a,b,c] xs"
   shows   "slope a b < slope b c"
-  using subseq_index cup_is_slopeinc
+  using subseq_index3 cup_is_slopeinc
   by (metis assms(1,2))
 
 lemma cup_sub_cup:
@@ -251,20 +251,21 @@ proof-
     assume "sublist [a,b,c] ys"
     hence  "subseq [a,b,c] xs"
       using assms(2) subseq_order.dual_order.trans by blast
-    thus "slope a b < slope b c" using assms(1) cup_is_slopeinc subseq_index
+    thus "slope a b < slope b c" using assms(1) cup_is_slopeinc subseq_index3
       by metis
   qed
   thus ?thesis using 1 slopeinc_is_cup get_cap_from_bad_cup sdistinct_subl slope_cup3
     by meson
 qed
 
-theorem cap_is_slopedec:
+(* 
+theorem cap_is_slope_dec:
   assumes "cap (length xs) xs" 
       and "i < j \<and> j < k \<and> k < length xs"
   shows   "slope (xs!i) (xs!j) > slope (xs!j) (xs!k)"
-  (* proof same as cup_is_slope_inc with similar prerequisite lemmas by cap \<longleftrightarrow> cup *)
+  (* proof same as cup_is_slopeinc with similar prerequisite lemmas by cap \<longleftrightarrow> cup *)
   sorry
-
+ *)
 lemma slopedec_is_cap:
   assumes "sdistinct xs" 
       and "\<forall>x y z. subseq [x,y,z] xs \<longrightarrow> slope x y > slope y z"
@@ -282,7 +283,9 @@ qed
 lemma cap_sub_cap:
   assumes "cap (length xs) xs" and "subseq ys xs"
   shows   "cap (length ys) ys"
-  sorry
-
+  by (metis assms(1,2) cap_orig_refl_rev cup_sub_cup length_neg length_rev
+      subseq_map subseq_rev)
 
 end
+
+
