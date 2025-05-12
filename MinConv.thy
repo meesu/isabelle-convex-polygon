@@ -651,6 +651,11 @@ proof(induction "k+l" arbitrary: l k)
   qed(simp add: min_conv_base)
 qed(simp add: min_conv_base)
 
+(* 
+prove cups caps are convex then
+add lemma erdos_szekeres_convex:
+*)
+
 end
 
 

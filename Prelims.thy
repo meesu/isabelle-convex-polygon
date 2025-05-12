@@ -5,12 +5,17 @@ begin
 
 lemma subseq_rev:
   "subseq xs ys \<Longrightarrow> subseq (rev xs) (rev ys)"
-proof(induction xs)
+proof(induction xs arbitrary: ys)
   case Nil
   then show ?case by simp
 next
   case (Cons a xs)
-  then show ?case sorry
+  then obtain ysp yss where a_ys: "ys = ysp @ a # yss" "subseq xs yss"
+    by (metis (mono_tags, lifting) list_emb_ConsD)
+  hence "subseq (rev xs) (rev yss)" using Cons(1) by simp
+  hence "subseq ((rev xs)@[a]) ((rev yss)@[a])" by simp
+  then show ?case using a_ys
+    by (metis list_emb_prefix rev.simps(2) rev_append)
 qed
 
 lemma inf_subset_bounds:
