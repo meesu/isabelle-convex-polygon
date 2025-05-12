@@ -47,7 +47,7 @@ corollary general_pos_neg_neg:
   by (metis (no_types, opaque_lifting) general_pos_subs minus_equation_iff
     rev_image_eqI subset_eq)
 
-lemma card_neg1:
+lemma card_neg:
   "(card S = n) = (card (reflect ` (S :: R2 set)) = n)" using card_def
   by (simp add: card_image)
 
