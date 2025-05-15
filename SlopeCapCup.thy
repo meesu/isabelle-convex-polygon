@@ -257,12 +257,16 @@ proof-
     by meson
 qed
 
+(* 
+-- not needed till min_conv_binomial equality --
+
 theorem cap_is_slopedec:
   assumes "cap (length xs) xs" 
       and "i < j \<and> j < k \<and> k < length xs"
     shows "slope (xs!i) (xs!j) > slope (xs!j) (xs!k)"
   (* proof same as cup_is_slopeinc with similar prerequisite lemmas by cap \<longleftrightarrow> cup *)
   sorry
+ *)
 
 lemma slopedec_is_cap:
   assumes "sdistinct xs" 

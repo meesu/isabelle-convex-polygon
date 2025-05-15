@@ -652,9 +652,130 @@ proof(induction "k+l" arbitrary: l k)
 qed(simp add: min_conv_base)
 
 (* 
+
+lemma fourconvex:
+  assumes "\<forall>X \<subseteq> (S::(real \<times> real) set). card X \<le> 4 \<longrightarrow> convex_pos X"
+  shows "convex_pos S"
+
 prove cups caps are convex then
 add lemma erdos_szekeres_convex:
 *)
+
+text \<open>We prove that cups and caps form a convex polygon.\<close>
+
+lemma cup_genpos:
+  assumes "cup (length xs) xs"
+  shows   "general_pos (set xs)"
+proof-
+  have "gpos (set xs)" unfolding gpos_def
+  proof(rule+)
+    fix a b c
+    assume asm:"a \<in> set xs" "b \<in> set xs" "c \<in> set xs" "distinct [a,b,c]" "collinear3 a b c"
+    then obtain u v w where uvw:"[u,v,w] = sorted_list_of_set {a,b,c}"
+      by (smt (verit, best) distinct_length_2_or_more
+          empty_set insert_commute linorder_not_less
+          list.simps(15) order_less_imp_le sorted1 sorted2
+          sorted_list_of_set.idem_if_sorted_distinct)
+    have 1:"subseq [u,v,w] xs" using assms asm uvw
+      by (metis (no_types, lifting) bot.extremum cup_def distinctFst_distinct insert_subset
+          subseq_sorted_subset)
+    hence 2:"sdistinct [u,v,w]" using assms uvw
+      by (simp add: cup_def sdistinct_subseq)
+    hence "\<not>collinear3 u v w" using assms 1 slope_cup3 collinear3_def cup_is_slopeinc_subseq
+      by (metis cup3_def order_less_le)
+    then show False 
+      using 2 asm(4,5) uvw
+      by (metis coll_is_affDep sorted_list_of_set.set_sorted_key_list_of_set strict_sorted_iff
+          finite.emptyI finite.insertI list.set(1) list.simps(15) sdistinct_sortedStrict)
+  qed
+  thus ?thesis using gpos_generalpos by simp
+qed
+
+lemma cup_poly:
+  assumes "cup (length xs) xs"
+  shows   "convex_poly (length xs) xs"
+proof(rule ccontr)
+  assume asm:"\<not>convex_poly (length xs) xs"
+  have 0:"sdistinct xs" using assms cup_def by simp
+  have 1:"subseq ys xs \<Longrightarrow> length ys = card (set ys)" for ys
+    by (metis assms cup_def distinct_card distinct_map sdistinct_subseq)
+  have 2:"sorted xs" using 0 by simp
+  have "\<not>convex_pos (set xs)" using asm by simp
+  then obtain Y where Y: "Y \<subseteq> (set xs)" "card Y \<le> 4" "\<not>convex_pos Y" using fourconvex by meson
+  define ys where ys:"ys = sorted_list_of_set Y"
+  hence 3:"sdistinct ys" using 0 sdistinct_sub Y(1) distinctFst_distinct
+    by (metis List.finite_set sorted_list_of_set.idem_if_sorted_distinct)
+  hence 4:"subseq ys xs" using Y(1) 0 2 subseq_sorted_subset distinct_map ys by blast
+  have 5:"affine_dependent Y" using Y(2,3) affine_hull_convex_hull hull_inc
+    by (metis affine_dependent_def convex_pos_def)
+
+  show False
+    text \<open>Since one of the points is contained within the triangle formed by other three: it forms a cap with some two of these points.\<close>
+  proof(cases "card Y = 4")
+    case True
+    then show ?thesis sorry
+  next
+    case False
+    hence y_3:"card Y \<le> 3"
+      using Y(2) by linarith
+    then show ?thesis
+    proof(cases "card Y = 3")
+      case True
+      hence "\<not>affine_dependent Y" using general_pos_subs genpos_cross0 assms general_pos_def cross_affine_dependent_conv cup_genpos Y(1) nsubset_def
+        by (metis (mono_tags, lifting) mem_Collect_eq)
+      thus ?thesis using 5 by simp 
+    next
+      case False
+      hence y_2:"card Y \<le> 2" using y_3 by simp
+      have C0:"card Y = 0 \<Longrightarrow> False" using Y(1,3) convex_pos_def finite_subset by fastforce
+      have C1:"card Y = 1 \<Longrightarrow> False" using Y(1,3) convex_pos_def
+        by (metis Diff_cancel card_1_singletonE convex_hull_eq_empty empty_not_insert singletonD)
+      have    "card Y = 2 \<Longrightarrow> False"
+      proof-
+        assume "card Y = 2"
+        then obtain a b where ab:"Y = {a,b}" "a\<noteq>b" by (meson card_2_iff)
+        have "a \<in> convex hull {b}" using Y(3) ab(1) convex_pos_def
+          by (metis (no_types, lifting) Diff_cancel convex_hull_singleton  hull_redundant_eq
+              insertE insert_Diff_if insert_absorb insert_not_empty)
+        thus False using ab(2) by auto
+      qed
+      thus ?thesis using y_2 C0 C1 
+        by fastforce 
+    qed
+  qed
+qed
+
+lemma cap_poly:
+  assumes "cap (length xs) xs"
+  shows   "convex_poly (length xs) xs"
+  using cup_poly cap_orig_refl_rev[of "length xs" "xs"] length_neg
+  by (metis assms convex_pos_list_refl implm_rev_reflect_inv length_rev set_rev)
+
+lemma min_conv_set_non_empty:
+  "min_conv_set n n \<noteq> {}"
+proof(cases "n \<le> 2")
+  case True
+  then show ?thesis using min_conv_0 min_conv_1 min_conv_2
+    by (metis One_nat_def Suc_1 bot_nat_0.extremum_uniqueI le_SucE)
+next
+  case False
+  hence "n\<ge>3" by simp
+  then show ?thesis using min_conv_k_l_eq
+    by (metis One_nat_def Suc_1 add_Suc_right le_add_diff_inverse2 numeral_3_eq_3)
+qed
+
+lemma "EZ n \<le> min_conv n n"
+proof-
+  have "cap a xs \<or> cup a xs \<longrightarrow> convex_poly a xs" for a xs 
+    using cup_poly cap_poly cap_def cup_def by presburger
+  hence "min_conv_set n n \<subseteq>
+    {N :: nat. (\<forall>S :: R2 set. (card S \<ge> N \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
+               \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> convex_poly n xs))}" (is "_ \<subseteq> ?EZXS n")
+    by (smt (verit) mem_Collect_eq min_conv_num_out_set subset_eq)
+  thus "EZ n \<le> min_conv n n"
+    using EZ_def inf_subset_bounds min_conv_def min_conv_set_def min_conv_set_non_empty
+    by fastforce
+qed
 
 end
 

@@ -27,9 +27,14 @@ definition general_pos::"((real\<times>real) set) \<Rightarrow> bool" where
 (*we define a set of points to be in a convex position if none of the points 
 belong to the convex hull of the rest*)
 (*a set of points in a convex position can be thought of as the minimal specification set
-of a convex hull*)
+of a convex hull.
+This definition also makes sure that the points in S form a convex polygon.
+*)
 definition convex_pos::"('a::euclidean_space set) \<Rightarrow> bool" where
   "convex_pos S \<equiv>  (\<forall> s \<in> S. convex hull S \<noteq> convex hull (S - {s}))"
+
+abbreviation convex_poly :: "nat \<Rightarrow> R2 list \<Rightarrow> bool" where
+  "convex_poly n xs \<equiv> length xs = n \<and> convex_pos (set xs)"
 
 definition cross3 :: "R2 \<Rightarrow> R2 \<Rightarrow> R2 \<Rightarrow> real" where
   "cross3 a b c = (fst b - fst a) * (snd c - snd b) - (fst c - fst b) * (snd b - snd a)"
@@ -43,7 +48,7 @@ definition cap3 :: "_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool" where
 definition collinear3 :: "_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool" where
   "collinear3 a b c \<equiv> cross3 a b c = 0"
 
-(* observation: \<not> collinear3 a b c = general_pos_2D {a,b,c} *)
+(* observation: distinct [a,b,c] \<and>  \<not> collinear3 a b c = general_pos_2D {a,b,c} *)
 
 fun list_check :: "(_ \<Rightarrow> _ \<Rightarrow> _ \<Rightarrow> bool) \<Rightarrow> _ list \<Rightarrow> bool" where
   "list_check f [] = True"
@@ -71,5 +76,12 @@ definition min_conv_set :: "nat \<Rightarrow> nat \<Rightarrow> nat set" where
   "min_conv_set k l = 
         {n. (\<forall>S :: R2 set. (card S \<ge> n \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
                 \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs)))}"
+
+text \<open>Miss Klein suggested the following problem. Can we find for a given number n a number N(n) such that from any set containing at least N(n) points it is possible to select n points forming a convex polygon? The number EZ(n) is defined to be the smallest possible value of N(n) for a given n.\<close>
+
+definition EZ :: "nat \<Rightarrow> nat" where
+  "EZ n = Inf {N :: nat. 
+              (\<forall>S :: R2 set. (card S \<ge> N \<and> general_pos S \<and> sdistinct(sorted_list_of_set S))
+                \<longrightarrow> (\<exists>xs. set xs \<subseteq> S \<and> sdistinct xs \<and> convex_poly n xs))}"
 
 end

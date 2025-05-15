@@ -300,8 +300,88 @@ qed
 lemma min_conv_arg_swap: "min_conv k l = min_conv l k"
   unfolding min_conv_def using min_conv_sets_eq by simp
 
+(* ----- *)
+
+lemma convex_pos_rev:
+  "convex_pos (set xs) \<Longrightarrow> convex_pos (set (rev xs))"
+  using set_rev by simp
+
+lemma hull_refl:
+  assumes "\<forall>t. S t = S (reflect ` t)"
+  shows   "reflect ` (S hull s) = S hull (reflect ` s)"
+proof-
+  have 1:"(x \<in> S hull s) \<longleftrightarrow> (\<forall>t. S t \<and> s \<subseteq> t \<longrightarrow> x \<in> t)" for x unfolding hull_def by blast
+  have 2:"(\<forall>t. S t \<and> s \<subseteq> t \<longrightarrow> x \<in> t) \<longleftrightarrow> (\<forall>t. S t \<and> reflect ` s \<subseteq> t \<longrightarrow> reflect x \<in> t)" for x 
+    by (metis (no_types, opaque_lifting) add.inverse_inverse assms id_apply imageI image_comp   
+        image_id image_mono neg_neg)
+  have 3:"(\<forall>t. S t \<and> reflect ` s \<subseteq> t \<longrightarrow> reflect x \<in> t) \<longleftrightarrow> (x \<in> reflect ` (S hull (reflect ` s)))" for x unfolding hull_def
+    by (smt (verit, best) InterE InterI image_iff mem_Collect_eq minus_equation_iff)
+  have "(S hull s) = reflect ` (S hull (reflect ` s))" using 1 2 3 by auto
+  thus ?thesis
+    by (metis (no_types, lifting) eq_id_iff image_comp
+        image_ident neg_neg)
+qed
+
+lemma convex_pos_refl:
+  assumes "convex_pos S"
+  shows   "convex_pos (reflect ` S)"
+  using assms unfolding convex_pos_def
+proof-
+  assume asm:"\<forall>s\<in>S. convex hull S \<noteq> convex hull (S - {s})"
+  have 1:"s\<in>S \<longrightarrow> convex hull reflect ` S = reflect ` (convex hull S)" for s using hull_refl
+    by (simp add: linear_uminus)
+  have 2:"s\<in>S \<longrightarrow> reflect ` (convex hull S) \<noteq> (reflect ` (convex hull (S - {s})))" for s
+    using  asm by (metis (no_types, lifting) eq_id_iff image_comp image_ident neg_neg)
+  have 3:"s\<in>S \<longrightarrow> (reflect ` (convex hull (S - {s}))) = (convex hull (reflect ` (S - {s})))" for s
+    using hull_refl by (simp add: linear_uminus)
+  have 4:"s\<in>S \<longrightarrow> (convex hull (reflect ` (S - {s}))) = convex hull (reflect ` S - {reflect s})" for s
+    by (smt (verit) Diff_insert_absorb 1 2 3
+        image_insert insert_Diff insert_absorb)
+  have res:"s\<in>S \<longrightarrow> convex hull reflect ` S \<noteq> convex hull (reflect ` S - {reflect s})" for s
+    using 1 2 3 4
+    by metis
+  have "s \<in> S \<longrightarrow> reflect s \<in> reflect ` S" for s by (simp add: linear_uminus)
+  hence "reflect s \<in> reflect ` S 
+     \<longrightarrow> convex hull reflect ` S \<noteq> convex hull (reflect ` S - {reflect s})" for s
+    using res by (simp add: image_iff)
+  thus "\<forall>s\<in>reflect ` S. convex hull reflect ` S \<noteq> convex hull (reflect ` S - {s})" by blast
+qed
+
+lemma convex_pos_list_refl:
+  assumes "convex_pos (set xs)"
+  shows   "convex_pos (set (map reflect xs))"
+  using convex_pos_refl assms by force
 
 (* translation invariants *)
+
+lemma bij_tr:
+  "bij (\<lambda> p. p + (t::R2))"
+  by (simp add: bij_plus_right)
+
+lemma tr_refl_inv: 
+  "map (\<lambda>p. p + reflect ta) (map (\<lambda>p. p + ta) ps) = ps"
+  by (simp add: comp_def)
+
+lemma prod_addright_le:
+  fixes   a s t :: R2 
+  assumes "a \<le> s"
+  shows   "a + t \<le> s + t"
+proof(cases "fst a < fst s")
+  case True
+  hence "fst (a + t) < fst (s + t)" by simp
+  then show ?thesis
+    by (smt (verit, best) assms fst_add prod_le_def snd_add)
+next
+  case False
+  hence I8:"fst a = fst s" using assms
+    by (simp add: prod_le_def)
+  hence "snd a \<le> snd s" using assms prod_le_def False by blast
+  hence "snd (a + t) \<le> snd (s + t)" by simp
+  then show ?thesis
+    by (auto simp add: I8 less_eq_prod_def)
+qed                                                
+
+
 lemma distinct_fst_translated:
   fixes   L :: "R2 list" and t :: R2
   assumes "distinct (map fst L)" and "tr \<equiv> (\<lambda>p. p + t)"
@@ -326,28 +406,6 @@ proof(induction L)
   then show ?case using Cons.hyps by simp
 qed(simp)
 
-lemma prod_addright_le:
-  fixes   a s t :: R2 
-  assumes "a \<le> s"
-  shows   "a + t \<le> s + t"
-proof(cases "fst a < fst s")
-  case True
-  hence "fst (a + t) < fst (s + t)" by simp
-  then show ?thesis
-    by (smt (verit, best) assms fst_add prod_le_def snd_add)
-next
-  case False
-  hence I8:"fst a = fst s" using assms
-    by (simp add: prod_le_def)
-  hence "snd a \<le> snd s" using assms prod_le_def False by blast
-  hence "snd (a + t) \<le> snd (s + t)" by simp
-  then show ?thesis
-    by (auto simp add: I8 less_eq_prod_def)
-qed
-
-lemma bij_tr:
-  "bij (\<lambda> p. p + (t::R2))"
-  by (simp add: bij_plus_right)
 
 lemma translated_sdistinct:
   assumes "sdistinct L"
@@ -431,11 +489,6 @@ proof(induction xs arbitrary: k)
   qed
 qed(simp)
 
-lemma tr_refl_inv: 
-  "map (\<lambda>p. p + reflect ta) (map (\<lambda>p. p + ta) ps) = ps"
-  by (simp add: comp_def)
-
-
 lemma translated_cup_eq:
   "\<And>t. cup k xs = cup k (map (\<lambda>p. p + t) xs)"
 proof
@@ -487,23 +540,34 @@ qed(simp)
 
 lemma translated_cap_eq:
   "\<And>t. cap k xs = cap k (map (\<lambda>p. p + t) xs)"
-proof
-  define ys where ysp: "ys \<equiv> map (\<lambda>p. p - t) xs"
-  have "cap k ys \<Longrightarrow> cap k (map (\<lambda>p. p + t) ys)" using translated_cap by simp
-  hence "cap k (map (\<lambda>p. p + (-t)) xs) \<Longrightarrow> cap k xs"
-    by (simp add: o_def ysp)
-  thus "\<And>t. cap k (map (\<lambda>p. p + t) xs) \<Longrightarrow> cap k xs"
-    (* the Isar proof below was found using sledgehammer *)
-  proof -
-    fix ta :: "real \<times> real"
-    assume a1: "cap k (map (\<lambda>p. p + ta) xs)"
-    have "\<forall>ps. map (\<lambda>p. p + reflect ta) (map (\<lambda>p. p + ta) ps) = ps"
-      by (simp add: comp_def)
-    then show "cap k xs"
-      using a1 by (metis (no_types) translated_cap)
-  qed
-qed(simp add:translated_cap)
+  by (metis tr_refl_inv translated_cap)
 
+(* translations of sets in general position *)
+
+lemma card_tr:
+  fixes t :: R2
+  assumes "card S = n" 
+  shows   "card ((\<lambda> p. p + t) ` S) = n"
+  using bij_tr bij_def assms
+  by (metis card_vimage_inj inj_vimage_image_eq top.extremum)
+
+lemma gpos_tr:
+  fixes t :: R2
+  assumes "gpos S"
+  shows   "gpos ((\<lambda> p. p + t) ` S)"
+proof-
+    {
+      fix a b c
+      assume asm:"a\<in>S" "b\<in>S" "c\<in>S" "distinct [a,b,c]"
+      hence 4:"\<not>collinear3 a b c" using assms unfolding gpos_def by simp
+      have 5:"distinct [a + t, b + t, c + t]" using asm(4) by auto
+      have "\<not>collinear3 (a + t) (b + t) (c + t)" 
+        using 4 unfolding collinear3_def cross3_def by simp
+      then have "distinct [a + t, b + t, c + t] \<longrightarrow> \<not>collinear3 (a + t) (b + t) (c + t)"
+        using 5 by simp
+    }
+    thus ?thesis using gpos_def by simp
+qed
 
 lemma translated_set:
   fixes   t :: R2
@@ -517,35 +581,14 @@ lemma translated_set:
     shows "card St = n \<and> general_pos St \<and> sdistinct(sorted_list_of_set St) \<and>
            (\<forall>xs. set xs \<subseteq> St \<and> sdistinct xs \<longrightarrow> \<not>(cap k xs \<or> cup l xs))"
 proof-
-  have P1:"card St = n" using bij_tr bij_def assms(1,5)
-    by (metis card_vimage_inj inj_vimage_image_eq top.extremum)
+  have P1:"card St = n" using assms(1,5) card_tr by simp
 
-  have "gpos St"
-  proof-
-    have 3:"gpos S"
-      using assms(2) gpos_generalpos by auto
-    {
-      fix a b c
-      assume asm:"a\<in>S" "b\<in>S" "c\<in>S" "distinct [a,b,c]"
-      hence 4:"\<not>collinear3 a b c" using 3 unfolding gpos_def by simp
-      have 5:"distinct [a + t, b + t, c + t]" using asm(4) by auto
-      have "\<not>collinear3 (a + t) (b + t) (c + t)" 
-        using 4 unfolding collinear3_def cross3_def by simp
-      then have "distinct [a + t, b + t, c + t] \<longrightarrow> \<not>collinear3 (a + t) (b + t) (c + t)"
-        using 5 by simp
-    }
-    thus ?thesis using 3 unfolding gpos_def
-      by (simp add: assms(5))
-  qed
-  hence P2:"general_pos St" using gpos_generalpos by simp
+  have P2:"general_pos St" using gpos_generalpos gpos_tr assms(2,5) by blast
 
-  have 6:"distinct (map fst (sorted_list_of_set S))" using assms(3) by simp
-  have 8:"distinct (map fst (map (\<lambda> p. p + t) (sorted_list_of_set S)))" 
-    using 6 distinct_fst_translated by blast
-  hence "distinct (map fst (sorted_list_of_set ((\<lambda> p. p + t) ` S)))" 
-    using map_sorted_list_set 8 by simp
-  hence P3:"sdistinct(sorted_list_of_set St)" using assms(3, 5) by simp
+  have P3:"sdistinct(sorted_list_of_set St)" using assms(3,5) translated_sdistinct
+    by (metis map_sorted_list_set)
 
+  text \<open>A change in variable, ys = map (\<lambda>p. p+t) xs,  allows us to prove the following.\<close>
   have "\<forall>xs. set xs \<subseteq> S \<longrightarrow> 
         \<not>(cap k (map (\<lambda> p. p + t) xs) \<or> cup l (map (\<lambda> p. p + t) xs))" 
     using translated_cup_eq translated_cap_eq
@@ -558,6 +601,7 @@ proof-
   hence "\<forall>xs. set xs \<subseteq> St \<and> sdistinct xs \<longrightarrow> \<not>(cap k xs \<or> cup l xs)"
     using assms(5) 9
     by (metis (no_types, lifting) diff_add_cancel ex_map_conv)
+
   thus ?thesis using P1 P2 P3 by simp
 qed
 

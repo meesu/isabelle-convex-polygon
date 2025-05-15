@@ -285,6 +285,36 @@ proof-
     using sdistinct_subseq assms by simp
 qed
 
+lemma subseq_sorted_subset:
+  assumes "distinct xs" and "sorted xs" and "Y \<subseteq> set xs"
+  shows   "subseq (sorted_list_of_set Y) xs"
+  using assms
+proof(induction "xs" arbitrary: Y)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons a xs)
+  hence 1:"distinct xs"
+    by (metis distinct.simps(2))
+  have 2:"sorted xs" using Cons.prems(2) sorted_simps(2) by blast
+  have 3:"Y - {a} \<subseteq> set xs" using Cons(4) by auto
+  have 4:"subseq (sorted_list_of_set (Y-{a})) xs"  using Cons(1) 1 2 3 by simp
+  show ?case
+  proof(cases "a \<in> Y")
+    case True
+    have T0:"a = min_list (a#xs)" using Cons(2,3)
+      by (metis List.finite_set Min_insert2 list.distinct(1)
+          list.simps(15) min_list_Min sorted_simps(2))
+    hence "sorted_list_of_set Y = a # sorted_list_of_set (Y-{a})" using Cons.prems(3) True
+      by (metis List.finite_set Min_antimono list.distinct(1) min_list_Min finite_subset
+          Min_le dual_order.eq_iff empty_iff sorted_list_of_set_nonempty)
+    then show ?thesis using 1 2 3 4 by (metis subseq_Cons2)
+  next
+    case False
+    then show ?thesis using Cons.prems(3) Cons.IH by (auto simp add: 1 2)
+  qed
+qed
+
 
 (* cross cup etc *)
 lemma ex_equiv_minconv:
