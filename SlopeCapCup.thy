@@ -132,6 +132,27 @@ lemma farey_prop2:
   shows "(n1+n2) / (d1+d2) < n2 / d2"
   by (smt (verit, best) assms(1,2,3) divide_minus_left farey_prop1)
 
+lemma farey_pos_coeff:
+  fixes \<beta> n1 n2 d1 d2 :: real
+  assumes "\<beta> \<ge> 0" "d1 > 0" and "d2 > 0" and "n1 / d1 < n2 / d2"
+  shows "n1 / d1 \<le> (n1 + \<beta>*n2) / (d1 + \<beta>*d2)" "(n1 + \<beta>*n2) / (d1 + \<beta>*d2) < n2/d2"
+  using farey_prop1 farey_prop2 nle_le assms
+  by (metis add.right_neutral mult_divide_mult_cancel_left_if mult_pos_pos
+      mult_zero_left order.strict_iff_order)+
+
+lemma farey_neg_coeff1:
+  fixes \<beta> n1 n2 d1 d2 :: real
+  assumes "0 < d1 + \<beta>*d2" "\<beta> < 0" "d1 > 0" and "d2 > 0" and "n1 / d1 < n2 / d2"
+  shows "(n1 + \<beta>*n2) / (d1 + \<beta>*d2) < n1 / d1"
+  sorry
+
+lemma farey_neg_coeff2:
+  fixes \<beta> n1 n2 d1 d2 :: real
+  assumes "d1 + \<beta>*d2 < 0" "d1 > 0" and "d2 > 0" and "n1 / d1 < n2 / d2"
+  shows "(n1 + \<beta>*n2) / (d1 + \<beta>*d2) > n2 / d2"
+  sorry
+
+
 (* need this prop for proof below *)
 lemma slope_trans:
   assumes "sdistinct [a,b,c]" 

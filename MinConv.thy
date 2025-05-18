@@ -651,16 +651,6 @@ proof(induction "k+l" arbitrary: l k)
   qed(simp add: min_conv_base)
 qed(simp add: min_conv_base)
 
-(* 
-
-lemma fourconvex:
-  assumes "\<forall>X \<subseteq> (S::(real \<times> real) set). card X \<le> 4 \<longrightarrow> convex_pos X"
-  shows "convex_pos S"
-
-prove cups caps are convex then
-add lemma erdos_szekeres_convex:
-*)
-
 text \<open>We prove that cups and caps form a convex polygon.\<close>
 
 lemma cup_genpos:
@@ -703,8 +693,9 @@ proof(rule ccontr)
   have "\<not>convex_pos (set xs)" using asm by simp
   then obtain Y where Y: "Y \<subseteq> (set xs)" "card Y \<le> 4" "\<not>convex_pos Y" using fourconvex by meson
   define ys where ys:"ys = sorted_list_of_set Y"
-  hence 3:"sdistinct ys" using 0 sdistinct_sub Y(1) distinctFst_distinct
-    by (metis List.finite_set sorted_list_of_set.idem_if_sorted_distinct)
+  hence 23: "distinct ys" by simp
+  hence 3:"sdistinct ys" using 0
+    by (metis Y(1) distinct_map sdistinct_subseq subseq_sorted_subset ys) 
   hence 4:"subseq ys xs" using Y(1) 0 2 subseq_sorted_subset distinct_map ys by blast
   have 5:"affine_dependent Y" using Y(2,3) affine_hull_convex_hull hull_inc
     by (metis affine_dependent_def convex_pos_def)
@@ -713,7 +704,106 @@ proof(rule ccontr)
     text \<open>Since one of the points is contained within the triangle formed by other three: it forms a cap with some two of these points.\<close>
   proof(cases "card Y = 4")
     case True
-    then show ?thesis sorry
+    have num_4:"4 = Suc (Suc (Suc (Suc 0)))" using numeral_3_eq_3 by simp
+    have "length (sorted_list_of_set Y) = 4"
+      using True by simp
+    then obtain a b c d where abcd: "a#b#c#d#Nil = sorted_list_of_set Y"
+      using num_4 length_Suc_conv Suc_length_conv length_0_conv by smt
+    hence y_set: "Y = {a,b,c,d}"
+      by (metis List.finite_set Y(1) infinite_super
+          list.set(1) list.simps(15)
+          sorted_list_of_set.set_sorted_key_list_of_set)
+    hence y_fin: "\<forall>e\<in>Y. finite (Y-{e})" by blast
+    have ys_abcd:"ys = [a,b,c,d]" using abcd ys by argo
+    hence y_a:"\<forall>e\<in>Y. card (Y-{e}) = 3" using True 23 Y(1) num_4 ys
+      by (metis add_diff_cancel_left' card_Diff_singleton numeral_3_eq_3 plus_1_eq_Suc)
+    hence y_a_len:"\<forall>e\<in>Y. length (sorted_list_of_set (Y-{e})) = 3" by simp
+    have y_sub_ind:"\<forall>e\<in>Y. \<not>affine_dependent (Y-{e})" 
+      using general_pos_subs genpos_cross0 assms general_pos_def y_a
+        cross_affine_dependent_conv cup_genpos Y(1) nsubset_def
+      by (metis (mono_tags, lifting) Diff_subset mem_Collect_eq)
+    hence y_sub_tri:"\<forall>e\<in>Y. convex_pos (Y-{e})"
+      by (metis affine_dependent_def affine_hull_convex_hull convex_pos_def hull_inc)
+    have coeffs:"\<forall>e\<in>Y. e \<in> convex hull (Y-{e}) \<longrightarrow>
+          (\<exists>u. (sum u (Y-{e}) = 1) \<and> (\<forall>x\<in>(Y-{e}). 0 < u x) \<and> sum (\<lambda>x. u x *\<^sub>R x) (Y-{e}) = e)"
+    proof(rule, rule)
+      fix e
+      assume asm:"e \<in> Y" "e \<in> convex hull (Y - {e})"
+      then obtain u where uy: "(sum u (Y-{e}) = 1)" "(\<forall>x\<in>(Y-{e}). 0 \<le> u x)" 
+                              "sum (\<lambda>x. u x *\<^sub>R x) (Y-{e}) = e" 
+        using convex_hull_finite y_fin mem_Collect_eq
+        by (smt (verit, best))
+      have "e \<in> convex hull (Y-{x, e})" if asm:"x \<in> (Y-{e}) \<and> u x = 0" for x
+      proof-
+        have 1:"sum u (Y - {x, e}) = 1"
+          using uy asm
+          by (smt (verit, ccfv_SIG) DiffD2 Diff_insert
+              List.finite_set Y(1) finite.emptyI finite_Diff2
+              finite_insert insertI1 insert_Diff rev_finite_subset
+              sum.insert)
+        have 2:"(\<forall>x\<in>Y - {x, e}. 0 \<le> u x) \<and> (\<Sum>z\<in>Y - {x, e}. u z *\<^sub>R z) = e"
+        proof(rule)
+          show "\<forall>x\<in>Y - {x, e}. 0 \<le> u x" using uy by blast
+          have "(\<Sum>z\<in>Y - {x, e}. u z *\<^sub>R z) + (u x *\<^sub>R x) = e" 
+            using uy add.commute asm
+            by (metis (no_types, lifting) Diff_insert2
+                insert_absorb insert_commute sum.infinite
+                sum.insert_remove zero_neq_one)
+          thus "(\<Sum>z\<in>Y - {x, e}. u z *\<^sub>R z) = e" using asm by simp
+        qed
+        hence "e \<in> {y. \<exists>u. (\<forall>x\<in>Y-{x,e}. 0 \<le> u x) \<and> sum u (Y-{x,e}) = 1 \<and> (\<Sum>x\<in>Y-{x,e}. u x *\<^sub>R x) = y}"
+          using "1" by blast
+        thus ?thesis using convex_hull_finite Y(1) finite_subset
+          by (smt (verit, del_insts) mem_Collect_eq
+              sum.infinite)
+      qed
+
+      hence "x \<in> (Y-{e}) \<and> u x = 0 \<Longrightarrow> False" for x
+        using y_sub_ind Diff_insert2 Diff_insert_absorb convex_pos_def asm y_sub_tri
+              hull_redundant_eq insert_absorb insert_commute mk_disjoint_insert asm
+        by (smt (verit, best))
+
+      thus "(\<exists>u. (sum u (Y-{e}) = 1) \<and> (\<forall>x\<in>(Y-{e}). 0 < u x) \<and> sum (\<lambda>x. u x *\<^sub>R x) (Y-{e}) = e)"
+        by (metis (lifting) antisym_conv2 uy(1,2,3))
+    qed
+
+    have "e\<in>{a,b,c,d} \<Longrightarrow> e \<notin> convex hull (Y-{e})" for e
+    proof-
+      have ca:"\<not> a \<in> convex hull (Y-{a})"
+      proof(rule ccontr)
+        assume "\<not> a \<notin> convex hull (Y - {a})"
+        hence "a\<in>convex hull (Y-{a})" by simp
+        then obtain u where uY: "(\<forall>x\<in>(Y-{a}). 0 < u x)" "sum u (Y-{a}) = 1"
+                                "sum (\<lambda>x. u x *\<^sub>R x) (Y-{a}) = a"
+          using coeffs Y(1) y_set by auto
+        then have c_sum:"u b + u c + u d = 1" using y_set coeffs
+          by (smt (verit, best) "23" Diff_insert_absorb abcd
+              distinct.simps(2) empty_set finite.emptyI
+              finite_insert list.simps(15) sum.empty sum.insert ys)
+        have "fst a = sum (\<lambda>x. u x * (fst x)) (Y-{a})" using uY
+          by (metis (mono_tags, lifting) fst_scaleR fst_sum
+              real_scaleR_def sum.cong)
+        also have "... = u b * (fst b) + u c * (fst c) + u d * (fst d)"
+          using uY
+          by (smt (verit) "23" Diff_insert_absorb abcd
+              distinct.simps(2) empty_set finite.emptyI
+              finite_insert list.simps(15) sum.empty sum.insert
+              y_set ys)
+        also have " ... >  u b * (fst a) + u c * (fst a) + u d * (fst a)" using 3 ys_abcd sorry
+        ultimately show False
+          by (metis c_sum distrib_left
+              mult.commute mult.right_neutral
+              order_less_irrefl)
+      qed
+      have cb:"\<not> b \<in> convex hull (Y-{b})" sorry
+      have cc:"\<not> c \<in> convex hull (Y-{c})" sorry
+      have cd:"\<not> d \<in> convex hull (Y-{d})" sorry
+      show ?thesis using ca cb cc cd Y(3) convex_pos_def y_set
+        by (smt (verit, ccfv_SIG) hull_redundant_eq insertE
+            insert_Diff singletonD)
+    qed
+    then show ?thesis using Y(3) convex_pos_def y_set
+      by (metis hull_inc)
   next
     case False
     hence y_3:"card Y \<le> 3"
@@ -727,18 +817,12 @@ proof(rule ccontr)
     next
       case False
       hence y_2:"card Y \<le> 2" using y_3 by simp
-      have C0:"card Y = 0 \<Longrightarrow> False" using Y(1,3) convex_pos_def finite_subset by fastforce
-      have C1:"card Y = 1 \<Longrightarrow> False" using Y(1,3) convex_pos_def
-        by (metis Diff_cancel card_1_singletonE convex_hull_eq_empty empty_not_insert singletonD)
-      have    "card Y = 2 \<Longrightarrow> False"
-      proof-
-        assume "card Y = 2"
-        then obtain a b where ab:"Y = {a,b}" "a\<noteq>b" by (meson card_2_iff)
-        have "a \<in> convex hull {b}" using Y(3) ab(1) convex_pos_def
-          by (metis (no_types, lifting) Diff_cancel convex_hull_singleton  hull_redundant_eq
-              insertE insert_Diff_if insert_absorb insert_not_empty)
-        thus False using ab(2) by auto
-      qed
+      have C0:"card Y = 0 \<Longrightarrow> False" 
+        using affine_independent_0 "5" Y(1) finite_subset by fastforce
+      have C1:"card Y = 1 \<Longrightarrow> False" 
+        using affine_independent_1 by (metis "5" card_1_singletonE)
+      have    "card Y = 2 \<Longrightarrow> False" 
+        using "5" affine_independent_2 by (metis card_2_iff)
       thus ?thesis using y_2 C0 C1 
         by fastforce 
     qed
