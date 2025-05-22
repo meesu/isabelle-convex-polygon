@@ -696,6 +696,8 @@ proof(rule ccontr)
   hence 23: "distinct ys" by simp
   hence 3:"sdistinct ys" using 0
     by (metis Y(1) distinct_map sdistinct_subseq subseq_sorted_subset ys) 
+  hence 34:"sorted_wrt (<) ys"
+    using sdistinct_sortedStrict by blast
   hence 4:"subseq ys xs" using Y(1) 0 2 subseq_sorted_subset distinct_map ys by blast
   have 5:"affine_dependent Y" using Y(2,3) affine_hull_convex_hull hull_inc
     by (metis affine_dependent_def convex_pos_def)
@@ -780,6 +782,9 @@ proof(rule ccontr)
           by (smt (verit, best) "23" Diff_insert_absorb abcd
               distinct.simps(2) empty_set finite.emptyI
               finite_insert list.simps(15) sum.empty sum.insert ys)
+        have fst_a_min:"fst a < fst b" "fst a < fst c" "fst a < fst d" using ys_abcd "3"
+          by (smt (verit)  distinct_length_2_or_more
+              less_eq_prod_def list.simps(9) sorted2)+
         have "fst a = sum (\<lambda>x. u x * (fst x)) (Y-{a})" using uY
           by (metis (mono_tags, lifting) fst_scaleR fst_sum
               real_scaleR_def sum.cong)
@@ -789,18 +794,66 @@ proof(rule ccontr)
               distinct.simps(2) empty_set finite.emptyI
               finite_insert list.simps(15) sum.empty sum.insert
               y_set ys)
-        also have " ... >  u b * (fst a) + u c * (fst a) + u d * (fst a)" using 3 ys_abcd sorry
+        also have " ... >  u b * (fst a) + u c * (fst a) + u d * (fst a)" 
+          using fst_a_min "23" uY(1) y_set ys_abcd
+          by (smt (verit, best) DiffI insert_absorb insert_iff
+              insert_not_empty mult_less_cancel_left_pos)
         ultimately show False
           by (metis c_sum distrib_left
               mult.commute mult.right_neutral
               order_less_irrefl)
       qed
-      have cb:"\<not> b \<in> convex hull (Y-{b})" sorry
+      have cb:"\<not> b \<in> convex hull (Y-{b})"
+      proof(rule ccontr)
+        assume "\<not> b \<notin> convex hull (Y - {b})"
+        hence "b\<in>convex hull (Y-{b})" by simp
+        then obtain u where uY: "(\<forall>x\<in>(Y-{b}). 0 < u x)" "sum u (Y-{b}) = 1"
+                                "sum (\<lambda>x. u x *\<^sub>R x) (Y-{b}) = b"
+          using coeffs Y(1) y_set by auto
+        then have c_sum:" u a + u c + u d = 1" using y_set coeffs
+          by (smt (z3) "23" Diff_insert_absorb abcd
+              distinct.simps(2) empty_set finite.emptyI
+              finite_insert insertCI insert_absorb insert_commute
+              list.simps(15) sum.empty sum.insert ys)
+        have y_d: "Y-{b} = {a,c,d}" using y_set "23" ys_abcd by auto
+        show False sorry
+      qed
       have cc:"\<not> c \<in> convex hull (Y-{c})" sorry
-      have cd:"\<not> d \<in> convex hull (Y-{d})" sorry
+      have cd:"\<not> d \<in> convex hull (Y-{d})"
+      proof(rule ccontr)
+        assume "\<not> d \<notin> convex hull (Y - {d})"
+        hence "d\<in>convex hull (Y-{d})" by simp
+        then obtain u where uY: "(\<forall>x\<in>(Y-{d}). 0 < u x)" "sum u (Y-{d}) = 1"
+                                "sum (\<lambda>x. u x *\<^sub>R x) (Y-{d}) = d"
+          using coeffs Y(1) y_set by auto
+        then have c_sum:" u a + u b + u c = 1" using y_set coeffs
+          by (smt (z3) "23" Diff_insert_absorb abcd
+              distinct.simps(2) empty_set finite.emptyI
+              finite_insert insertCI insert_absorb insert_commute
+              list.simps(15) sum.empty sum.insert ys)
+        have y_d: "Y-{d} = {a,b,c}" using y_set "23" ys_abcd by auto
+        have fst_a_min:"fst d > fst a" "fst d > fst b" "fst d > fst c" using ys_abcd "3"
+          by (smt (verit)  distinct_length_2_or_more less_eq_prod_def list.simps(9) sorted2)+
+      
+        have "fst d = sum (\<lambda>x. u x * (fst x)) (Y-{d})" using uY
+          by (metis (mono_tags, lifting) fst_scaleR fst_sum real_scaleR_def sum.cong)
+
+        also have "... = u a * (fst a) + u b * (fst b) + u c * (fst c)"
+          using uY(3) y_d "23" abcd ys
+          by (smt (verit, ccfv_threshold) distinct.simps(2) empty_set finite.emptyI
+              finite_insert insert_iff list.simps(15) sum.empty sum.insert)
+
+        also have " ... <  u a * (fst d) + u b * (fst d) + u c * (fst d)" 
+          using fst_a_min "23" uY(1) y_set ys_abcd
+          by (smt (verit, best) DiffI insert_absorb insert_iff
+              insert_not_empty mult_less_cancel_left_pos)
+
+        ultimately show False using c_sum
+          by (metis distrib_left mult.commute mult.right_neutral order_less_irrefl)
+      qed
+
       show ?thesis using ca cb cc cd Y(3) convex_pos_def y_set
-        by (smt (verit, ccfv_SIG) hull_redundant_eq insertE
-            insert_Diff singletonD)
+        by (smt (verit, ccfv_SIG) hull_redundant_eq insertE insert_Diff singletonD)
     qed
     then show ?thesis using Y(3) convex_pos_def y_set
       by (metis hull_inc)
