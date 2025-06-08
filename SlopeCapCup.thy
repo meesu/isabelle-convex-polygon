@@ -132,6 +132,7 @@ lemma farey_prop2:
   shows "(n1+n2) / (d1+d2) < n2 / d2"
   by (smt (verit, best) assms(1,2,3) divide_minus_left farey_prop1)
 
+(* not used anywhere.*)
 lemma farey_pos_coeff:
   fixes \<beta> n1 n2 d1 d2 :: real
   assumes "\<beta> \<ge> 0" "d1 > 0" and "d2 > 0" and "n1 / d1 < n2 / d2"
@@ -139,25 +140,6 @@ lemma farey_pos_coeff:
   using farey_prop1 farey_prop2 nle_le
   by (metis mult_pos_pos mult_zero_left order.strict_iff_order
       add.right_neutral mult_divide_mult_cancel_left_if assms)+
-
-lemma farey_neg_coeff:
-  fixes \<beta> n1 n2 d1 d2 :: real
-  assumes "0 < (n1 + \<beta>*n2)" "\<beta> < 0" "d1 > 0" and "d2 > 0" and "n1 / d1 < n2 / d2"
-  shows "(n1 + \<beta>*n2) / (d1 + \<beta>*d2) < n1 / d1 \<or> n2 / d2 \<le> (n1 + \<beta>*n2) / (d1 + \<beta>*d2)"
-  using farey_pos_coeff 
-  oops
-
-lemma farey_neg_coeff1:
-  fixes \<beta> n1 n2 d1 d2 :: real
-  assumes "0 < d1 + \<beta>*d2" "\<beta> < 0" "d1 > 0" and "d2 > 0" and "n1 / d1 < n2 / d2"
-  shows "(n1 + \<beta>*n2) / (d1 + \<beta>*d2) < n1 / d1"
-  oops
-
-lemma farey_neg_coeff2:
-  fixes \<beta> n1 n2 d1 d2 :: real
-  assumes "d1 + \<beta>*d2 < 0" "d1 > 0" and "d2 > 0" and "n1 / d1 < n2 / d2"
-  shows "(n1 + \<beta>*n2) / (d1 + \<beta>*d2) > n2 / d2"
-  oops
 
 (* need this prop for proof below *)
 lemma slope_trans:
