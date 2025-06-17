@@ -254,12 +254,12 @@ proof-
   have 1: "fst a * (snd b - snd d) + snd a * (fst d - fst b) > fst d * snd b - snd d * fst b"
     by (smt (verit, del_insts) cross3_def cup3_def cup_abd left_diff_distrib mult.commute
         right_diff_distrib')
-  have 4: "v \<bullet> a \<ge> D" using cup_acd inner_d3 dpqNE0
+  have 4: "v \<bullet> a \<ge> D" using cup_abd inner_d3 dpqNE0
       unfolding D_def x1_def x2_def y1_def y2_def cup3_def cross3_def
       by (metis "1" divide_right_mono dpqNE0 inner_commute inner_d3 mult.commute nless_le)
   show ?thesis using 4 unfolding halfspace_pos_def
-      by (metis (mono_tags, lifting) D_def dpq_def mem_Collect_eq split_beta v_def x1_def x2_def y1_def
-          y2_def) 
+    by (metis (mono_tags, lifting) D_def dpq_def mem_Collect_eq split_beta v_def x1_def 
+        x2_def y1_def y2_def) 
 qed
 
 lemma convex_hull_subset_halfspace2: 
@@ -268,8 +268,9 @@ lemma convex_hull_subset_halfspace2:
   shows "convex hull {a,b,c,d}\<subseteq> halfspace_pos b d"
 proof-
   have s_1:"b \<noteq> d" using assms(1) unfolding cup_def by fastforce
-  thus ?thesis using assms(2) a_c_belongs_halfspace_a_c[OF s_1]  cup4_last_halfspace_pos[OF assms(1)]
-    by (metis SomeLemmas.halfspace_pos_convex assms(1) cup4_first_halfspace_pos hull_redundant
+  thus ?thesis using assms(2) a_c_belongs_halfspace_a_c[OF s_1]  
+      cup4_last_halfspace_pos[OF assms(1)]
+    by (metis halfspace_pos_convex assms(1) cup4_first_halfspace_pos hull_redundant
         insert_commute insert_subsetI less_by_empty subset_hull)
 qed
 
@@ -314,5 +315,6 @@ proof(rule ccontr)
   moreover have "c \<notin> halfspace_pos b d" using cNotInhalfspace_pos_bd[OF assms] .
   ultimately show False by blast
 qed
+
 
 end
