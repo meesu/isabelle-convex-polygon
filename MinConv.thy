@@ -30,7 +30,7 @@ proof
    (is "?b \<in> {n. \<forall>S. ?GSET n S \<longrightarrow> (\<exists>xs. ?SS xs S \<and> ?CUPCAP k xs l)}")
 
   proof
-    text\<open>We show that any point set with size min_conv (k-1) l + min_conv k (l-1) - 1 contains a k-cap or an l-cup.\<close>
+    text\<open>We show that any point set with size @{term "min_conv (k-1) l + min_conv k (l-1) - 1"} contains a k-cap or an l-cup.\<close>
     show "\<forall>S. card S = ?b \<and> general_pos S \<and> sdistinct(sorted_list_of_set S) 
               \<longrightarrow> (\<exists>xs. (set xs \<subseteq> S \<and> sdistinct xs \<and> (cap k xs \<or> cup l xs)))"
     proof-
@@ -291,7 +291,7 @@ proof-
     fix a b c
     assume  asm:"a \<in> S1 \<union> S2" "b \<in> S1 \<union> S2" "c \<in> S1 \<union> S2" 
                 "distinct [a, b, c]" "collinear3 a b c"
-    text \<open>This gives us 3!*2^3 = 48 cases to verify, we reduce it to 4 cases.\<close>
+    text \<open>This gives us $3!*2^3 = 48$ cases to verify, we reduce it to 4 cases.\<close>
     then obtain u v w where uvw:"u<v" "v<w" "{u,v,w} = {a,b,c}"
       by (metis (full_types) distinct_length_2_or_more insert_commute linorder_less_linear)
     hence 0:"u < w" by simp
@@ -431,8 +431,7 @@ proof-
           subset_Un_eq)
     hence xs_len: "length xs = length xs1 + length xs2" by simp
 
-    text\<open>The sets xs1 and xs2 satisfy the properties \<not>(cap (k+2) xs1 \<or> cup (Suc (l+2)) xs1) and 
-          \<not>(cap (Suc (k+2)) xs2 \<or> cup (l+2) xs2)\<close>
+    text\<open>The sets xs1 and xs2 satisfy the properties @{term "\<not>(cap (k+2) xs1 \<or> cup (Suc (l+2)) xs1)"} and  @{term "\<not>(cap (Suc (k+2)) xs2 \<or> cup (l+2) xs2)"}\<close>
     have xs1p3:"\<not>(cap (Suc(k+2)) xs1 \<or> cup (l+2) xs1)" using S1(4) xs1p1 xs1p2 by simp
     have xs2p3:"\<not>(cap (k+2) xs2 \<or> cup (Suc(l+2)) xs2)" using S2(4) xs2p1 xs2p2 by simp
 
@@ -1234,5 +1233,3 @@ lemma EZ_bound_final:
       eq_numeral_Suc le_add_diff_inverse2 mult_2 numeral_3_eq_3 numeral_Bit0_eq_double
       ordered_cancel_comm_monoid_diff_class.add_diff_assoc plus_1_eq_Suc right_diff_distrib') 
 end
-
-

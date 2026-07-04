@@ -1,0 +1,472 @@
+%
+\begin{isabellebody}%
+\setisabellecontext{Four{\isacharunderscore}{\kern0pt}Convex}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\isatagtheory
+\isakeywordONE{theory}\isamarkupfalse%
+\ Four{\isacharunderscore}{\kern0pt}Convex\isanewline
+\isakeywordTWO{imports}\ Definitions\isanewline
+\isakeywordTWO{begin}%
+\endisatagtheory
+{\isafoldtheory}%
+%
+\isadelimtheory
+\isanewline
+%
+\endisadelimtheory
+\isanewline
+\isakeywordONE{lemma}\isamarkupfalse%
+\ convex{\isacharunderscore}{\kern0pt}pos{\isacharunderscore}{\kern0pt}inherit{\isacharprime}{\kern0pt}{\isacharcolon}{\kern0pt}\ \isanewline
+\ \ \isakeywordTWO{assumes}\ {\isachardoublequoteopen}convex{\isacharunderscore}{\kern0pt}pos\ S{\isachardoublequoteclose}\isanewline
+\ \ \isakeywordTWO{shows}\ {\isachardoublequoteopen}{\isasymforall}\ A\ {\isasymsubseteq}\ S{\isachardot}{\kern0pt}\ convex{\isacharunderscore}{\kern0pt}pos\ {\isacharparenleft}{\kern0pt}S\ {\isacharminus}{\kern0pt}\ A{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+%
+\isadelimproof
+\ \ %
+\endisadelimproof
+%
+\isatagproof
+\isakeywordONE{unfolding}\isamarkupfalse%
+\ convex{\isacharunderscore}{\kern0pt}pos{\isacharunderscore}{\kern0pt}def\isanewline
+\isakeywordONE{proof}\isamarkupfalse%
+{\isacharparenleft}{\kern0pt}rule\ ccontr{\isacharparenright}{\kern0pt}\isanewline
+\ \ \isakeywordTHREE{assume}\isamarkupfalse%
+\ {\isachardoublequoteopen}{\isasymnot}\ {\isacharparenleft}{\kern0pt}{\isasymforall}A{\isasymsubseteq}S{\isachardot}{\kern0pt}\ {\isasymforall}s{\isasymin}S\ {\isacharminus}{\kern0pt}\ A{\isachardot}{\kern0pt}\ convex\ hull\ {\isacharparenleft}{\kern0pt}S\ {\isacharminus}{\kern0pt}\ A{\isacharparenright}{\kern0pt}\ {\isasymnoteq}\ convex\ hull\ {\isacharparenleft}{\kern0pt}S\ {\isacharminus}{\kern0pt}\ A\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}s{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\ \ \isakeywordONE{then}\isamarkupfalse%
+\ \isakeywordTHREE{obtain}\isamarkupfalse%
+\ A\ s\ \isakeywordTWO{where}\ es{\isacharcolon}{\kern0pt}{\isachardoublequoteopen}A{\isasymsubseteq}S{\isachardoublequoteclose}\ {\isachardoublequoteopen}s{\isasymin}S{\isacharminus}{\kern0pt}A{\isachardoublequoteclose}\ {\isachardoublequoteopen}convex\ hull\ {\isacharparenleft}{\kern0pt}S{\isacharminus}{\kern0pt}A{\isacharparenright}{\kern0pt}\ {\isacharequal}{\kern0pt}\ convex\ hull\ {\isacharparenleft}{\kern0pt}S{\isacharminus}{\kern0pt}A{\isacharminus}{\kern0pt}{\isacharbraceleft}{\kern0pt}s{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\ \isanewline
+\ \ \ \ \isakeywordONE{by}\isamarkupfalse%
+\ blast\isanewline
+\ \ \isakeywordONE{hence}\isamarkupfalse%
+\ {\isachardoublequoteopen}convex\ hull\ S\ {\isacharequal}{\kern0pt}\ convex\ hull\ {\isacharparenleft}{\kern0pt}S{\isacharminus}{\kern0pt}{\isacharbraceleft}{\kern0pt}s{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\ \ \ \ \isakeywordONE{by}\isamarkupfalse%
+\ {\isacharparenleft}{\kern0pt}smt\ {\isacharparenleft}{\kern0pt}verit{\isacharcomma}{\kern0pt}\ ccfv{\isacharunderscore}{\kern0pt}SIG{\isacharparenright}{\kern0pt}\ Diff{\isacharunderscore}{\kern0pt}mono\ Diff{\isacharunderscore}{\kern0pt}subset\ hull{\isacharunderscore}{\kern0pt}inc\ hull{\isacharunderscore}{\kern0pt}mono\ hull{\isacharunderscore}{\kern0pt}redundant\ insert{\isacharunderscore}{\kern0pt}Diff\isanewline
+\ \ \ \ \ \ \ \ insert{\isacharunderscore}{\kern0pt}mono\ rel{\isacharunderscore}{\kern0pt}interior{\isacharunderscore}{\kern0pt}empty\ rel{\isacharunderscore}{\kern0pt}interior{\isacharunderscore}{\kern0pt}subset\ subset{\isacharunderscore}{\kern0pt}iff{\isacharparenright}{\kern0pt}\isanewline
+\ \ \isakeywordTHREE{thus}\isamarkupfalse%
+\ False\ \isakeywordONE{using}\isamarkupfalse%
+\ assms\ convex{\isacharunderscore}{\kern0pt}pos{\isacharunderscore}{\kern0pt}def\ es{\isacharparenleft}{\kern0pt}{\isadigit{2}}{\isacharparenright}{\kern0pt}\ \isakeywordONE{by}\isamarkupfalse%
+\ blast\isanewline
+\isakeywordONE{qed}\isamarkupfalse%
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+\isanewline
+%
+\endisadelimproof
+\isanewline
+\isakeywordONE{lemma}\isamarkupfalse%
+\ convex{\isacharunderscore}{\kern0pt}pos{\isacharunderscore}{\kern0pt}inherit{\isadigit{0}}{\isacharcolon}{\kern0pt}\ \isanewline
+\ \ \isakeywordTWO{assumes}\ {\isachardoublequoteopen}convex{\isacharunderscore}{\kern0pt}pos\ S{\isachardoublequoteclose}\isanewline
+\ \ \isakeywordTWO{shows}\ {\isachardoublequoteopen}{\isasymforall}\ e\ {\isasymin}\ S{\isachardot}{\kern0pt}\ convex{\isacharunderscore}{\kern0pt}pos\ {\isacharparenleft}{\kern0pt}S\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}e{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+%
+\isadelimproof
+\ \ %
+\endisadelimproof
+%
+\isatagproof
+\isakeywordONE{unfolding}\isamarkupfalse%
+\ convex{\isacharunderscore}{\kern0pt}pos{\isacharunderscore}{\kern0pt}def\isanewline
+\isakeywordONE{proof}\isamarkupfalse%
+{\isacharparenleft}{\kern0pt}rule\ ccontr{\isacharparenright}{\kern0pt}\isanewline
+\ \ \isakeywordTHREE{assume}\isamarkupfalse%
+\ {\isachardoublequoteopen}{\isasymnot}\ {\isacharparenleft}{\kern0pt}{\isasymforall}e{\isasymin}S{\isachardot}{\kern0pt}\ {\isasymforall}s{\isasymin}S\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}e{\isacharbraceright}{\kern0pt}{\isachardot}{\kern0pt}\ convex\ hull\ {\isacharparenleft}{\kern0pt}S\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}e{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}\ {\isasymnoteq}\ convex\ hull\ {\isacharparenleft}{\kern0pt}S\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}e{\isacharbraceright}{\kern0pt}\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}s{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\ \ \isakeywordONE{then}\isamarkupfalse%
+\ \isakeywordTHREE{obtain}\isamarkupfalse%
+\ e\ s\ \isakeywordTWO{where}\ es{\isacharcolon}{\kern0pt}{\isachardoublequoteopen}e{\isasymin}S{\isachardoublequoteclose}\ {\isachardoublequoteopen}s{\isasymin}S{\isacharminus}{\kern0pt}{\isacharbraceleft}{\kern0pt}e{\isacharbraceright}{\kern0pt}{\isachardoublequoteclose}\ {\isachardoublequoteopen}convex\ hull\ {\isacharparenleft}{\kern0pt}S{\isacharminus}{\kern0pt}{\isacharbraceleft}{\kern0pt}e{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}\ {\isacharequal}{\kern0pt}\ convex\ hull\ {\isacharparenleft}{\kern0pt}S{\isacharminus}{\kern0pt}{\isacharbraceleft}{\kern0pt}e{\isacharbraceright}{\kern0pt}{\isacharminus}{\kern0pt}{\isacharbraceleft}{\kern0pt}s{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\ \isanewline
+\ \ \ \ \isakeywordONE{by}\isamarkupfalse%
+\ blast\isanewline
+\ \ \isakeywordONE{hence}\isamarkupfalse%
+\ {\isachardoublequoteopen}convex\ hull\ S\ {\isacharequal}{\kern0pt}\ convex\ hull\ {\isacharparenleft}{\kern0pt}S{\isacharminus}{\kern0pt}{\isacharbraceleft}{\kern0pt}s{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\ \ \ \ \isakeywordONE{by}\isamarkupfalse%
+\ {\isacharparenleft}{\kern0pt}metis\ Diff{\isacharunderscore}{\kern0pt}insert\ hull{\isacharunderscore}{\kern0pt}insert\ insert{\isacharunderscore}{\kern0pt}Diff{\isacharunderscore}{\kern0pt}single\ insert{\isacharunderscore}{\kern0pt}absorb\ insert{\isacharunderscore}{\kern0pt}commute\ member{\isacharunderscore}{\kern0pt}remove\isanewline
+\ \ \ \ \ \ \ \ remove{\isacharunderscore}{\kern0pt}def{\isacharparenright}{\kern0pt}\isanewline
+\ \ \isakeywordTHREE{thus}\isamarkupfalse%
+\ False\ \isakeywordONE{using}\isamarkupfalse%
+\ assms\ convex{\isacharunderscore}{\kern0pt}pos{\isacharunderscore}{\kern0pt}def\ es{\isacharparenleft}{\kern0pt}{\isadigit{2}}{\isacharparenright}{\kern0pt}\ \isakeywordONE{by}\isamarkupfalse%
+\ blast\isanewline
+\isakeywordONE{qed}\isamarkupfalse%
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+\isanewline
+%
+\endisadelimproof
+\isanewline
+\isakeywordONE{lemma}\isamarkupfalse%
+\ convex{\isacharunderscore}{\kern0pt}pos{\isacharunderscore}{\kern0pt}inherit{\isacharcolon}{\kern0pt}\ \isanewline
+\ \ \isakeywordTWO{assumes}\ {\isachardoublequoteopen}convex{\isacharunderscore}{\kern0pt}pos\ S{\isachardoublequoteclose}\isanewline
+\ \ \isakeywordTWO{shows}\ {\isachardoublequoteopen}{\isasymforall}\ X\ {\isasymsubseteq}\ S{\isachardot}{\kern0pt}\ convex{\isacharunderscore}{\kern0pt}pos\ X{\isachardoublequoteclose}\isanewline
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+\isakeywordONE{proof}\isamarkupfalse%
+{\isacharparenleft}{\kern0pt}rule\ ccontr{\isacharparenright}{\kern0pt}\isanewline
+\ \ \isakeywordTHREE{assume}\isamarkupfalse%
+\ {\isachardoublequoteopen}{\isasymnot}\ {\isacharparenleft}{\kern0pt}{\isasymforall}\ X\ {\isasymsubseteq}\ S{\isachardot}{\kern0pt}\ convex{\isacharunderscore}{\kern0pt}pos\ X{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\ \ \isakeywordONE{then}\isamarkupfalse%
+\ \isakeywordTHREE{obtain}\isamarkupfalse%
+\ X\ \isakeywordTWO{where}\ X{\isacharcolon}{\kern0pt}{\isachardoublequoteopen}X\ {\isasymsubseteq}\ S{\isachardoublequoteclose}\ {\isachardoublequoteopen}{\isasymnot}\ {\isacharparenleft}{\kern0pt}convex{\isacharunderscore}{\kern0pt}pos\ X{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\ \isakeywordONE{by}\isamarkupfalse%
+\ auto\isanewline
+\ \ \isakeywordONE{then}\isamarkupfalse%
+\ \isakeywordTHREE{obtain}\isamarkupfalse%
+\ x\ \isakeywordTWO{where}\ x{\isacharcolon}{\kern0pt}{\isachardoublequoteopen}x\ {\isasymin}\ X{\isachardoublequoteclose}\ {\isachardoublequoteopen}convex\ hull\ X\ {\isacharequal}{\kern0pt}\ convex\ hull\ {\isacharparenleft}{\kern0pt}X\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}x{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\ \ \ \ \isakeywordONE{unfolding}\isamarkupfalse%
+\ convex{\isacharunderscore}{\kern0pt}pos{\isacharunderscore}{\kern0pt}def\ \isakeywordONE{by}\isamarkupfalse%
+\ blast\isanewline
+\ \ \isakeywordONE{then}\isamarkupfalse%
+\ \isakeywordONE{have}\isamarkupfalse%
+\ {\isachardoublequoteopen}x\ {\isasymin}\ convex\ hull\ {\isacharparenleft}{\kern0pt}X\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}x{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\ \isanewline
+\ \ \ \ \isakeywordONE{by}\isamarkupfalse%
+\ {\isacharparenleft}{\kern0pt}metis\ hull{\isacharunderscore}{\kern0pt}inc{\isacharparenright}{\kern0pt}\isanewline
+\ \ \isakeywordONE{then}\isamarkupfalse%
+\ \isakeywordONE{have}\isamarkupfalse%
+\ {\isachardoublequoteopen}x\ {\isasymin}\ convex\ hull\ {\isacharparenleft}{\kern0pt}{\isacharparenleft}{\kern0pt}X\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}x{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}\ {\isasymunion}\ {\isacharparenleft}{\kern0pt}S\ {\isacharminus}{\kern0pt}\ X{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\ \isanewline
+\ \ \ \ \isakeywordONE{by}\isamarkupfalse%
+\ {\isacharparenleft}{\kern0pt}meson\ hull{\isacharunderscore}{\kern0pt}mono\ in{\isacharunderscore}{\kern0pt}mono\ sup{\isachardot}{\kern0pt}cobounded{\isadigit{1}}{\isacharparenright}{\kern0pt}\isanewline
+\ \ \isakeywordONE{moreover}\isamarkupfalse%
+\ \isakeywordONE{have}\isamarkupfalse%
+\ {\isachardoublequoteopen}{\isacharparenleft}{\kern0pt}{\isacharparenleft}{\kern0pt}X\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}x{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}\ {\isasymunion}\ {\isacharparenleft}{\kern0pt}S\ {\isacharminus}{\kern0pt}\ X{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}\ {\isacharequal}{\kern0pt}\ {\isacharparenleft}{\kern0pt}S\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}x{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\ \isanewline
+\ \ \ \ \isakeywordONE{using}\isamarkupfalse%
+\ X{\isacharparenleft}{\kern0pt}{\isadigit{1}}{\isacharparenright}{\kern0pt}\ x{\isacharparenleft}{\kern0pt}{\isadigit{1}}{\isacharparenright}{\kern0pt}\ \isakeywordONE{by}\isamarkupfalse%
+\ fast\isanewline
+\ \ \isakeywordONE{ultimately}\isamarkupfalse%
+\ \isakeywordONE{have}\isamarkupfalse%
+\ {\isachardoublequoteopen}x\ {\isasymin}\ \ convex\ hull\ {\isacharparenleft}{\kern0pt}S\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}x{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\ \isakeywordONE{by}\isamarkupfalse%
+\ simp\isanewline
+\ \ \isakeywordONE{hence}\isamarkupfalse%
+\ {\isachardoublequoteopen}convex\ hull\ S\ {\isacharequal}{\kern0pt}\ convex\ hull\ {\isacharparenleft}{\kern0pt}S\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}x{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\ \isakeywordONE{using}\isamarkupfalse%
+\ x{\isacharparenleft}{\kern0pt}{\isadigit{1}}{\isacharparenright}{\kern0pt}\ X{\isacharparenleft}{\kern0pt}{\isadigit{1}}{\isacharparenright}{\kern0pt}\ \isanewline
+\ \ \ \ \isakeywordONE{by}\isamarkupfalse%
+\ {\isacharparenleft}{\kern0pt}metis\ hull{\isacharunderscore}{\kern0pt}redundant\ in{\isacharunderscore}{\kern0pt}mono\ insert{\isacharunderscore}{\kern0pt}Diff{\isacharparenright}{\kern0pt}\isanewline
+\ \ \isakeywordTHREE{thus}\isamarkupfalse%
+\ False\ \isakeywordONE{using}\isamarkupfalse%
+\ x{\isacharparenleft}{\kern0pt}{\isadigit{1}}{\isacharparenright}{\kern0pt}\ X{\isacharparenleft}{\kern0pt}{\isadigit{1}}{\isacharparenright}{\kern0pt}\ assms\ \isanewline
+\ \ \ \ \isakeywordONE{using}\isamarkupfalse%
+\ convex{\isacharunderscore}{\kern0pt}pos{\isacharunderscore}{\kern0pt}def\ \isakeywordONE{by}\isamarkupfalse%
+\ auto\isanewline
+\isakeywordONE{qed}\isamarkupfalse%
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+\isanewline
+%
+\endisadelimproof
+\isanewline
+\isanewline
+\isanewline
+\isakeywordONE{lemma}\isamarkupfalse%
+\ fourconvex{\isacharcolon}{\kern0pt}\isanewline
+\ \ \isakeywordTWO{assumes}\ {\isachardoublequoteopen}{\isasymforall}X\ {\isasymsubseteq}\ {\isacharparenleft}{\kern0pt}S{\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}{\isacharparenleft}{\kern0pt}real\ {\isasymtimes}\ real{\isacharparenright}{\kern0pt}\ set{\isacharparenright}{\kern0pt}{\isachardot}{\kern0pt}\ card\ X\ {\isasymle}\ {\isadigit{4}}\ {\isasymlongrightarrow}\ convex{\isacharunderscore}{\kern0pt}pos\ X{\isachardoublequoteclose}\isanewline
+\ \ \isakeywordTWO{shows}\ {\isachardoublequoteopen}convex{\isacharunderscore}{\kern0pt}pos\ S{\isachardoublequoteclose}\isanewline
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+\isakeywordONE{proof}\isamarkupfalse%
+{\isacharparenleft}{\kern0pt}rule\ ccontr{\isacharparenright}{\kern0pt}\isanewline
+\ \ \isakeywordTHREE{assume}\isamarkupfalse%
+\ asm{\isacharcolon}{\kern0pt}{\isachardoublequoteopen}{\isasymnot}\ convex{\isacharunderscore}{\kern0pt}pos\ S{\isachardoublequoteclose}\isanewline
+\ \ \isakeywordONE{then}\isamarkupfalse%
+\ \isakeywordTHREE{obtain}\isamarkupfalse%
+\ p\ \isakeywordTWO{where}\ p{\isacharcolon}{\kern0pt}{\isachardoublequoteopen}p\ {\isasymin}\ S{\isachardoublequoteclose}\ {\isachardoublequoteopen}convex\ hull\ S\ {\isacharequal}{\kern0pt}\ convex\ hull\ {\isacharparenleft}{\kern0pt}S\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}p{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\ \ \ \ \isakeywordONE{using}\isamarkupfalse%
+\ asm\ \isakeywordONE{unfolding}\isamarkupfalse%
+\ convex{\isacharunderscore}{\kern0pt}pos{\isacharunderscore}{\kern0pt}def\ \isakeywordONE{by}\isamarkupfalse%
+\ blast\isanewline
+\ \ \isakeywordONE{then}\isamarkupfalse%
+\ \isakeywordONE{have}\isamarkupfalse%
+\ {\isachardoublequoteopen}p\ {\isasymin}\ convex\ hull\ {\isacharparenleft}{\kern0pt}S\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}p{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\ \ \ \ \isakeywordONE{using}\isamarkupfalse%
+\ hull{\isacharunderscore}{\kern0pt}inc\ \isakeywordONE{by}\isamarkupfalse%
+\ fastforce\isanewline
+\ \ \isakeywordONE{then}\isamarkupfalse%
+\ \isakeywordTHREE{obtain}\isamarkupfalse%
+\ T\ \isakeywordTWO{where}\ t{\isacharcolon}{\kern0pt}{\isachardoublequoteopen}finite\ T{\isachardoublequoteclose}\ {\isachardoublequoteopen}T\ {\isasymsubseteq}\ S\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}p{\isacharbraceright}{\kern0pt}{\isachardoublequoteclose}\ {\isachardoublequoteopen}card\ T\ {\isasymle}\ DIM{\isacharparenleft}{\kern0pt}real{\isasymtimes}real{\isacharparenright}{\kern0pt}\ {\isacharplus}{\kern0pt}\ {\isadigit{1}}{\isachardoublequoteclose}\ {\isachardoublequoteopen}p{\isasymin}convex\ hull\ T{\isachardoublequoteclose}\isanewline
+\ \ \ \ \isakeywordONE{using}\isamarkupfalse%
+\ caratheodory{\isacharbrackleft}{\kern0pt}of\ {\isachardoublequoteopen}S{\isacharminus}{\kern0pt}{\isacharbraceleft}{\kern0pt}p{\isacharbraceright}{\kern0pt}{\isachardoublequoteclose}{\isacharbrackright}{\kern0pt}\ \isakeywordONE{by}\isamarkupfalse%
+\ blast\isanewline
+\ \ \isakeywordONE{hence}\isamarkupfalse%
+\ c{\isadigit{1}}{\isacharcolon}{\kern0pt}{\isachardoublequoteopen}{\isasymnot}\ convex{\isacharunderscore}{\kern0pt}pos\ {\isacharparenleft}{\kern0pt}T{\isasymunion}{\isacharbraceleft}{\kern0pt}p{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\ \isakeywordONE{unfolding}\isamarkupfalse%
+\ convex{\isacharunderscore}{\kern0pt}pos{\isacharunderscore}{\kern0pt}def\isanewline
+\ \ \ \ \isakeywordONE{by}\isamarkupfalse%
+\ {\isacharparenleft}{\kern0pt}simp\ add{\isacharcolon}{\kern0pt}\ hull{\isacharunderscore}{\kern0pt}insert\ insert{\isacharunderscore}{\kern0pt}absorb\ subset{\isacharunderscore}{\kern0pt}Diff{\isacharunderscore}{\kern0pt}insert{\isacharparenright}{\kern0pt}\isanewline
+\ \ \isakeywordONE{have}\isamarkupfalse%
+\ c{\isadigit{2}}{\isacharcolon}{\kern0pt}{\isachardoublequoteopen}card\ {\isacharparenleft}{\kern0pt}T{\isasymunion}{\isacharbraceleft}{\kern0pt}p{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}\ {\isasymle}\ {\isadigit{4}}{\isachardoublequoteclose}\ \isakeywordONE{using}\isamarkupfalse%
+\ t\isanewline
+\ \ \ \ \isakeywordONE{by}\isamarkupfalse%
+\ {\isacharparenleft}{\kern0pt}simp\ add{\isacharcolon}{\kern0pt}\ subset{\isacharunderscore}{\kern0pt}Diff{\isacharunderscore}{\kern0pt}insert{\isacharparenright}{\kern0pt}\isanewline
+\ \ \isakeywordONE{have}\isamarkupfalse%
+\ {\isachardoublequoteopen}T{\isasymunion}{\isacharbraceleft}{\kern0pt}p{\isacharbraceright}{\kern0pt}\ {\isasymsubseteq}\ S{\isachardoublequoteclose}\ \isakeywordONE{using}\isamarkupfalse%
+\ t{\isacharparenleft}{\kern0pt}{\isadigit{2}}{\isacharparenright}{\kern0pt}\ p{\isacharparenleft}{\kern0pt}{\isadigit{1}}{\isacharparenright}{\kern0pt}\ \isakeywordONE{by}\isamarkupfalse%
+\ auto\isanewline
+\ \ \isakeywordTHREE{thus}\isamarkupfalse%
+\ False\ \isakeywordONE{using}\isamarkupfalse%
+\ c{\isadigit{1}}\ c{\isadigit{2}}\isanewline
+\ \ \ \ \isakeywordONE{by}\isamarkupfalse%
+\ {\isacharparenleft}{\kern0pt}simp\ add{\isacharcolon}{\kern0pt}\ assms{\isacharparenright}{\kern0pt}\isanewline
+\isakeywordONE{qed}\isamarkupfalse%
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+\isanewline
+%
+\endisadelimproof
+\isanewline
+\isakeywordONE{lemma}\isamarkupfalse%
+\ convexfour{\isacharcolon}{\kern0pt}\isanewline
+\ \ \isakeywordTWO{assumes}\ {\isachardoublequoteopen}convex{\isacharunderscore}{\kern0pt}pos\ S{\isachardoublequoteclose}\isanewline
+\ \ \isakeywordTWO{shows}\ {\isachardoublequoteopen}{\isasymforall}X\ {\isasymsubseteq}\ {\isacharparenleft}{\kern0pt}S{\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}{\isacharparenleft}{\kern0pt}real\ {\isasymtimes}\ real{\isacharparenright}{\kern0pt}\ set{\isacharparenright}{\kern0pt}{\isachardot}{\kern0pt}\ card\ X\ {\isasymle}\ {\isadigit{4}}\ {\isasymlongrightarrow}\ convex{\isacharunderscore}{\kern0pt}pos\ X{\isachardoublequoteclose}\isanewline
+%
+\isadelimproof
+\ \ %
+\endisadelimproof
+%
+\isatagproof
+\isakeywordONE{using}\isamarkupfalse%
+\ assms\ convex{\isacharunderscore}{\kern0pt}pos{\isacharunderscore}{\kern0pt}inherit\ \isakeywordONE{by}\isamarkupfalse%
+\ auto%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+\isanewline
+%
+\endisadelimproof
+\isanewline
+\isakeywordONE{theorem}\isamarkupfalse%
+\ fourConvexfour{\isacharcolon}{\kern0pt}\isanewline
+{\isachardoublequoteopen}convex{\isacharunderscore}{\kern0pt}pos\ S\ {\isacharequal}{\kern0pt}\ {\isacharparenleft}{\kern0pt}{\isasymforall}X\ {\isasymsubseteq}\ {\isacharparenleft}{\kern0pt}S{\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}{\isacharparenleft}{\kern0pt}real\ {\isasymtimes}\ real{\isacharparenright}{\kern0pt}\ set{\isacharparenright}{\kern0pt}{\isachardot}{\kern0pt}\ card\ X\ {\isasymle}\ {\isadigit{4}}\ {\isasymlongrightarrow}\ convex{\isacharunderscore}{\kern0pt}pos\ X{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+%
+\isadelimproof
+\ \ %
+\endisadelimproof
+%
+\isatagproof
+\isakeywordONE{using}\isamarkupfalse%
+\ convexfour\ fourconvex\ \isakeywordONE{by}\isamarkupfalse%
+\ blast%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+\isanewline
+%
+\endisadelimproof
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\isatagtheory
+\isakeywordTWO{end}\isamarkupfalse%
+%
+\endisatagtheory
+{\isafoldtheory}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\end{isabellebody}%
+\endinput
+%:%file=~/git/isabelle-convex-polygon/Four_Convex.thy%:%
+%:%10=1%:%
+%:%11=1%:%
+%:%12=2%:%
+%:%13=3%:%
+%:%18=3%:%
+%:%21=4%:%
+%:%22=5%:%
+%:%23=5%:%
+%:%24=6%:%
+%:%25=7%:%
+%:%28=8%:%
+%:%32=8%:%
+%:%33=8%:%
+%:%34=9%:%
+%:%35=9%:%
+%:%36=10%:%
+%:%37=10%:%
+%:%38=11%:%
+%:%39=11%:%
+%:%40=11%:%
+%:%41=12%:%
+%:%42=12%:%
+%:%43=13%:%
+%:%44=13%:%
+%:%45=14%:%
+%:%46=14%:%
+%:%47=15%:%
+%:%48=16%:%
+%:%49=16%:%
+%:%50=16%:%
+%:%51=16%:%
+%:%52=17%:%
+%:%58=17%:%
+%:%61=18%:%
+%:%62=19%:%
+%:%63=19%:%
+%:%64=20%:%
+%:%65=21%:%
+%:%68=22%:%
+%:%72=22%:%
+%:%73=22%:%
+%:%74=23%:%
+%:%75=23%:%
+%:%76=24%:%
+%:%77=24%:%
+%:%78=25%:%
+%:%79=25%:%
+%:%80=25%:%
+%:%81=26%:%
+%:%82=26%:%
+%:%83=27%:%
+%:%84=27%:%
+%:%85=28%:%
+%:%86=28%:%
+%:%87=29%:%
+%:%88=30%:%
+%:%89=30%:%
+%:%90=30%:%
+%:%91=30%:%
+%:%92=31%:%
+%:%98=31%:%
+%:%101=32%:%
+%:%102=33%:%
+%:%103=33%:%
+%:%104=34%:%
+%:%105=35%:%
+%:%112=36%:%
+%:%113=36%:%
+%:%114=37%:%
+%:%115=37%:%
+%:%116=38%:%
+%:%117=38%:%
+%:%118=38%:%
+%:%119=38%:%
+%:%120=39%:%
+%:%121=39%:%
+%:%122=39%:%
+%:%123=40%:%
+%:%124=40%:%
+%:%125=40%:%
+%:%126=41%:%
+%:%127=41%:%
+%:%128=41%:%
+%:%129=42%:%
+%:%130=42%:%
+%:%131=43%:%
+%:%132=43%:%
+%:%133=43%:%
+%:%134=44%:%
+%:%135=44%:%
+%:%136=45%:%
+%:%137=45%:%
+%:%138=45%:%
+%:%139=46%:%
+%:%140=46%:%
+%:%141=46%:%
+%:%142=47%:%
+%:%143=47%:%
+%:%144=47%:%
+%:%145=47%:%
+%:%146=48%:%
+%:%147=48%:%
+%:%148=48%:%
+%:%149=49%:%
+%:%150=49%:%
+%:%151=50%:%
+%:%152=50%:%
+%:%153=50%:%
+%:%154=51%:%
+%:%155=51%:%
+%:%156=51%:%
+%:%157=52%:%
+%:%163=52%:%
+%:%166=53%:%
+%:%167=55%:%
+%:%168=56%:%
+%:%169=57%:%
+%:%170=57%:%
+%:%171=58%:%
+%:%172=59%:%
+%:%179=60%:%
+%:%180=60%:%
+%:%181=61%:%
+%:%182=61%:%
+%:%183=62%:%
+%:%184=62%:%
+%:%185=62%:%
+%:%186=63%:%
+%:%187=63%:%
+%:%188=63%:%
+%:%189=63%:%
+%:%190=64%:%
+%:%191=64%:%
+%:%192=64%:%
+%:%193=65%:%
+%:%194=65%:%
+%:%195=65%:%
+%:%196=66%:%
+%:%197=66%:%
+%:%198=66%:%
+%:%199=67%:%
+%:%200=67%:%
+%:%201=67%:%
+%:%202=68%:%
+%:%203=68%:%
+%:%204=68%:%
+%:%205=69%:%
+%:%206=69%:%
+%:%207=70%:%
+%:%208=70%:%
+%:%209=70%:%
+%:%210=71%:%
+%:%211=71%:%
+%:%212=72%:%
+%:%213=72%:%
+%:%214=72%:%
+%:%215=72%:%
+%:%216=73%:%
+%:%217=73%:%
+%:%218=73%:%
+%:%219=74%:%
+%:%220=74%:%
+%:%221=75%:%
+%:%227=75%:%
+%:%230=76%:%
+%:%231=77%:%
+%:%232=77%:%
+%:%233=78%:%
+%:%234=79%:%
+%:%237=80%:%
+%:%241=80%:%
+%:%242=80%:%
+%:%243=80%:%
+%:%248=80%:%
+%:%251=81%:%
+%:%252=82%:%
+%:%253=82%:%
+%:%254=83%:%
+%:%257=84%:%
+%:%261=84%:%
+%:%262=84%:%
+%:%263=84%:%
+%:%268=84%:%
+%:%277=85%:%

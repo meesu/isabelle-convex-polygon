@@ -1,7 +1,7 @@
 theory Definitions
   imports Main          
-          "~~/src/HOL/Library/Product_Lexorder"
-          "~~/src/HOL/Analysis/Cartesian_Euclidean_Space"
+          "HOL-Library.Product_Lexorder"
+          "HOL-Analysis.Cartesian_Euclidean_Space"
           "HOL-Library.Sublist"
 
 begin

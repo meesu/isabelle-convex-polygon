@@ -588,7 +588,9 @@ proof-
   have P3:"sdistinct(sorted_list_of_set St)" using assms(3,5) translated_sdistinct
     by (metis map_sorted_list_set)
 
-  text \<open>A change in variable, ys = map (\<lambda>p. p+t) xs,  allows us to prove the following.\<close>
+
+  text \<open>A change in variable, @{term "ys = map (\<lambda>p. p + t) xs"}, allows us to prove the following.\<close>
+
   have "\<forall>xs. set xs \<subseteq> S \<longrightarrow> 
         \<not>(cap k (map (\<lambda> p. p + t) xs) \<or> cup l (map (\<lambda> p. p + t) xs))" 
     using translated_cup_eq translated_cap_eq

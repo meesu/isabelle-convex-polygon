@@ -330,7 +330,7 @@ proof-
           hence "sdistinct[v2 u, v2 v, v2 w]" using xsp xs3 True by simp
           hence "cup3 a b c" using f_prop4 uvw f_prop10 by presburger
           thus "\<not>(cap 3 xs)" using True exactly_one_true cap_def xs3 by (metis list_check.simps(4))
-          text\<open>When the length xs \<noteq> 3 then xs can not be a 3-cap from definition trivially.\<close>
+          text\<open>When @{term "length xs \<noteq> 3"} then xs can not be a 3-cap from definition trivially.\<close>
         qed(auto simp add: cap_def) 
         hence "set xs \<subseteq> set V2L \<and> sdistinct xs \<longrightarrow> \<not> (cap 3 xs \<or> cup (Suc k) xs)" using 1
           by blast

@@ -1,0 +1,235 @@
+%
+\begin{isabellebody}%
+\setisabellecontext{Definitions}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\isatagtheory
+\isakeywordONE{theory}\isamarkupfalse%
+\ Definitions\isanewline
+\ \ \isakeywordTWO{imports}\ Main\ \ \ \ \ \ \ \ \ \ \isanewline
+\ \ \ \ \ \ \ \ \ \ \isanewline
+\ \ \ \ \ \ \ \ \ \ {\isachardoublequoteopen}HOL{\isacharminus}{\kern0pt}Library{\isachardot}{\kern0pt}Product{\isacharunderscore}{\kern0pt}Lexorder{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \ \ \ \ {\isachardoublequoteopen}HOL{\isacharminus}{\kern0pt}Analysis{\isachardot}{\kern0pt}Cartesian{\isacharunderscore}{\kern0pt}Euclidean{\isacharunderscore}{\kern0pt}Space{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \ \ \ \ {\isachardoublequoteopen}HOL{\isacharminus}{\kern0pt}Library{\isachardot}{\kern0pt}Sublist{\isachardoublequoteclose}\isanewline
+\isanewline
+\isakeywordTWO{begin}%
+\endisatagtheory
+{\isafoldtheory}%
+%
+\isadelimtheory
+\isanewline
+%
+\endisadelimtheory
+\isanewline
+\isakeywordONE{type{\isacharunderscore}{\kern0pt}synonym}\isamarkupfalse%
+\ R{\isadigit{2}}\ {\isacharequal}{\kern0pt}\ {\isachardoublequoteopen}real\ {\isasymtimes}\ real{\isachardoublequoteclose}\isanewline
+\isanewline
+\isakeywordONE{definition}\isamarkupfalse%
+\ slope\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}R{\isadigit{2}}\ {\isasymRightarrow}\ R{\isadigit{2}}\ {\isasymRightarrow}\ real{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}slope\ a\ b\ {\isacharequal}{\kern0pt}\ {\isacharparenleft}{\kern0pt}snd\ b\ {\isacharminus}{\kern0pt}\ snd\ a{\isacharparenright}{\kern0pt}\ {\isacharslash}{\kern0pt}\ {\isacharparenleft}{\kern0pt}fst\ b\ {\isacharminus}{\kern0pt}\ fst\ a{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isakeywordONE{abbreviation}\isamarkupfalse%
+\isanewline
+\ \ {\isachardoublequoteopen}sortedStrict\ {\isasymequiv}\ sorted{\isacharunderscore}{\kern0pt}wrt\ {\isacharparenleft}{\kern0pt}{\isacharless}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isakeywordONE{abbreviation}\isamarkupfalse%
+\ sdistinct\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}R{\isadigit{2}}\ list\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}sdistinct\ xs\ {\isasymequiv}\ distinct\ {\isacharparenleft}{\kern0pt}map\ fst\ xs{\isacharparenright}{\kern0pt}\ {\isasymand}\ sorted\ xs{\isachardoublequoteclose}\isanewline
+\isanewline
+\isakeywordONE{definition}\isamarkupfalse%
+\ nsubset{\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}{\isachardoublequoteopen}{\isacharprime}{\kern0pt}a\ set\ {\isasymRightarrow}\ nat\ {\isasymRightarrow}\ {\isacharparenleft}{\kern0pt}{\isacharprime}{\kern0pt}a\ set{\isacharparenright}{\kern0pt}\ set{\isachardoublequoteclose}\ {\isacharparenleft}{\kern0pt}\isakeywordTWO{infix}\ {\isachardoublequoteopen}{\isachartilde}{\kern0pt}{\isachardoublequoteclose}\ {\isadigit{7}}{\isadigit{6}}{\isacharparenright}{\kern0pt}\ \ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}nsubset\ S\ k\ {\isacharequal}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}X{\isachardot}{\kern0pt}\ X\ {\isasymsubseteq}\ S\ {\isasymand}\ \ card\ X\ {\isacharequal}{\kern0pt}\ k{\isacharbraceright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isanewline
+\isakeywordONE{definition}\isamarkupfalse%
+\ general{\isacharunderscore}{\kern0pt}pos{\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}{\isachardoublequoteopen}{\isacharparenleft}{\kern0pt}{\isacharparenleft}{\kern0pt}real{\isasymtimes}real{\isacharparenright}{\kern0pt}\ set{\isacharparenright}{\kern0pt}\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}general{\isacharunderscore}{\kern0pt}pos\ S\ {\isasymequiv}\ \ {\isacharparenleft}{\kern0pt}{\isasymforall}\ P{\isadigit{3}}\ {\isasymin}\ S{\isachartilde}{\kern0pt}{\isadigit{3}}{\isachardot}{\kern0pt}\ {\isasymnot}\ affine{\isacharunderscore}{\kern0pt}dependent\ P{\isadigit{3}}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isanewline
+\isanewline
+\isakeywordONE{definition}\isamarkupfalse%
+\ convex{\isacharunderscore}{\kern0pt}pos{\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}{\isachardoublequoteopen}{\isacharparenleft}{\kern0pt}{\isacharprime}{\kern0pt}a{\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}euclidean{\isacharunderscore}{\kern0pt}space\ set{\isacharparenright}{\kern0pt}\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}convex{\isacharunderscore}{\kern0pt}pos\ S\ {\isasymequiv}\ \ {\isacharparenleft}{\kern0pt}{\isasymforall}\ s\ {\isasymin}\ S{\isachardot}{\kern0pt}\ convex\ hull\ S\ {\isasymnoteq}\ convex\ hull\ {\isacharparenleft}{\kern0pt}S\ {\isacharminus}{\kern0pt}\ {\isacharbraceleft}{\kern0pt}s{\isacharbraceright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isakeywordONE{abbreviation}\isamarkupfalse%
+\ convex{\isacharunderscore}{\kern0pt}poly\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}nat\ {\isasymRightarrow}\ R{\isadigit{2}}\ list\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}convex{\isacharunderscore}{\kern0pt}poly\ n\ xs\ {\isasymequiv}\ length\ xs\ {\isacharequal}{\kern0pt}\ n\ {\isasymand}\ convex{\isacharunderscore}{\kern0pt}pos\ {\isacharparenleft}{\kern0pt}set\ xs{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isakeywordONE{definition}\isamarkupfalse%
+\ cross{\isadigit{3}}\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}R{\isadigit{2}}\ {\isasymRightarrow}\ R{\isadigit{2}}\ {\isasymRightarrow}\ R{\isadigit{2}}\ {\isasymRightarrow}\ real{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}cross{\isadigit{3}}\ a\ b\ c\ {\isacharequal}{\kern0pt}\ {\isacharparenleft}{\kern0pt}fst\ b\ {\isacharminus}{\kern0pt}\ fst\ a{\isacharparenright}{\kern0pt}\ {\isacharasterisk}{\kern0pt}\ {\isacharparenleft}{\kern0pt}snd\ c\ {\isacharminus}{\kern0pt}\ snd\ b{\isacharparenright}{\kern0pt}\ {\isacharminus}{\kern0pt}\ {\isacharparenleft}{\kern0pt}fst\ c\ {\isacharminus}{\kern0pt}\ fst\ b{\isacharparenright}{\kern0pt}\ {\isacharasterisk}{\kern0pt}\ {\isacharparenleft}{\kern0pt}snd\ b\ {\isacharminus}{\kern0pt}\ snd\ a{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isakeywordONE{definition}\isamarkupfalse%
+\ cup{\isadigit{3}}\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}{\isacharunderscore}{\kern0pt}\ {\isasymRightarrow}\ {\isacharunderscore}{\kern0pt}\ {\isasymRightarrow}\ {\isacharunderscore}{\kern0pt}\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}cup{\isadigit{3}}\ a\ b\ c\ {\isasymequiv}\ \ cross{\isadigit{3}}\ a\ b\ c\ {\isachargreater}{\kern0pt}\ {\isadigit{0}}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isakeywordONE{definition}\isamarkupfalse%
+\ cap{\isadigit{3}}\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}{\isacharunderscore}{\kern0pt}\ {\isasymRightarrow}\ {\isacharunderscore}{\kern0pt}\ {\isasymRightarrow}\ {\isacharunderscore}{\kern0pt}\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}cap{\isadigit{3}}\ a\ b\ c\ {\isasymequiv}\ \ cross{\isadigit{3}}\ a\ b\ c\ {\isacharless}{\kern0pt}\ {\isadigit{0}}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isakeywordONE{definition}\isamarkupfalse%
+\ collinear{\isadigit{3}}\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}{\isacharunderscore}{\kern0pt}\ {\isasymRightarrow}\ {\isacharunderscore}{\kern0pt}\ {\isasymRightarrow}\ {\isacharunderscore}{\kern0pt}\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}collinear{\isadigit{3}}\ a\ b\ c\ {\isasymequiv}\ cross{\isadigit{3}}\ a\ b\ c\ {\isacharequal}{\kern0pt}\ {\isadigit{0}}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isanewline
+\isanewline
+\isakeywordONE{fun}\isamarkupfalse%
+\ list{\isacharunderscore}{\kern0pt}check\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}{\isacharparenleft}{\kern0pt}{\isacharunderscore}{\kern0pt}\ {\isasymRightarrow}\ {\isacharunderscore}{\kern0pt}\ {\isasymRightarrow}\ {\isacharunderscore}{\kern0pt}\ {\isasymRightarrow}\ bool{\isacharparenright}{\kern0pt}\ {\isasymRightarrow}\ {\isacharunderscore}{\kern0pt}\ list\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}list{\isacharunderscore}{\kern0pt}check\ f\ {\isacharbrackleft}{\kern0pt}{\isacharbrackright}{\kern0pt}\ {\isacharequal}{\kern0pt}\ True{\isachardoublequoteclose}\isanewline
+{\isacharbar}{\kern0pt}\ {\isachardoublequoteopen}list{\isacharunderscore}{\kern0pt}check\ f\ {\isacharparenleft}{\kern0pt}a{\isacharhash}{\kern0pt}{\isacharbrackleft}{\kern0pt}{\isacharbrackright}{\kern0pt}{\isacharparenright}{\kern0pt}\ {\isacharequal}{\kern0pt}\ True{\isachardoublequoteclose}\isanewline
+{\isacharbar}{\kern0pt}\ {\isachardoublequoteopen}list{\isacharunderscore}{\kern0pt}check\ f\ {\isacharparenleft}{\kern0pt}a{\isacharhash}{\kern0pt}b{\isacharhash}{\kern0pt}{\isacharbrackleft}{\kern0pt}{\isacharbrackright}{\kern0pt}{\isacharparenright}{\kern0pt}\ {\isacharequal}{\kern0pt}\ {\isacharparenleft}{\kern0pt}a\ {\isasymnoteq}\ b{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+{\isacharbar}{\kern0pt}\ {\isachardoublequoteopen}list{\isacharunderscore}{\kern0pt}check\ f\ {\isacharparenleft}{\kern0pt}a{\isacharhash}{\kern0pt}b{\isacharhash}{\kern0pt}c{\isacharhash}{\kern0pt}rest{\isacharparenright}{\kern0pt}\ {\isacharequal}{\kern0pt}\ {\isacharparenleft}{\kern0pt}f\ a\ b\ c\ {\isasymand}\ list{\isacharunderscore}{\kern0pt}check\ f\ {\isacharparenleft}{\kern0pt}b{\isacharhash}{\kern0pt}c{\isacharhash}{\kern0pt}rest{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isanewline
+\isakeywordONE{definition}\isamarkupfalse%
+\ cap\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}nat\ {\isasymRightarrow}\ {\isacharparenleft}{\kern0pt}real{\isasymtimes}real{\isacharparenright}{\kern0pt}\ list\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}cap\ k\ L\ {\isasymequiv}\ {\isacharparenleft}{\kern0pt}k\ {\isacharequal}{\kern0pt}\ length\ L{\isacharparenright}{\kern0pt}\ {\isasymand}\ {\isacharparenleft}{\kern0pt}sdistinct\ L{\isacharparenright}{\kern0pt}\ {\isasymand}\ {\isacharparenleft}{\kern0pt}list{\isacharunderscore}{\kern0pt}check\ cap{\isadigit{3}}\ L{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isakeywordONE{definition}\isamarkupfalse%
+\ cup\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}nat\ {\isasymRightarrow}\ {\isacharparenleft}{\kern0pt}real\ {\isasymtimes}\ real{\isacharparenright}{\kern0pt}\ list\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}cup\ k\ L\ {\isasymequiv}\ {\isacharparenleft}{\kern0pt}k\ {\isacharequal}{\kern0pt}\ length\ L{\isacharparenright}{\kern0pt}\ {\isasymand}\ {\isacharparenleft}{\kern0pt}sdistinct\ L{\isacharparenright}{\kern0pt}\ {\isasymand}\ {\isacharparenleft}{\kern0pt}list{\isacharunderscore}{\kern0pt}check\ cup{\isadigit{3}}\ L{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isanewline
+\isanewline
+\isanewline
+\isanewline
+\isakeywordONE{definition}\isamarkupfalse%
+\ min{\isacharunderscore}{\kern0pt}conv\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}nat\ {\isasymRightarrow}\ nat\ {\isasymRightarrow}\ nat{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}min{\isacharunderscore}{\kern0pt}conv\ k\ l\ {\isacharequal}{\kern0pt}\ \isanewline
+\ \ \ \ Inf\ {\isacharbraceleft}{\kern0pt}n\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ nat{\isachardot}{\kern0pt}\ {\isacharparenleft}{\kern0pt}{\isasymforall}S\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ R{\isadigit{2}}\ set{\isachardot}{\kern0pt}\ {\isacharparenleft}{\kern0pt}card\ S\ {\isasymge}\ n\ {\isasymand}\ general{\isacharunderscore}{\kern0pt}pos\ S\ {\isasymand}\ sdistinct{\isacharparenleft}{\kern0pt}sorted{\isacharunderscore}{\kern0pt}list{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}set\ S{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isasymlongrightarrow}\ {\isacharparenleft}{\kern0pt}{\isasymexists}xs{\isachardot}{\kern0pt}\ set\ xs\ {\isasymsubseteq}\ S\ {\isasymand}\ sdistinct\ xs\ {\isasymand}\ {\isacharparenleft}{\kern0pt}cap\ k\ xs\ {\isasymor}\ cup\ l\ xs{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isacharbraceright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isakeywordONE{definition}\isamarkupfalse%
+\ min{\isacharunderscore}{\kern0pt}conv{\isacharunderscore}{\kern0pt}set\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}nat\ {\isasymRightarrow}\ nat\ {\isasymRightarrow}\ nat\ set{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}min{\isacharunderscore}{\kern0pt}conv{\isacharunderscore}{\kern0pt}set\ k\ l\ {\isacharequal}{\kern0pt}\ \isanewline
+\ \ \ \ \ \ \ \ {\isacharbraceleft}{\kern0pt}n{\isachardot}{\kern0pt}\ {\isacharparenleft}{\kern0pt}{\isasymforall}S\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ R{\isadigit{2}}\ set{\isachardot}{\kern0pt}\ {\isacharparenleft}{\kern0pt}card\ S\ {\isasymge}\ n\ {\isasymand}\ general{\isacharunderscore}{\kern0pt}pos\ S\ {\isasymand}\ sdistinct{\isacharparenleft}{\kern0pt}sorted{\isacharunderscore}{\kern0pt}list{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}set\ S{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isasymlongrightarrow}\ {\isacharparenleft}{\kern0pt}{\isasymexists}xs{\isachardot}{\kern0pt}\ set\ xs\ {\isasymsubseteq}\ S\ {\isasymand}\ sdistinct\ xs\ {\isasymand}\ {\isacharparenleft}{\kern0pt}cap\ k\ xs\ {\isasymor}\ cup\ l\ xs{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isacharbraceright}{\kern0pt}{\isachardoublequoteclose}%
+\begin{isamarkuptext}%
+Miss Klein suggested the following problem. Can we find for a given number n a number N(n) such that from any set containing at least N(n) points it is possible to select n points forming a convex polygon? The number EZ(n) is defined to be the smallest possible value of N(n) for a given n.%
+\end{isamarkuptext}\isamarkuptrue%
+\isakeywordONE{definition}\isamarkupfalse%
+\ EZ\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}nat\ {\isasymRightarrow}\ nat{\isachardoublequoteclose}\ \isakeywordTWO{where}\isanewline
+\ \ {\isachardoublequoteopen}EZ\ n\ {\isacharequal}{\kern0pt}\ Inf\ {\isacharbraceleft}{\kern0pt}N\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ nat{\isachardot}{\kern0pt}\ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharparenleft}{\kern0pt}{\isasymforall}S\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ R{\isadigit{2}}\ set{\isachardot}{\kern0pt}\ {\isacharparenleft}{\kern0pt}card\ S\ {\isasymge}\ N\ {\isasymand}\ general{\isacharunderscore}{\kern0pt}pos\ S\ {\isasymand}\ sdistinct{\isacharparenleft}{\kern0pt}sorted{\isacharunderscore}{\kern0pt}list{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}set\ S{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isasymlongrightarrow}\ {\isacharparenleft}{\kern0pt}{\isasymexists}xs{\isachardot}{\kern0pt}\ set\ xs\ {\isasymsubseteq}\ S\ {\isasymand}\ sdistinct\ xs\ {\isasymand}\ convex{\isacharunderscore}{\kern0pt}poly\ n\ xs{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isacharbraceright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+%
+\isadelimtheory
+\isanewline
+%
+\endisadelimtheory
+%
+\isatagtheory
+\isakeywordTWO{end}\isamarkupfalse%
+%
+\endisatagtheory
+{\isafoldtheory}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\end{isabellebody}%
+\endinput
+%:%file=~/git/isabelle-convex-polygon/Definitions.thy%:%
+%:%10=1%:%
+%:%11=1%:%
+%:%12=2%:%
+%:%13=3%:%
+%:%13=4%:%
+%:%14=5%:%
+%:%15=6%:%
+%:%16=7%:%
+%:%17=8%:%
+%:%18=9%:%
+%:%23=9%:%
+%:%26=10%:%
+%:%27=11%:%
+%:%28=11%:%
+%:%29=12%:%
+%:%30=13%:%
+%:%31=13%:%
+%:%32=14%:%
+%:%33=15%:%
+%:%34=16%:%
+%:%35=16%:%
+%:%36=17%:%
+%:%37=18%:%
+%:%38=19%:%
+%:%39=19%:%
+%:%40=20%:%
+%:%41=21%:%
+%:%42=22%:%
+%:%43=22%:%
+%:%44=23%:%
+%:%45=24%:%
+%:%46=25%:%
+%:%47=26%:%
+%:%48=26%:%
+%:%49=27%:%
+%:%50=28%:%
+%:%51=30%:%
+%:%52=34%:%
+%:%53=35%:%
+%:%54=35%:%
+%:%55=36%:%
+%:%56=37%:%
+%:%57=38%:%
+%:%58=38%:%
+%:%59=39%:%
+%:%60=40%:%
+%:%61=41%:%
+%:%62=41%:%
+%:%63=42%:%
+%:%64=43%:%
+%:%65=44%:%
+%:%66=44%:%
+%:%67=45%:%
+%:%68=46%:%
+%:%69=47%:%
+%:%70=47%:%
+%:%71=48%:%
+%:%72=49%:%
+%:%73=50%:%
+%:%74=50%:%
+%:%75=51%:%
+%:%76=52%:%
+%:%77=53%:%
+%:%78=54%:%
+%:%79=55%:%
+%:%80=55%:%
+%:%81=56%:%
+%:%82=57%:%
+%:%83=58%:%
+%:%84=59%:%
+%:%85=60%:%
+%:%86=61%:%
+%:%87=62%:%
+%:%88=62%:%
+%:%89=63%:%
+%:%90=64%:%
+%:%91=65%:%
+%:%92=65%:%
+%:%93=66%:%
+%:%94=67%:%
+%:%95=68%:%
+%:%96=69%:%
+%:%97=70%:%
+%:%98=71%:%
+%:%99=72%:%
+%:%100=72%:%
+%:%101=73%:%
+%:%103=75%:%
+%:%104=76%:%
+%:%105=77%:%
+%:%106=77%:%
+%:%107=78%:%
+%:%111=82%:%
+%:%113=84%:%
+%:%114=84%:%
+%:%115=85%:%
+%:%117=87%:%
+%:%120=88%:%
+%:%125=89%:%
